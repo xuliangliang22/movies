@@ -176,7 +176,7 @@ class ImgDownYgdy8 extends Command
                 }
                 //提交单线程下载图片,本地图路径
                 $ext = $this->getExt($value->litpic);
-                $fileName = $this->savePath . md5($value->litpoic) . $ext;
+                $fileName = $this->savePath . md5($value->litpic) . $ext;
                 $this->picObj->imgDown($fileName,$value->litpic);
                 $ossImg = '';
                 //判断图片格式是否正确

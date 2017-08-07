@@ -2,6 +2,7 @@ drop table if exists gather;
 CREATE TABLE `gather` (
 `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 `title` varchar(255) NOT NULL COMMENT '标题',
+`title_hash` varchar(255) NOT NULL DEFAULT '' COMMENT '标题的hash值',
 `typeid` tinyint(4) DEFAULT NULL,
 `grade` varchar(10) DEFAULT NULL COMMENT '评分值',
 `litpic` varchar(255) DEFAULT NULL COMMENT '缩略图',
@@ -20,10 +21,12 @@ CREATE TABLE `gather` (
 `is_post` tinyint(4) NOT NULL DEFAULT '-1' COMMENT '是否已经提交到dede后台',
 `episode_nums` smallint(6) NOT NULL DEFAULT '0' COMMENT '电视剧的总集数',
 `m_time` timestamp NULL DEFAULT NULL COMMENT '影片网站上更新的时间,通过这个时间去判断是否需要更新',
+`is_update` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否更新的标志,如果为-1表示数据更新,0表示没有更新',
 PRIMARY KEY (`id`),
 KEY `idx_is_con` (`is_con`),
 KEY `idx_is_litpic` (`is_litpic`) USING BTREE,
-KEY `idx_title` (`title`),
 KEY `idx_typeid` (`typeid`),
-KEY `idx_is_body` (`is_body`) USING BTREE
+KEY `idx_is_body` (`is_body`) USING BTREE,
+KEY `idx_title_hash` (`title_hash`) USING BTREE,
+KEY `idx_is_update` (`is_update`) USING BTREE
 ) ENGINE=MyISAM AUTO_INCREMENT=10946 DEFAULT CHARSET=utf8;

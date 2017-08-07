@@ -43,6 +43,8 @@ class Kernel extends ConsoleKernel
 
         //采集阳光电影8所有内地电视剧
         Commands\Caiji\Ygdy8\DaluTvs::class,
+        //跟踪采集大陆电视剧
+        Commands\Caiji\Ygdy8\DaluTvsUpdate::class,
         //采集阳光电影8所有日韩电视剧
         Commands\Caiji\Ygdy8\RhanTvs::class,
 

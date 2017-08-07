@@ -57,7 +57,7 @@ class BaiduLitpic extends Command
             mkdir($this->savePath,0755,true);
         }
 
-        DB::connection('dedea67')->table('gather_dedea67')->where('typeid',$typeId)->where('litpic','')->orderBy('id')->chunk(100,function ($conArr) use ($keyWordSuffix){
+        DB::connection('dedea67')->table('gather_dedea67')->where('typeid',$typeId)->where('litpic','')->where('is_post',-1)->orderBy('id')->chunk(100,function ($conArr) use ($keyWordSuffix){
             $tot = count($conArr);
 
             $factory = new Factory();

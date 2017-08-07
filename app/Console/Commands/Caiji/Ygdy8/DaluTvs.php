@@ -60,21 +60,21 @@ class DaluTvs extends Command
         $url = 'http://www.ygdy8.net/html/tv/hytv/list_71_2.html';
         $pageTot = 16;
         //得到所有的列表页
-//        $this->MovieInit();
-//        $this->movieList($pageTot,$url);
-//        $this->getContent('other');
+        $this->MovieInit();
+        $this->movieList($pageTot,$url,true);
+        $this->getContent('other');
 //        $this->aid = $aid;
 //        $this->perfectContent();
 
         //下载图片
-        $qiniuDir = 'tvs/imgs';
+//        $qiniuDir = 'tvs/imgs';
         //内容页图片
         //9450
-        $this->call('xiazai:imgdownygdy8',['type'=>'body','qiniu_dir'=>$qiniuDir,'type_id'=>$this->typeId,'db_name'=>$this->dbName,'table_name'=>$this->tableName]);
+//        $this->call('xiazai:imgdownygdy8',['type'=>'body','qiniu_dir'=>$qiniuDir,'type_id'=>$this->typeId,'db_name'=>$this->dbName,'table_name'=>$this->tableName]);
         //缩略图
-        $this->call('xiazai:imgdownygdy8',['type'=>'litpic','qiniu_dir'=>$qiniuDir,'type_id'=>$this->typeId,'db_name'=>$this->dbName,'table_name'=>$this->tableName]);
+//        $this->call('xiazai:imgdownygdy8',['type'=>'litpic','qiniu_dir'=>$qiniuDir,'type_id'=>$this->typeId,'db_name'=>$this->dbName,'table_name'=>$this->tableName]);
         //百度图片
-        $this->call('caiji:baidulitpic',['qiniu_dir'=>$qiniuDir,'type_id'=>$this->typeId]);
+//        $this->call('caiji:baidulitpic',['qiniu_dir'=>$qiniuDir,'type_id'=>$this->typeId]);
 
     }
 }

@@ -49,7 +49,11 @@ trait Douban
                                 break;
                             case 'body':
                                 if (empty($v) && isset($douban_data['body'])) {
-                                    $updateArr['body'] = $douban_data['body'];
+                                    $body = $douban_data['body'];
+                                    if(mb_strlen($body) > 250){
+                                        $body = mb_substr($body,0,250).'....';
+                                    }
+                                    $updateArr['body'] = $body;
                                 }
                                 break;
                             case 'director':
