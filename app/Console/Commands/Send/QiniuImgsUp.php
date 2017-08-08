@@ -31,7 +31,6 @@ class QiniuImgsUp extends Command
     protected $secretKey;
 
 
-
     /**
      * Create a new command instance.
      *
@@ -57,6 +56,10 @@ class QiniuImgsUp extends Command
 
         $files = scandir($localDir);
         $tot = count($files);
+        if($tot < 3){
+            $this->info("{$localDir} empty !");
+            exit;
+        }
         foreach ($files as $fkey => $file) {
             $this->info("{$fkey}/{$tot}");
             $filePath = $localDir . DIRECTORY_SEPARATOR . $file;
@@ -113,7 +116,6 @@ class QiniuImgsUp extends Command
         $authUrl = $auth->privateDownloadUrl($baseUrl);
         echo $authUrl;
     }
-
 
 
 }

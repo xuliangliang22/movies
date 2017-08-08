@@ -8,7 +8,7 @@ use App\Console\Commands\Mytraits\Douban;
 use Illuminate\Support\Facades\DB;
 use App\Console\Commands\Mytraits\DedeLogin;
 
-class DaluTvsUpdate extends Command
+class RhanTvsUpdate extends Command
 {
     use Ygdy8;
     use Douban;
@@ -18,14 +18,14 @@ class DaluTvsUpdate extends Command
      *
      * @var string
      */
-    protected $signature = 'caiji:ygdy8_dalutvs_update {aid?}';
+    protected $signature = 'caiji:ygdy8_rhantvs_update {aid?}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '采集阳光电影8的大陆电视剧信息';
+    protected $description = '采集阳光电影8的日韩电视剧信息';
 
     //库名与表名
     public $dbName;
@@ -40,7 +40,7 @@ class DaluTvsUpdate extends Command
 
     //出错的时候调用大于这个aid的数据
     public $aid;
-    public $typeId = 17;
+    public $typeId = 18;
     public $channelId = 17;
 
 
@@ -73,9 +73,8 @@ class DaluTvsUpdate extends Command
         $aid = empty($this->argument('aid')) ? 0 : $this->argument('aid');
         $this->aid = $aid;
 
-        //内地电视 16 http://www.ygdy8.net/html/tv/hytv/list_71_2.html
-        $url = 'http://www.ygdy8.net/html/tv/hytv/list_71_2.html';
-        $pageTot = 16;
+        $url = 'http://www.ygdy8.net/html/tv/rihantv/list_8_2.html';
+        $pageTot = 34;
         //下载图片
         $qiniuDir = 'tvs/imgs';
         //得到所有的列表页
@@ -100,7 +99,7 @@ class DaluTvsUpdate extends Command
         $this->call('caiji:baidulitpic', ['qiniu_dir' => $qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => '电视剧']);
         echo "img down end ! \n";
         echo "====================================\n\n";
-
+//
         echo "====================================\n";
         echo "update dede admin begin ! \n";
         //node格式化下载链接
@@ -121,7 +120,7 @@ class DaluTvsUpdate extends Command
         //只有新增了数据才会去上传图片
         if ($isSend) {
             //图片上传
-            $this->call('send:qiniuimgs', ['local_dir' => config('qiniu.qiniu_data.www_root') . '/' . date('ymd') . $this->typeId, 'qiniu_idr' => $qiniuDir . date('ymd') . '/']);
+            $this->call('send:qiniuimgs', ['local_dir' => config('qiniu.qiniu_data.www_root') . '/' . date('ymd') . $this->typeId, 'qiniu_dir' => trim($qiniuDir,'/') .'/'. date('ymd') .$this->typeId. '/']);
         }
         echo "send to qiniu imgs end !\n";
         echo "====================================\n\n";

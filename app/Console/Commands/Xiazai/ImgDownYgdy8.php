@@ -62,12 +62,12 @@ class ImgDownYgdy8 extends Command
         $factory->getSelfObj('picdown');
         $this->picObj = $factory->factoryObj;
 
-        $this->savePath = config('qiniu.qiniu_data.www_root') . date('ymd').$this->typeId.'/';
+        $this->savePath = config('qiniu.qiniu_data.www_root') . date('ymd') . $this->typeId . '/';
         if (!is_dir($this->savePath)) {
             mkdir($this->savePath, 0777, true);
         }
 
-        $this->qiniuKey = rtrim(config('qiniu.qiniu_data.qiniu_dns'),'/').'/' .trim($qiniuDir, '/') . '/'.date('ymd').$this->typeId.'/';
+        $this->qiniuKey = rtrim(config('qiniu.qiniu_data.qiniu_dns'), '/') . '/' . trim($qiniuDir, '/') . '/' . date('ymd') . $this->typeId . '/';
 
         if ($type == 'body') {
             $this->bodyImg();
@@ -114,20 +114,20 @@ class ImgDownYgdy8 extends Command
                 }
                 //$matchs[1] 得到所有的图片链接
                 $fileName = array();
-                foreach ($matchs[1] as $k=>$v){
+                foreach ($matchs[1] as $k => $v) {
                     $ext = $this->getExt($v);
-                    $fileName[$k] = $this->savePath.md5($v).$ext;
+                    $fileName[$k] = $this->savePath . md5($v) . $ext;
                 }
                 //dd($fileName,$matchs[1]);
                 //两个参数，保存路径，与图片网络路径
-                $this->picObj->imgDown($fileName,$matchs[1]);
+                $this->picObj->imgDown($fileName, $matchs[1]);
                 $ossImg = array();
-                foreach ($fileName as $fk=>$fv){
+                foreach ($fileName as $fk => $fv) {
                     //判断图片文件是否有效
                     $isPic = $this->judgeImg($fv);
-                    if($isPic === true){
-                        $ossImg[] = str_replace($this->savePath,$this->qiniuKey,$fv);
-                    }else{
+                    if ($isPic === true) {
+                        $ossImg[] = str_replace($this->savePath, $this->qiniuKey, $fv);
+                    } else {
                         unlink($fv);
                     }
                 }
@@ -177,14 +177,14 @@ class ImgDownYgdy8 extends Command
                 //提交单线程下载图片,本地图路径
                 $ext = $this->getExt($value->litpic);
                 $fileName = $this->savePath . md5($value->litpic) . $ext;
-                $this->picObj->imgDown($fileName,$value->litpic);
+                $this->picObj->imgDown($fileName, $value->litpic);
                 $ossImg = '';
                 //判断图片格式是否正确
                 $isPic = $this->judgeImg($fileName);
-                if($isPic === true){
+                if ($isPic === true) {
                     //更新数据库信息
                     $ossImg = str_replace($this->savePath, $this->qiniuKey, $fileName);
-                }else{
+                } else {
                     unlink($fileName);
                 }
                 $this->info($ossImg);

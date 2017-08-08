@@ -47,6 +47,8 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\Ygdy8\DaluTvsUpdate::class,
         //采集阳光电影8所有日韩电视剧
         Commands\Caiji\Ygdy8\RhanTvs::class,
+        //跟踪采集日韩电视剧
+        Commands\Caiji\Ygdy8\RhanTvsUpdate::class,
 
 
         //将没有的缩略图从面度上截取

@@ -49,15 +49,15 @@ class BaiduLitpic extends Command
         $typeId = $this->argument('type_id');
         $qiniuDir = $this->argument('qiniu_dir');
         //搜索关键词的后缀，找出更精确的图片
-        $keyWordSuffix = empty($this->argument('key_word_suffix'))?'':$this->argument('key_word_suffix');
+        $keyWordSuffix = empty($this->argument('key_word_suffix')) ? '' : $this->argument('key_word_suffix');
 
-        $this->savePath = rtrim($this->savePath,'/').'/'.date('ymd').$typeId.'/';
-        $this->qiniuKey = rtrim($this->qiniuKey,'/').'/'.trim($qiniuDir,'/').'/'.date('ymd').$typeId.'/';
-        if(!is_dir($this->savePath)){
-            mkdir($this->savePath,0755,true);
+        $this->savePath = rtrim($this->savePath, '/') . '/' . date('ymd') . $typeId . '/';
+        $this->qiniuKey = rtrim($this->qiniuKey, '/') . '/' . trim($qiniuDir, '/') . '/' . date('ymd') . $typeId . '/';
+        if (!is_dir($this->savePath)) {
+            mkdir($this->savePath, 0755, true);
         }
 
-        DB::connection('dedea67')->table('gather_dedea67')->where('typeid',$typeId)->where('litpic','')->where('is_post',-1)->orderBy('id')->chunk(100,function ($conArr) use ($keyWordSuffix){
+        DB::connection('dedea67')->table('gather_dedea67')->where('typeid', $typeId)->where('litpic', '')->where('is_post', -1)->orderBy('id')->chunk(100, function ($conArr) use ($keyWordSuffix) {
             $tot = count($conArr);
 
             $factory = new Factory();
@@ -70,13 +70,13 @@ class BaiduLitpic extends Command
             foreach ($conArr as $key => $value) {
                 echo "==============//===================\n";
                 $this->info("{$key}/{$tot} id is {$value->id}");
-                $ret = $baiduobj->getPic($value->title.' '.$keyWordSuffix);
+                $ret = $baiduobj->getPic($value->title . ' ' . $keyWordSuffix);
                 if (empty($ret)) {
 //                throw new \Exception("{$keyWord} litpic baidu is not exists");
                     $this->error("{$value->title} litpic baidu is not exists");
                 }
 
-                foreach ($ret as $k=>$v) {
+                foreach ($ret as $k => $v) {
                     $imgUrl = $v;
                     $ext = substr($imgUrl, strripos($imgUrl, '.'));
                     if (in_array($ext, array('.jpg', '.jpeg', '.png', '.gif')) === false) {
@@ -94,7 +94,7 @@ class BaiduLitpic extends Command
                         //更新数据库
                         $rest = DB::connection('dedea67')->table('gather_dedea67')->where('id', $value->id)->update(['litpic' => $fileName]);
                         if ($rest) {
-                            $this->info('baidu litpic update success filename is '.$fileName.' !');
+                            $this->info('baidu litpic update success filename is ' . $fileName . ' !');
                             break;
                         } else {
                             $this->error('baidu litpic update fail !');

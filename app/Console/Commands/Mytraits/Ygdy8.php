@@ -26,7 +26,7 @@ trait Ygdy8
     /**
      * 保存电影电视剧列表页
      */
-    public function movieList($pageTot, $baseListUrl,$isNew = false)
+    public function movieList($pageTot, $baseListUrl, $isNew = false)
     {
         if (strrpos($baseListUrl, '_') !== false) {
             $url = substr($baseListUrl, 0, strrpos($baseListUrl, '_'));
@@ -51,24 +51,25 @@ trait Ygdy8
             foreach ($list as $key => $value) {
                 $rs = null;
                 $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
-                if($rest) {
-                    if($isNew === true) {
+                if ($rest) {
+                    if ($isNew === true) {
                         $isNewType = 'update';
-                        //更新这样记录的下载链接,将is_con=-1,down_link = '',is_update=-1//default 0
-                        $rs = DB::connection($this->dbName)->table($this->tableName)->where('id', $rest->id)->update(['down_link' => '', 'is_con' => -1, 'is_update' => -1]);
                         //判断时间,更新的时候不需要判断名字的重复
                         if (strtotime($maxTime) >= strtotime($value['m_time'])) {
                             break 2;
                         }
-                    }else{
+                        //更新这样记录的下载链接,将is_con=-1,down_link = '',is_update=-1//default 0
+                        $rs = DB::connection($this->dbName)->table($this->tableName)->where('id', $rest->id)->update(['down_link' => '', 'is_con' => -1, 'is_update' => -1]);
+
+                    } else {
                         continue;
                     }
-                }else{
+                } else {
                     //不是更新的时候判断名字的重复
                     $isNewType = 'save';
                     $listSaveArr = [
                         'title' => trim($value['title']),
-                        'title_hash'=>md5(trim($value['title'])),
+                        'title_hash' => md5(trim($value['title'])),
                         'con_url' => $value['con_url'],
                         'm_time' => $value['m_time'],
                         'typeid' => $this->typeId,
@@ -77,9 +78,9 @@ trait Ygdy8
                 }
 
                 if ($rs) {
-                    $this->info($value['title'] . ' list '.$isNewType.' success');
+                    $this->info($value['title'] . ' list ' . $isNewType . ' success');
                 } else {
-                    $this->info($value['title'] . ' list '.$isNewType.' fail');
+                    $this->info($value['title'] . ' list ' . $isNewType . ' fail');
                 }
             }
         }
@@ -112,8 +113,8 @@ trait Ygdy8
             } else {
                 $item['title'] = '';
             }
-            if(strpos($item['title'],'/') !== false){
-                $item['title'] = strstr($item['title'],'/',true);
+            if (strpos($item['title'], '/') !== false) {
+                $item['title'] = strstr($item['title'], '/', true);
             }
             $item['con_url'] = $host . $item['con_url'];
             $m_time = explode("\n", str_replace("\r", '', $item['m_time']));
@@ -130,7 +131,7 @@ trait Ygdy8
      * 采信内容页
      * @param  $type 1.movie(下载电影) 2.other(只下载链接)
      */
-    public function getContent($type,$isNew = false)
+    public function getContent($type, $isNew = false)
     {
 //        $url = 'http://www.ygdy8.net/html/gndy/dyzz/20170625/54313.html';
         $name = '';
@@ -160,8 +161,8 @@ trait Ygdy8
                     if (!$conSaveArr) {
                         continue;
                     }
-                    if($isNew === true && $value->is_update = -1){
-                       unset($conSaveArr['litpic']);
+                    if ($isNew === true && $value->is_update = -1) {
+                        unset($conSaveArr['litpic']);
                     }
                     print_r($conSaveArr);
                     $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update($conSaveArr);
@@ -427,19 +428,88 @@ trait Ygdy8
     {
         //node自动更新下载链接
         //->where('down_link','not like','%thunder://%')
-        $isNoDownLinks = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('down_link','not like','%thunder://%')->where(function ($query){
-            $query->where('is_post',-1)
-                ->orWhere('is_update',-1);
+        $isNoDownLinks = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('down_link', 'not like', '%thunder://%')->where(function ($query) {
+            $query->where('is_post', -1)
+                ->orWhere('is_update', -1);
         })->get();
         $tot = count($isNoDownLinks);
 //        dd($tot);
 
-        foreach ($isNoDownLinks as $key=>$value) {
+        foreach ($isNoDownLinks as $key => $value) {
             $this->info("parse down_link {$key}/{$tot}");
             $url = config('qiniu.qiniu_data.node_url') . '?aid=' . $value->id . '&down_link=' . urlencode($value->down_link);
             $this->curl->runSmall($url);
         }
         $this->info("parse down_link end");
+    }
+
+
+    /**
+     * 将更新的数据替换到dede后台
+     */
+    public function dedeDownLinkUpdate()
+    {
+        $isUpdate = false;
+
+        $dedeDownLinkUpdateUrl = config('qiniu.qiniu_data.dede_url') . 'myplus/down_link_update.php';
+        $isNoDownLinks = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_update', -1)->get();
+        $tot = count($isNoDownLinks);
+
+        foreach ($isNoDownLinks as $key => $value) {
+            $this->info("{$key}/{$tot} id is {$value->id}");
+            //echo $value->down_link."\n";
+            //先登录
+            $rest = $this->dedeLogin($this->dedeUrl . 'login.php', $this->dedeUser, $this->dedePwd);
+
+            if ($rest) {
+                $this->curl->add()
+                    ->opt_targetURL($dedeDownLinkUpdateUrl)
+                    ->opt_sendHeader('Cookie', $this->cookie)
+                    ->opt_sendPost('typeid', $value->typeid)
+                    ->opt_sendPost('title', $value->title)
+                    ->opt_sendPost('down_link', $value->down_link)
+                    ->done('post');
+                $this->curl->run();
+                $content = $this->curl->getAll();
+                $body = explode("\r\n\r\n", $content['body'], 2);
+                if (isset($body[1]) && $body[1] == 'update ok') {
+                    $isUpdate = true;
+                    //更新数据库is_update
+                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_update' => 0]);
+                    $this->info("dede down_link update {$value->title} update ok !");
+                } else {
+                    //没有更新成功,也将is_update更新为0
+                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_update' => 0]);
+                    $this->error("dede down_link update {$value->title} update fail !");
+                }
+            } else {
+                $this->error("dede down_link update login fail !");
+            }
+        }
+        $this->info("dede down_link update end !");
+        return $isUpdate;
+    }
+
+
+    /**
+     * dede生成栏目页
+     */
+    public function makeLanmu()
+    {
+        $url = $this->dedeUrl . 'makehtml_list_action.php?typeid=' . $this->typeId . '&maxpagesize=50&upnext=1';
+        //dd($url);
+        $this->dedeLogin($this->dedeUrl . 'login.php', $this->dedeUser, $this->dedePwd);
+        $this->curl->add()
+            ->opt_targetURL($url)
+            ->opt_sendHeader('cookie', $this->cookie)
+            ->done('get');
+        $this->curl->run();
+        $content = $this->curl->getAll();
+        if (mb_strpos($content['body'], '栏目列表更新',0, 'utf-8') !== false) {
+            $this->info("{$this->typeId}  lanmu list make success !");
+        } else {
+            $this->error("{$this->typeId}  lanmu list make fail !");
+        }
     }
 }
 

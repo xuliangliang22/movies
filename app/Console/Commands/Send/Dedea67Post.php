@@ -69,6 +69,8 @@ class Dedea67Post extends Command
      */
     public function handle()
     {
+        global $isSend;
+        $isSend = false;
         //
         $dede_data = array(
             'channelid' => $this->channelId,
@@ -161,6 +163,7 @@ class Dedea67Post extends Command
                 $rest = $this->getCurl($addUrl, 'post', $data);
 //                dd($rest);
                 if (stripos($rest, '成功发布文') !== false) {
+                    $isSend = true;
                     //成功提交后更新is_post
                     DB::connection('dedea67')->table('gather_dedea67')->where('id', $value->id)->update(['is_post' => 0]);
                     $this->info('dede post archive success');
