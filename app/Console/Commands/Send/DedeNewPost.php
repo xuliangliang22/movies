@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use App\Console\Commands\Mytraits\DedeLogin;
 
-class Dedea67Post extends Command
+class DedeNewPost extends Command
 {
     use DedeLogin;
     /**
@@ -14,14 +14,14 @@ class Dedea67Post extends Command
      *
      * @var string
      */
-    protected $signature = 'send:dedea67post {channel_id}{typeid}{aid?}';
+    protected $signature = 'send:dedenewpost {channel_id}{typeid}{aid?}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '将采集到的数据提交到动态图后台';
+    protected $description = '将采集到的数据提交到dede后台->channelid = 1';
 
     /**
      * 后台地址
@@ -74,57 +74,56 @@ class Dedea67Post extends Command
         //
         $dede_data = array(
             'channelid' => 1,
-            'cid' => 58,
             'dopost' => 'save',
-            'title' => 'bbb',
+            'title' => 'source title',
             'shorttitle' => '',
             'redirecturl' => '',
             'tags' => '',
-            'weight' => 1,
+            'weight' => 5,
             'picname' => '',
-            'typeid' => 58,
-            'typeid2' => '',
-            'types' => [],
-            'director' => 'bbb',
-            'actors' => 'bbbb',
-            'myear' => '2000',
-            'down_link' => 'bbb',
-            'body' => 'bbbbbbbb',
-            'dede_addonfields' => 'types,checkbox;director,text;actors,text;myear,text;down_link,text;body,htmltext;episode_nums,text',
-            'autolitpic' => 1,
-            'notpost' => 0,
-            'click' => 104,
             'source' => '',
-            'writer' => '',
-            'sortup' => 0,
-            'color' => '',
-            'arcrank' => 0,
-            'ishtml' => 1,
-            'pubdate' => '2017-07-04 15:07:38',
-            'money' => 0,
-            'keywords]' => '',
+            'writer' => 'admin',
+            'typeid' => 2,
+            'typeid2' => '',
+            'keywords' => '',
             'autokey' => 1,
             'description' => '',
+            'dede_addonfields' => '',
+            'remote' => 1,
+            'autolitpic' => 1,
+            'needwatermark' => 1,
+            'sptype' => 'hand',
+            'spsize' => 5,
+            'body' => 'source body',
+            'voteid' => '',
+            'notpost' => 0,
+            'click' => 52,
+            'sortup' => 0,
+            'color' => '',
+            'arcrank' => -1,
+            'money' => 0,
+            'pubdate' => '2017-02-15 21:30:50',
+            'ishtml' => 1,
             'filename' => '',
-            'imageField_x' => 28,
-            'imageField_y' => 5,
-
+            'templet' => '',
+            'imageField_x' => 45,
+            'imageField_y' => 9,
         );
 
         $loginUrl = $this->dedeUrl . 'login.php';
-        $addUrl = $this->dedeUrl . 'archives_add.php';
+        $addUrl = $this->dedeUrl . 'article_add.php';
+
         $take = 10;
         $this->channelId = $this->argument('channel_id');
         $this->typeId = $this->argument('typeid');
-
         //取出最大的id加1
         $maxId = DB::connection('dedea67')->table('gather_dedea67')->where('typeid', $this->typeId)->max('id');
-        $maxId = empty($this->argument('aid')) ? $maxId +1 : $this->argument('aid');
+        $maxId = empty($this->argument('aid')) ? $maxId + 1 : $this->argument('aid');
 //        dd($minId);
 
         do {
             //提交数据
-            $archives = DB::connection('dedea67')->table('gather_dedea67')->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post','-1')->orderBy('id','desc')->take($take)->get();
+            $archives = DB::connection('dedea67')->table('gather_dedea67')->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post', '-1')->orderBy('id', 'desc')->take($take)->get();
             $tot = count($archives);
             foreach ($archives as $key => $value) {
                 $maxId = $value->id;
@@ -149,18 +148,12 @@ class Dedea67Post extends Command
                     'body' => $value->body,
                     'pubdate' => date('Y-m-d H:i:s'),
                     'arcrank' => 0,
-                    'director' => $value->director,
-                    'actors' => $value->actors,
-                    'myear' => $value->myear,
-                    'types' => explode(',', $value->types),
-//                    'types' => $value->types,
-                    'down_link' => $value->down_link,
-                    'grade' => $value->grade,
-                    'episode_nums' => $value->episode_nums,
+                    //文章描述
+                    'description'=>$value->down_link,
                 ];
 //                dd($rel_data);
                 $data = array_merge($dede_data, $rel_data);
-//                dd($data);
+                dd($data);
                 $rest = $this->getCurl($addUrl, 'post', $data);
 //                dd($rest);
                 if (stripos($rest, '成功发布文') !== false) {
@@ -176,7 +169,5 @@ class Dedea67Post extends Command
         } while ($tot > 0);
         $this->info('dede post archive end');
     }
-
-
 
 }

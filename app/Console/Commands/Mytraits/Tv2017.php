@@ -10,7 +10,7 @@ namespace App\Console\Commands\Mytraits;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
 
-trait Ygdy8
+trait Tv2017
 {
     public $curl;
     public $listInfo;
@@ -31,11 +31,7 @@ trait Ygdy8
     {
         try {
 
-            if (strrpos($baseListUrl, '_') !== false) {
-                $url = substr($baseListUrl, 0, strrpos($baseListUrl, '_'));
-            } else {
-                $url = substr($baseListUrl, 0, strrpos($baseListUrl, '/')) . '/';
-            }
+            $url = substr($baseListUrl, 0, strrpos($baseListUrl, '.'));
 
             //取出最大的时间
             $maxTime = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->max('m_time');
@@ -44,12 +40,12 @@ trait Ygdy8
                 $this->listInfo = $i.'-'.$pageTot.'-'.$baseListUrl.'-'.$isNew;
                 $this->info("this is page {$i}");
                 if ($i == 1) {
-                    $listUrl = substr($url, 0, strrpos($url, '/')) . '/index.html';
+                    $listUrl = $url . '.html';
                 } else {
                     $listUrl = $url . '_' . $i . '.html';
                 }
                 $list = $this->getList($listUrl);
-//            dd($list);
+            dd($list);
 
                 //保存进数据库中去
                 foreach ($list as $key => $value) {
@@ -113,36 +109,28 @@ trait Ygdy8
     public function getList($url)
     {
         $list = null;
-        $host = 'http://www.ygdy8.com';
+        $host = 'http://www.2015tt.com';
 
-        $this->curl->add()->opt_targetURL($url)->done();
-        $this->curl->run();
-        $html = $this->curl->getAll();
-        $html = $html['body'];
-        $html = iconv('gb2312', 'utf-8//IGNORE', $html);
-//        dd($html);
+//        $this->curl->add()->opt_targetURL($url)->done();
+//        $this->curl->run();
+//        $html = $this->curl->getAll();
+//        $html = $html['body'];
+//        $html = iconv('gb2312', 'utf-8//IGNORE', $html);
 
-        $list = QueryList::Query($html, array(
-            'title' => array('.ulink:last()', 'html'),
-            'con_url' => array('.ulink:last()', 'href'),
-            'm_time' => array('tr:eq(2) td:eq(1)', 'text') //影片更新的时间
-        ), '.co_content8 table')->getData(function ($item) use ($host) {
-            $marest = preg_match('/《(.*?)》/i', $item['title'], $matchs);
-            if ($marest === 1) {
-                $item['title'] = $matchs[1];
-            } else {
-                $item['title'] = '';
-            }
-            if (strpos($item['title'], '/') !== false) {
-                $item['title'] = strstr($item['title'], '/', true);
-            }
-            $item['con_url'] = $host . $item['con_url'];
-            $m_time = explode("\n", str_replace("\r", '', $item['m_time']));
-            $m_time = explode('：', $m_time[0])[1];
-            $item['m_time'] = $m_time;
+        $content = QueryList::Query($url,array(
+            'title'=>array('h5 a','text'),
+            'litpic'=>array('.play-pic img','src'),
+            'con_url'=>array('h5 a','href'),
+            'actors' => array('.actor','text','-em'),
+            'body'=>array('.plot','text','-em'),
+        ),'#contents li','utf-8','gbk',true)->getData(function ($item) use ($host){
+            $item['litpic'] = $host.$item['litpic'];
+            $item['con_url'] = $host.$item['con_url'];
             return $item;
         });
-//        dd($list);
+
+        dd($content);
+
         return $list;
     }
 

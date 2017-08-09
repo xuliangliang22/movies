@@ -86,12 +86,13 @@ class Douban extends Command
 //        dd($content);
     }
 
+
+
+
     /**
      * https　curl
      * @param $url
      */
-
-
     public function getContent($url)
     {
         global $douban_data;

@@ -96,7 +96,6 @@ class ImgDownYgdy8 extends Command
                 }
                 //得到所有图片链接
                 $marest = preg_match_all('/<img\s*src=["\'](.*?)["\'][^>]*>/is', $value->body, $matchs);
-//                dd($matchs);
 
                 //数据不完整,内容中没有图片,则更新这条记录
 //                dd($matchs);
@@ -122,21 +121,25 @@ class ImgDownYgdy8 extends Command
                 //两个参数，保存路径，与图片网络路径
                 $this->picObj->imgDown($fileName, $matchs[1]);
                 $ossImg = array();
+//                dd($fileName);
                 foreach ($fileName as $fk => $fv) {
                     //判断图片文件是否有效
                     $isPic = $this->judgeImg($fv);
                     if ($isPic === true) {
-                        $ossImg[] = str_replace($this->savePath, $this->qiniuKey, $fv);
+                        $ossImg[$fk] = str_replace($this->savePath, $this->qiniuKey, $fv);
                     } else {
-                        unlink($fv);
+                        if(file_exists($fv)){
+                            unlink($fv);
+                        }
+                        $ossImg[$fk] = '';
                     }
                 }
-                dd($ossImg);
-
-                echo $value->body . "\n";
-//                dd($value->body);
+                $body = str_replace($matchs[1],$ossImg,$value->body);
+                $body = preg_replace('/<img(.*)src=""(.*)>/isU','',$body);
+//                dd($body);
+                echo $body."\n";
 //                //更新数据库
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $value->body, 'is_body' => 0]);
+                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $body, 'is_body' => 0]);
                 if ($rest) {
                     $this->info('img body update success');
                 } else {

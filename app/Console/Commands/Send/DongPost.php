@@ -62,7 +62,7 @@ class DongPost extends Command
      */
     public function handle()
     {
-        //
+        //普通文章模型
         $dede_data = array(
             'channelid' => 1,
             'dopost' => 'save',

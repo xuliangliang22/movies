@@ -5,7 +5,6 @@ namespace App\Console\Commands\Caiji\Ygdy8;
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\Douban;
-use Illuminate\Support\Facades\DB;
 use App\Console\Commands\Mytraits\DedeLogin;
 
 class RhanTvsUpdate extends Command
@@ -31,10 +30,7 @@ class RhanTvsUpdate extends Command
     public $dbName;
     public $tableName;
 
-    //dede后台的名称
-    protected $dedeUrl;
-    protected $dedeUser;
-    protected $dedePwd;
+    //dede后台cookie
     protected $cookie;
 
 
@@ -54,12 +50,6 @@ class RhanTvsUpdate extends Command
         parent::__construct();
         $this->dbName = config('qiniu.qiniu_data.db_name');
         $this->tableName = config('qiniu.qiniu_data.table_name');
-
-        $this->dedeUrl = config('qiniu.qiniu_data.dede_url');
-        $this->dedeUser = config('qiniu.qiniu_data.dede_user');
-        $this->dedePwd = config('qiniu.qiniu_data.dede_pwd');
-
-
     }
 
     /**
@@ -74,6 +64,7 @@ class RhanTvsUpdate extends Command
         $this->aid = $aid;
 
         $url = 'http://www.ygdy8.net/html/tv/rihantv/list_8_2.html';
+        $pageStart = 1;
         $pageTot = 34;
         //下载图片
         $qiniuDir = 'tvs/imgs';
@@ -82,7 +73,7 @@ class RhanTvsUpdate extends Command
         echo "====================================\n";
         echo "list and content and douban begin ! \n";
         $this->MovieInit();
-        $this->movieList($pageTot, $url, true);
+        $this->movieList($pageStart,$pageTot, $url, true);
         $this->getContent('other', true);
         $this->aid = $aid;
         $this->perfectContent();

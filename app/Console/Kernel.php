@@ -25,7 +25,6 @@ class Kernel extends ConsoleKernel
         //dedea67电影网采集
         Commands\Caiji\MovieYgdy8::class,
         Commands\Xiazai\ImgDownYgdy8::class,
-        Commands\Send\Dedea67Post::class,
 
         //豆瓣网更新影视详情信息
         Commands\Caiji\Douban::class,
@@ -38,6 +37,10 @@ class Kernel extends ConsoleKernel
         Commands\Send\QiniuImgsUp::class,
         //七牛云删除文件
         Commands\Send\QiniuImgsDel::class,
+        //电影电视剧提交到dede后台
+        Commands\Send\Dedea67Post::class,
+        //新闻提交到dede后台
+        Commands\Send\DedeNewPost::class,
 
 
 
@@ -49,6 +52,21 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\Ygdy8\RhanTvs::class,
         //跟踪采集日韩电视剧
         Commands\Caiji\Ygdy8\RhanTvsUpdate::class,
+        //采集阳光电影8所有欧美电视剧
+        Commands\Caiji\Ygdy8\OumeiTvs::class,
+        //采集阳光电影8所有港台电视剧
+        Commands\Caiji\Ygdy8\GantaiTvs::class,
+
+        //跟踪采集大陆电影
+        Commands\Caiji\Ygdy8\DaluMoviesUpdate::class,
+
+        //Tv2017
+        //经典电影采集
+        Commands\Caiji\Tv2017\Jindian::class,
+
+        //Y3600
+        //娱乐新闻采集
+        Commands\Caiji\News\Y3600::class,
 
 
         //将没有的缩略图从面度上截取
