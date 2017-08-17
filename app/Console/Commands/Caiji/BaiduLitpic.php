@@ -14,7 +14,7 @@ class BaiduLitpic extends Command
      * @var string
      * @param qiniu_dir_name = tvs/imgs
      */
-    protected $signature = 'caiji:baidulitpic {qiniu_dir} {type_id} {key_word_suffix?}';
+    protected $signature = 'caiji:baidulitpic {db_name}{table_name}{qiniu_dir} {type_id} {key_word_suffix?}';
 
     /**
      * The console command description.
@@ -46,6 +46,8 @@ class BaiduLitpic extends Command
     public function handle()
     {
         //
+        $dbName = $this->argument('db_name');
+        $tableName = $this->argument('table_name');
         $typeId = $this->argument('type_id');
         $qiniuDir = $this->argument('qiniu_dir');
         //搜索关键词的后缀，找出更精确的图片
@@ -57,58 +59,65 @@ class BaiduLitpic extends Command
             mkdir($this->savePath, 0755, true);
         }
 
-        DB::connection('dedea67')->table('gather_dedea67')->where('typeid', $typeId)->where('litpic', '')->where('is_post', -1)->orderBy('id')->chunk(100, function ($conArr) use ($keyWordSuffix) {
-            $tot = count($conArr);
+            $minId =0;
+            $take = 100;
+            do {
+//                $conArr = DB::connection($dbName)->table($tableName)->where('id', '>', $minId)->where('typeid', $typeId)->where('litpic', '')->orderBy('id', 'asc')->take($take)->get();
+                $conArr = DB::connection($dbName)->table($tableName)->where('id', '>', $minId)->where('typeid', $typeId)->where('litpic', '')->where('is_post','-1')->orderBy('id', 'asc')->take($take)->get();
+                $tot = count($conArr);
+//                dd($tot);
+                $factory = new Factory();
+                $factory->getSelfObj('baidupic');
+                $baiduobj = $factory->factoryObj;
 
-            $factory = new Factory();
-            $factory->getSelfObj('baidupic');
-            $baiduobj = $factory->factoryObj;
+                $factory->getSelfObj('picdown');
+                $picdownObj = $factory->factoryObj;
 
-            $factory->getSelfObj('picdown');
-            $picdownObj = $factory->factoryObj;
-
-            foreach ($conArr as $key => $value) {
-                echo "==============//===================\n";
-                $this->info("{$key}/{$tot} id is {$value->id}");
-                $ret = $baiduobj->getPic($value->title . ' ' . $keyWordSuffix);
-                if (empty($ret)) {
+                foreach ($conArr as $key => $value) {
+                    $minId = $value->id;
+                    $this->info("==============//===================\n");
+                    $this->info($value->title . "\n");
+                    $this->info("{$key}/{$tot} id is {$value->id}");
+                    $ret = $baiduobj->getPic($value->title . ' ' . $keyWordSuffix,array('size'=>2));
+//                    dd($ret);
+                    if (empty($ret)) {
 //                throw new \Exception("{$keyWord} litpic baidu is not exists");
-                    $this->error("{$value->title} litpic baidu is not exists");
-                }
+                        $this->error("{$value->title} litpic baidu is not exists");
+                        continue;
+                    }
 
-                foreach ($ret as $k => $v) {
-                    $imgUrl = $v;
-                    $ext = substr($imgUrl, strripos($imgUrl, '.'));
-                    if (in_array($ext, array('.jpg', '.jpeg', '.png', '.gif')) === false) {
-                        $ext = '.jpg';
-                    }
-                    //本地保存路径
-                    $fileName = $this->savePath . md5($imgUrl) . $ext;
-                    $picdownObj->imgDown($fileName, $imgUrl);
-                    if (file_exists($fileName) && filesize($fileName) > 20 * 1024 && @getimagesize($fileName) !== false) {
-                        //更新数据库中的内容
-                        //七牛云的路径
-                        $fileName = str_replace($this->savePath, $this->qiniuKey, $fileName);
-//                        $qiniuFile = rtrim($this->qiniuPath,'/') .'/'. trim($qiniuDir,'/') .'/' .ltrim($fileName,'/');
-//                        dd($qiniuFile);
-                        //更新数据库
-                        $rest = DB::connection('dedea67')->table('gather_dedea67')->where('id', $value->id)->update(['litpic' => $fileName]);
-                        if ($rest) {
-                            $this->info('baidu litpic update success filename is ' . $fileName . ' !');
-                            break;
-                        } else {
-                            $this->error('baidu litpic update fail !');
+                    foreach ($ret as $k => $v) {
+                        $imgUrl = $v;
+                        $ext = substr($imgUrl, strripos($imgUrl, '.'));
+                        if (in_array($ext, array('.jpg', '.jpeg', '.png', '.gif')) === false) {
+                            $ext = '.jpg';
                         }
-                    } else {
-                        $this->error("{$fileName} is not a pic , deleted now !");
-                        unlink($fileName);
+                        //本地保存路径
+                        $fileName = $this->savePath . md5($imgUrl) . $ext;
+                        $picdownObj->imgDown($fileName, $imgUrl);
+                        if (file_exists($fileName) && @getimagesize($fileName) !== false) {
+                            //更新数据库中的内容
+                            //七牛云的路径
+                            $fileName = str_replace($this->savePath, $this->qiniuKey, $fileName) . '?imageslim';
+//                        dd($fileName);
+                            //更新数据库
+                            $rest = DB::connection($dbName)->table($tableName)->where('id', $value->id)->update(['litpic' => $fileName]);
+                            if ($rest) {
+                                $this->info('baidu litpic update success filename is ' . $fileName . ' !');
+                                break;
+                            } else {
+                                $this->error('baidu litpic update fail !');
+                            }
+                        } else {
+                            $this->error("{$fileName} is not a pic , deleted now !");
+                            unlink($fileName);
+                        }
                     }
-                }
-                echo "=================================\n";
+                    $this->info("=================================\n");
 //                dd(222);
-            }
-            //如果存在则取第一个然后下载
-        });
+                }
+                //如果存在则取第一个然后下载
+            }while($tot > 0);
         $this->info('baidu litpic update end !');
     }
 }

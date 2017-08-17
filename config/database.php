@@ -66,19 +66,6 @@ return [
             'engine' => null,
         ],
 
-        'dedea67' => [
-            'driver' => 'mysql',
-            'host' => env('DEDEA67_DB_HOST', '127.0.0.1'),
-            'port' => env('DEDEA67_DB_PORT', '3306'),
-            'database' => env('DEDEA67_DB_DATABASE', 'forge'),
-            'username' => env('DEDEA67_DB_USERNAME', 'forge'),
-            'password' => env('DEDEA67_DB_PASSWORD', ''),
-            'charset' => 'utf8',
-            'collation' => 'utf8_general_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
-        ],
 
         'pgsql' => [
             'driver' => 'pgsql',

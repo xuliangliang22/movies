@@ -33,7 +33,7 @@ trait QiniuTra
     public function judgeImg($data)
     {
         $rest = false;
-        if (file_exists($data) && filesize($data) > 20 * 1024 && @getimagesize($data) !== false) {
+        if (file_exists($data) && filesize($data) > 5 * 1024 && @getimagesize($data) !== false) {
             //更新数据库信息
             $rest = true;
         }

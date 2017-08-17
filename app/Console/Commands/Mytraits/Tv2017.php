@@ -7,6 +7,7 @@
  */
 namespace App\Console\Commands\Mytraits;
 
+use DiDom\Query;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
 
@@ -27,7 +28,7 @@ trait Tv2017
     /**
      * 保存电影电视剧列表页
      */
-    public function movieList($start,$pageTot, $baseListUrl, $isNew = false)
+    public function movieList($start, $pageTot, $baseListUrl, $isNew = false)
     {
         try {
 
@@ -37,7 +38,7 @@ trait Tv2017
             $maxTime = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->max('m_time');
 
             for ($i = $start; $i <= $pageTot; $i++) {
-                $this->listInfo = $i.'-'.$pageTot.'-'.$baseListUrl.'-'.$isNew;
+                $this->listInfo = $i . '-' . $pageTot . '-' . $baseListUrl . '-' . $isNew;
                 $this->info("this is page {$i}");
                 if ($i == 1) {
                     $listUrl = $url . '.html';
@@ -45,25 +46,15 @@ trait Tv2017
                     $listUrl = $url . '_' . $i . '.html';
                 }
                 $list = $this->getList($listUrl);
-            dd($list);
 
                 //保存进数据库中去
                 foreach ($list as $key => $value) {
+//                    dd($value);
                     $rs = null;
                     $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
                     if ($rest) {
-                        if ($isNew === true) {
-                            $isNewType = 'update';
-                            //判断时间,更新的时候不需要判断名字的重复
-                            if (strtotime($maxTime) >= strtotime($value['m_time'])) {
-                                break 2;
-                            }
-                            //更新这样记录的下载链接,将is_con=-1,down_link = '',is_update=-1//default 0
-                            $rs = DB::connection($this->dbName)->table($this->tableName)->where('id', $rest->id)->update(['down_link' => '', 'is_con' => -1, 'is_update' => -1]);
-
-                        } else {
-                            continue;
-                        }
+                        //如果存在则退出
+                        continue;
                     } else {
                         //不是更新的时候判断名字的重复
                         $isNewType = 'save';
@@ -71,8 +62,13 @@ trait Tv2017
                             'title' => trim($value['title']),
                             'title_hash' => md5(trim($value['title'])),
                             'con_url' => $value['con_url'],
-                            'm_time' => $value['m_time'],
                             'typeid' => $this->typeId,
+                            'body' => $value['body'],
+                            'actors' => str_replace('/', ',', $value['actors']),
+                            'litpic' => $value['litpic'],
+                            'grade' => mt_rand(0, 10),
+                            'is_body' => 0,
+                            'is_douban' => 0,
                         ];
 //                        dd($listSaveArr);
                         $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
@@ -86,19 +82,21 @@ trait Tv2017
                 }
             }
             $this->info('list save end');
-        }catch (\ErrorException $e){
-            $listInfoArr = explode('-',$this->listInfo);
-            if($listInfoArr[1] -  $listInfoArr[0] < 2){
+        } catch (\ErrorException $e) {
+            echo 'jindian movies error exception ' . $e->getMessage() . "\n";
+            $listInfoArr = explode('-', $this->listInfo);
+            if ($listInfoArr[1] - $listInfoArr[0] < 2) {
                 return;
-            }else{
-                $this->movieList($listInfoArr[0],$listInfoArr[1],$listInfoArr[2],$listInfoArr[3]);
+            } else {
+                $this->movieList($listInfoArr[0], $listInfoArr[1], $listInfoArr[2], $listInfoArr[3]);
             }
-        }catch (\Exception $e){
-            $listInfoArr = explode('-',$this->listInfo);
-            if($listInfoArr[1] -  $listInfoArr[0] < 2){
+        } catch (\Exception $e) {
+            echo 'jindian movies exception ' . $e->getMessage() . "\n";
+            $listInfoArr = explode('-', $this->listInfo);
+            if ($listInfoArr[1] - $listInfoArr[0] < 2) {
                 return;
-            }else{
-                $this->movieList($listInfoArr[0],$listInfoArr[1],$listInfoArr[2],$listInfoArr[3]);
+            } else {
+                $this->movieList($listInfoArr[0], $listInfoArr[1], $listInfoArr[2], $listInfoArr[3]);
             }
         }
     }
@@ -108,30 +106,20 @@ trait Tv2017
      */
     public function getList($url)
     {
-        $list = null;
         $host = 'http://www.2015tt.com';
 
-//        $this->curl->add()->opt_targetURL($url)->done();
-//        $this->curl->run();
-//        $html = $this->curl->getAll();
-//        $html = $html['body'];
-//        $html = iconv('gb2312', 'utf-8//IGNORE', $html);
-
-        $content = QueryList::Query($url,array(
-            'title'=>array('h5 a','text'),
-            'litpic'=>array('.play-pic img','src'),
-            'con_url'=>array('h5 a','href'),
-            'actors' => array('.actor','text','-em'),
-            'body'=>array('.plot','text','-em'),
-        ),'#contents li','utf-8','gbk',true)->getData(function ($item) use ($host){
-            $item['litpic'] = $host.$item['litpic'];
-            $item['con_url'] = $host.$item['con_url'];
+        $content = QueryList::Query($url, array(
+            'title' => array('h5 a', 'text'),
+            'litpic' => array('.play-pic img', 'src'),
+            'con_url' => array('h5 a', 'href'),
+            'actors' => array('.actor', 'text', '-em'),
+            'body' => array('.plot', 'text', '-em'),
+        ), '#contents li', 'utf-8', 'gbk', true)->getData(function ($item) use ($host) {
+            $item['litpic'] = $host . $item['litpic'];
+            $item['con_url'] = $host . $item['con_url'];
             return $item;
         });
-
-        dd($content);
-
-        return $list;
+        return $content;
     }
 
 
@@ -139,18 +127,9 @@ trait Tv2017
      * 采信内容页
      * @param  $type 1.movie(下载电影) 2.other(只下载链接)
      */
-    public function getContent($type, $isNew = false)
+    public function getContent()
     {
-//        $url = 'http://www.ygdy8.net/html/gndy/dyzz/20170625/54313.html';
-        $name = '';
-        switch ($type) {
-            case 'movie':
-                $name = 'getConSaveArr';
-                break;
-            case 'other':
-                $name = 'getOtherConSaveArr';
-                break;
-        }
+//
         try {
             do {
                 $take = 10;
@@ -165,15 +144,16 @@ trait Tv2017
 
                     //得到保存的数组
 //                    $conSaveArr = $this->getConSaveArr($value->con_url);
-                    $conSaveArr = $this->{$name}($value->con_url);
+                    $conSaveArr = $this->getConSaveArr($value->con_url);
                     if (!$conSaveArr) {
+                        DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
                         continue;
                     }
-                    if ($isNew === true && $value->is_update = -1) {
-                        unset($conSaveArr['litpic']);
-                    }
-                    print_r($conSaveArr);
-                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update($conSaveArr);
+                    $conSaveArr = implode(',', $conSaveArr);
+//                    dd($conSaveArr);
+                    print_r($conSaveArr) . "\n";
+
+                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['down_link' => $conSaveArr]);
                     if ($rest) {
                         DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
                         $this->info('save con success');
@@ -185,11 +165,11 @@ trait Tv2017
         } catch (\ErrorException $e) {
             $this->info('get content error exception ' . $e->getMessage());
 //            $this->call('caiji:movieygdy8',['aid'=>$this->aid]);
-            $this->getContent($type, $this->aid);
+            $this->getContent($this->aid);
         } catch (\Exception $e) {
             $this->info('get content exception ' . $e->getMessage());
 //            $this->call('caiji:movieygdy8',['aid'=>$this->aid]);
-            $this->getContent($type, $this->aid);
+            $this->getContent($this->aid);
         }
         //电视剧需要更新,还要再添加一个字段
         $this->info('save con end');
@@ -205,320 +185,12 @@ trait Tv2017
      */
     public function getConSaveArr($url)
     {
-        $restArr = array();
-
-        $this->curl->add()->opt_targetURL($url)->done();
-        $this->curl->run();
-        $html = $this->curl->getAll();
-        $html = $html['body'];
-        $html = iconv('gb2312', 'utf-8//IGNORE', $html);
-        $html2 = QueryList::Query($html, array(), '.co_content8')->getHtml();
-        if (empty($html2)) {
-            return null;
-        }
-//        dd($html);
-
-        $content = QueryList::Query($html, array(
-            'litpic' => array('img:first()', 'src'),
-            'down_link' => array('table', 'html'),
-            'html' => array('#Zoom', 'text', '-table'),
-            'con_pic' => array('#Zoom img:last()', 'src')
-        ), '.co_content8')->getData(function ($item) {
-//            $html = preg_replace('/onclick(.*?)"(.*?)"/is','',$item['html']);
-            if (strlen($item['litpic']) > 250) {
-                $item['litpic'] = '';
-            }
-            if (strlen($item['con_pic']) > 250) {
-                $item['con_pic'] = '';
-            }
-
-            $item['down_link'] = QueryList::Query($item['down_link'], array(
-                'down_link' => array('a', 'href'),
-            ))->getData(function ($item) {
-                return urldecode($item['down_link']);
-            });
-
-            $html = strtr($item['html'], array("\r" => '', "\n" => ''));
-            if (empty($html) === true) {
-                $marest = preg_match('/<div id="Zoom">(.*?)<table/is', $html, $matchs);
-                if ($marest === 0) {
-                    $html = '';
-                } else {
-                    $html = strip_tags($matchs[1]);
-                }
-            }
-            if (mb_strpos($html, '下载地址', 0, 'utf-8') !== false) {
-                $html = strstr($html, '【下载地址', true);
-            } else {
-                $html = strstr($html, 'ftp://', true);
-            }
-
-            if (strpos($html, '◎') !== false) {
-                $item['html'] = array_filter(explode('◎', $html));
-            } elseif (strpos($html, '◆') !== false) {
-                $item['html'] = array_filter(explode('◆', $html));
-            } elseif (strpos($html, '[') !== false) {
-                $item['html'] = array_filter(explode('[', $html));
-            } else {
-                return false;
-            }
-            return $item;
+        $content = QueryList::Query($url, array(
+            'down_link' => array('.down_url', 'value'),
+        ), '', 'utf-8', 'gbk', true)->getData(function ($item) {
+            return $item['down_link'];
         });
-        if (!$content[0]) {
-            return false;
-        }
-//        print_r($content);
-//        dd($content);
-        foreach ($content[0]['html'] as $key => $value) {
-            //添加了评分值
-            $value = trim($value);
-            if (mb_strpos($value, '评分') !== false) {
-                $marest = preg_match('/\d+(\.\d+)?/', $value, $matchs);
-                if ($marest === 1) {
-                    $restArr['grade'] = $matchs[0];
-                } else {
-                    $restArr['grade'] = 5;
-                }
-            }
-//            $lastPosition = mb_strrpos($value, '　', 0, 'utf-8');
-            if (strpos($value, '：') !== false) {
-                $lastPosition = mb_strpos($value, '：', 0, 'utf-8');
-            } else {
-                $lastPosition = mb_strrpos($value, '　', 0, 'utf-8');
-            }
-            if ($lastPosition === false) {
-                continue;
-            }
-            $prefix = strtr(mb_substr($value, 0, $lastPosition, 'utf-8'), array('　' => '', ' ' => ''));
-            $vrest = strtr(mb_substr($value, $lastPosition + 1, null, 'utf-8'), array('　' => '', ' ' => ''));
-            echo $prefix . PHP_EOL;
-            echo $vrest . PHP_EOL;
-
-            switch ($prefix) {
-                case '译名':
-                    if (isset($restArr['mname']) === true) {
-                        break;
-                    }
-                    if (strpos($vrest, '/') !== false) {
-                        $vrest = explode('/', $vrest);
-                        $vrest = $vrest[0];
-                    }
-                    $restArr['mname'] = $vrest;
-                    break;
-                case '片名':
-                    if (isset($restArr['mname']) === true) {
-                        break;
-                    }
-                    if (strpos($vrest, '/') !== false) {
-                        $vrest = explode('/', $vrest);
-                        $vrest = $vrest[0];
-                    }
-                    $restArr['mname'] = $vrest;
-                    break;
-                case '年代':
-                    if (isset($restArr['myear']) === true || strlen($vrest) > 20) {
-                        break;
-                    }
-                    $restArr['myear'] = $vrest;
-                    break;
-                case '类别':
-                    if (isset($restArr['types']) === true || strlen($vrest) > 250) {
-                        break;
-                    }
-                    $restArr['types'] = str_replace('/', ',', $vrest);
-                    break;
-                case '语言':
-                    if (isset($restArr['lan_guage']) === true || strlen($vrest) > 50) {
-                        break;
-                    }
-                    $restArr['lan_guage'] = str_replace('/', ',', $vrest);
-                    break;
-                case '集数':
-                    preg_match('/\d+/', $vrest, $matchs);
-                    $restArr['episode_nums'] = $matchs[0];
-                    break;
-                default:
-                    $value = str_replace('　', '', $value);
-                    if (mb_stripos($prefix, '导演') !== false && isset($restArr['director']) === false) {
-//                        $director = '';
-                        $director = str_replace('导演', '', $value);
-
-                        $marest = preg_match_all('/[\x{4e00}-\x{9fa5}]+/u', $director, $matchs);
-                        if ($marest) {
-                            $director = $matchs[0];
-                            $director = implode(',', $director);
-                        } else {
-                            if (strpos($director, '/') !== false) {
-                                $director = explode('/', $director);
-                                $director = $director[0];
-                            }
-                        }
-
-                        if (strlen($director) > 10) {
-                            $director = mb_substr($director, 0, 10);
-                        }
-                        $restArr['director'] = $director;
-                    } elseif ((mb_stripos($prefix, '主演') !== false || mb_stripos($prefix, '演员') !== false) && isset($restArr['actors']) === false) {
-//                        $actors = '';
-//                        $value = str_replace(array('主演','演员'), array('',''), $value);
-                        $marest = preg_match_all('/[\x{4e00}-\x{9fa5}]+/u', $vrest, $matchs);
-                        if ($marest) {
-                            $actors = $matchs[0];
-                            $actors = array_slice($actors, 0, 5);
-                            $actors = implode(',', $actors);
-//                            if (strlen($actors) > 250) {
-//                                break;
-//                            }
-                        } else {
-                            $actors = preg_split('/\.+/', $vrest);
-                            $actors = array_slice($actors, 0, 5);
-                            $actors = implode(',', $actors);
-                        }
-                        $restArr['actors'] = $actors;
-                    } elseif (mb_strpos($prefix, '简介') !== false && isset($restArr['body']) === false) {
-                        $body = $vrest;
-                        if (isset($content[0]['con_pic']) === true && empty($content[0]['con_pic']) === false) {
-                            $mname = isset($restArr['mname']) ? $restArr['mname'] : '';
-                            $body .= '<img src="' . $content[0]['con_pic'] . '" alt="' . $mname . '">';
-                        }
-                        $restArr['body'] = $body;
-                    }
-                    break;
-            }
-        }
-//        dd(222);
-//        dd($restArr);
-//        print_r($restArr);
-        unset($restArr['mname']);
-        $restArr = array_merge($restArr, ['litpic' => $content[0]['litpic'], 'down_link' => implode(',', $content[0]['down_link'])]);
-        return $restArr;
-    }
-
-
-    /**
-     * 只得到下载链接
-     */
-    public function getOtherConSaveArr($url)
-    {
-        $this->curl->add()->opt_targetURL($url)->done();
-        $this->curl->run();
-        $html = $this->curl->getAll();
-        $html = $html['body'];
-        $html = iconv('gb2312', 'utf-8//IGNORE', $html);
-
-
-        $content = QueryList::Query($html, array(
-            'litpic' => array('img:first()', 'src'),
-            'down_link' => array('table', 'html'),
-        ), '.co_content8')->getData(function ($item) {
-            if (strlen($item['litpic']) > 250) {
-                $item['litpic'] = '';
-            }
-
-            $item['down_link'] = QueryList::Query($item['down_link'], array(
-                'down_link' => array('a', 'href'),
-            ))->getData(function ($item) {
-                return urldecode($item['down_link']);
-            });
-            return $item;
-        });
-
-        $restArr = array(
-            'litpic' => $content[0]['litpic'],
-            'down_link' => implode(',', $content[0]['down_link'])
-        );
-        return $restArr;
-    }
-
-    /**
-     * 使用node去格式化下载链接
-     */
-    public function nodeDownLink()
-    {
-        //node自动更新下载链接
-        //->where('down_link','not like','%thunder://%')
-        $isNoDownLinks = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('down_link', 'not like', '%thunder://%')->where(function ($query) {
-            $query->where('is_post', -1)
-                ->orWhere('is_update', -1);
-        })->get();
-        $tot = count($isNoDownLinks);
-//        dd($tot);
-
-        foreach ($isNoDownLinks as $key => $value) {
-            $this->info("parse down_link {$key}/{$tot}");
-            $url = config('qiniu.qiniu_data.node_url') . '?aid=' . $value->id . '&down_link=' . urlencode($value->down_link);
-            $this->curl->runSmall($url);
-        }
-        $this->info("parse down_link end");
-    }
-
-
-    /**
-     * 将更新的数据替换到dede后台
-     */
-    public function dedeDownLinkUpdate()
-    {
-        $isUpdate = false;
-
-        $dedeDownLinkUpdateUrl = config('qiniu.qiniu_data.dede_url') . 'myplus/down_link_update.php';
-        $isNoDownLinks = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_update', -1)->get();
-        $tot = count($isNoDownLinks);
-
-        foreach ($isNoDownLinks as $key => $value) {
-            $this->info("{$key}/{$tot} id is {$value->id}");
-            //echo $value->down_link."\n";
-            //先登录
-            $rest = $this->dedeLogin($this->dedeUrl . 'login.php', $this->dedeUser, $this->dedePwd);
-
-            if ($rest) {
-                $this->curl->add()
-                    ->opt_targetURL($dedeDownLinkUpdateUrl)
-                    ->opt_sendHeader('Cookie', $this->cookie)
-                    ->opt_sendPost('typeid', $value->typeid)
-                    ->opt_sendPost('title', $value->title)
-                    ->opt_sendPost('down_link', $value->down_link)
-                    ->done('post');
-                $this->curl->run();
-                $content = $this->curl->getAll();
-                $body = explode("\r\n\r\n", $content['body'], 2);
-                if (isset($body[1]) && $body[1] == 'update ok') {
-                    $isUpdate = true;
-                    //更新数据库is_update
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_update' => 0]);
-                    $this->info("dede down_link update {$value->title} update ok !");
-                } else {
-                    //没有更新成功,也将is_update更新为0
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_update' => 0]);
-                    $this->error("dede down_link update {$value->title} update fail !");
-                }
-            } else {
-                $this->error("dede down_link update login fail !");
-            }
-        }
-        $this->info("dede down_link update end !");
-        return $isUpdate;
-    }
-
-
-    /**
-     * dede生成栏目页
-     */
-    public function makeLanmu()
-    {
-        $url = config('qiniu.qiniu_data.dede_url') . 'makehtml_list_action.php?typeid=' . $this->typeId . '&maxpagesize=50&upnext=1';
-        //dd($url);
-        $this->dedeLogin(config('qiniu.qiniu_data.dede_url'). 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
-        $this->curl->add()
-            ->opt_targetURL($url)
-            ->opt_sendHeader('cookie', $this->cookie)
-            ->done('get');
-        $this->curl->run();
-        $content = $this->curl->getAll();
-        if (mb_strpos($content['body'], '栏目列表更新',0, 'utf-8') !== false) {
-            $this->info("{$this->typeId}  lanmu list make success !");
-        } else {
-            $this->error("{$this->typeId}  lanmu list make fail !");
-        }
+        return $content;
     }
 }
 

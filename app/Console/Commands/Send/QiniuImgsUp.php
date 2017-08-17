@@ -57,7 +57,8 @@ class QiniuImgsUp extends Command
         $files = scandir($localDir);
         $tot = count($files);
         if($tot < 3){
-            $this->info("{$localDir} empty !");
+//            $this->info("{$localDir} empty !");
+            echo "{$localDir} empty !";
             exit;
         }
         foreach ($files as $fkey => $file) {
@@ -65,14 +66,11 @@ class QiniuImgsUp extends Command
             $filePath = $localDir . DIRECTORY_SEPARATOR . $file;
             $key = trim($qiniuDir, '/') . '/' . $file;
 
-            if ($file === '.' || $file === '..' || filesize($filePath) < 10 * 1024) {
+            if ($file === '.' || $file === '..') {
                 continue;
             }
             $this->qiniuUpload($filePath, $key);
         }
-
-////        $rest = $this->qiniuList('liangliang','movies/imgs/17071315','',100);
-//        dd(count($rest[0]));
     }
 
 
@@ -91,14 +89,14 @@ class QiniuImgsUp extends Command
         $uploadMgr = new UploadManager();
         // 调用 UploadManager 的 putFile 方法进行文件的上传
         list($ret, $err) = $uploadMgr->putFile($token, $key, $filePath);
-        echo "\n====> putFile result: \n";
+        $this->info("\n====> putFile result: \n");
         if ($err !== null) {
             //失败
             $this->error('fail');
-            var_dump($err);
+//            var_dump($err);
         } else {
             $this->info('success');
-            var_dump($ret);
+//            var_dump($ret);
         }
     }
 

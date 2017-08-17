@@ -11,17 +11,15 @@
 |
 */
 
-//Route::get('/', function () {
-//    return view('welcome');
-//});
-
 Route::get('/', function () {
     return view('welcome');
 });
 
-//命令行的return可以得到其结果
-Route::get('/caiji', function () {
-    $exitCode = Artisan::call('caiji:movieygdy8');
+Route::get('/test', function () {
+    //参数不需按照顺序排列
+//    Artisan::call('caiji:ygdy8_rhantvs_update',['page_start'=>1,'type_id'=>18,'page_tot'=>1,'--queue' => 'list']);
+    $rest = Artisan::call('caiji:test');
+    echo $rest;
 });
 
 

@@ -84,12 +84,12 @@ class Y3600 extends Command
         echo "add dede admin begin ! \n";
 
         //将新添加数据提交到dede后台 is_post = -1
-        $this->call('send:dedenewpost', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
-        dd(222);
+//        $this->call('send:dedenewpost', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
         if ($isSend = true) {
             //更新列表页
             $this->makeLanmu();
         }
+        dd(222);
         echo "add dede admin end ! \n";
         echo "====================================\n\n";
 //

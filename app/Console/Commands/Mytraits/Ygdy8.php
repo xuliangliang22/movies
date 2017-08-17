@@ -19,7 +19,7 @@ trait Ygdy8
     {
         if (empty($this->curl)) {
             $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'curl' . DIRECTORY_SEPARATOR . 'curl.php';
-            include $path;
+            require_once $path;
             $this->curl = new \curl();
         }
     }
@@ -29,6 +29,8 @@ trait Ygdy8
      */
     public function movieList($start,$pageTot, $baseListUrl, $isNew = false)
     {
+        global $listNum;
+        $listNum = 0;
         try {
 
             if (strrpos($baseListUrl, '_') !== false) {
@@ -42,7 +44,7 @@ trait Ygdy8
 
             for ($i = $start; $i <= $pageTot; $i++) {
                 $this->listInfo = $i.'-'.$pageTot.'-'.$baseListUrl.'-'.$isNew;
-                $this->info("this is page {$i}");
+                $this->info("this is page {$i} maxtime {$maxTime}");
                 if ($i == 1) {
                     $listUrl = substr($url, 0, strrpos($url, '/')) . '/index.html';
                 } else {
@@ -83,6 +85,7 @@ trait Ygdy8
                     }
 
                     if ($rs) {
+                        $listNum++;
                         $this->info($value['title'] . ' list ' . $isNewType . ' success');
                     } else {
                         $this->info($value['title'] . ' list ' . $isNewType . ' fail');
@@ -91,6 +94,7 @@ trait Ygdy8
             }
             $this->info('list save end');
         }catch (\ErrorException $e){
+            $this->info($e->getMessage());
             $listInfoArr = explode('-',$this->listInfo);
             if($listInfoArr[1] -  $listInfoArr[0] < 2){
                 return;
@@ -98,6 +102,7 @@ trait Ygdy8
                 $this->movieList($listInfoArr[0],$listInfoArr[1],$listInfoArr[2],$listInfoArr[3]);
             }
         }catch (\Exception $e){
+            $this->info($e->getMessage());
             $listInfoArr = explode('-',$this->listInfo);
             if($listInfoArr[1] -  $listInfoArr[0] < 2){
                 return;
@@ -151,24 +156,12 @@ trait Ygdy8
      * 采信内容页
      * @param  $type 1.movie(下载电影) 2.other(只下载链接)
      */
-    public function getContent($type, $isNew = false)
+    public function getContent($isNew = false)
     {
-//        $url = 'http://www.ygdy8.net/html/gndy/dyzz/20170625/54313.html';
-        $name = '';
-        switch ($type) {
-            case 'movie':
-                $name = 'getConSaveArr';
-                break;
-            case 'other':
-                $name = 'getOtherConSaveArr';
-                break;
-        }
         try {
             do {
                 $take = 10;
                 $arc = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $this->aid)->where('is_con', -1)->where('typeid', $this->typeId)->take($take)->orderBy('id')->get();
-//                $arc = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('body','like','%src=""%')->take($take)->get();
-//                dd($arc);
                 $tot = count($arc);
 
                 foreach ($arc as $key => $value) {
@@ -177,11 +170,11 @@ trait Ygdy8
 
                     //得到保存的数组
 //                    $conSaveArr = $this->getConSaveArr($value->con_url);
-                    $conSaveArr = $this->{$name}($value->con_url);
+                    $conSaveArr = $this->getConSaveArr($value->con_url,true);
                     if (!$conSaveArr) {
                         continue;
                     }
-                    if ($isNew === true && $value->is_update = -1) {
+                    if ($isNew === true && $value->is_update == -1) {
                         unset($conSaveArr['litpic']);
                     }
                     print_r($conSaveArr);
@@ -195,13 +188,11 @@ trait Ygdy8
                 }
             } while ($tot > 0);
         } catch (\ErrorException $e) {
-            $this->info('get content error exception ' . $e->getMessage());
-//            $this->call('caiji:movieygdy8',['aid'=>$this->aid]);
-            $this->getContent($type, $this->aid);
+            $this->info('get content error exception ' . $e->getMessage().'line is '.$e->getLine());
+            $this->getContent($this->aid);
         } catch (\Exception $e) {
-            $this->info('get content exception ' . $e->getMessage());
-//            $this->call('caiji:movieygdy8',['aid'=>$this->aid]);
-            $this->getContent($type, $this->aid);
+            $this->info('get content exception ' . $e->getMessage().'line is '.$e->getLine());
+            $this->getContent($this->aid);
         }
         //电视剧需要更新,还要再添加一个字段
         $this->info('save con end');
@@ -212,217 +203,18 @@ trait Ygdy8
 
 
     /**
-     * 得到内容页的保存数组,以◎分割
-     * @param $url 内容页的网址链接
-     */
-    public function getConSaveArr($url)
-    {
-        $restArr = array();
-
-        $this->curl->add()->opt_targetURL($url)->done();
-        $this->curl->run();
-        $html = $this->curl->getAll();
-        $html = $html['body'];
-        $html = iconv('gb2312', 'utf-8//IGNORE', $html);
-        $html2 = QueryList::Query($html, array(), '.co_content8')->getHtml();
-        if (empty($html2)) {
-            return null;
-        }
-//        dd($html);
-
-        $content = QueryList::Query($html, array(
-            'litpic' => array('img:first()', 'src'),
-            'down_link' => array('table', 'html'),
-            'html' => array('#Zoom', 'text', '-table'),
-            'con_pic' => array('#Zoom img:last()', 'src')
-        ), '.co_content8')->getData(function ($item) {
-//            $html = preg_replace('/onclick(.*?)"(.*?)"/is','',$item['html']);
-            if (strlen($item['litpic']) > 250) {
-                $item['litpic'] = '';
-            }
-            if (strlen($item['con_pic']) > 250) {
-                $item['con_pic'] = '';
-            }
-
-            $item['down_link'] = QueryList::Query($item['down_link'], array(
-                'down_link' => array('a', 'href'),
-            ))->getData(function ($item) {
-                return urldecode($item['down_link']);
-            });
-
-            $html = strtr($item['html'], array("\r" => '', "\n" => ''));
-            if (empty($html) === true) {
-                $marest = preg_match('/<div id="Zoom">(.*?)<table/is', $html, $matchs);
-                if ($marest === 0) {
-                    $html = '';
-                } else {
-                    $html = strip_tags($matchs[1]);
-                }
-            }
-            if (mb_strpos($html, '下载地址', 0, 'utf-8') !== false) {
-                $html = strstr($html, '【下载地址', true);
-            } else {
-                $html = strstr($html, 'ftp://', true);
-            }
-
-            if (strpos($html, '◎') !== false) {
-                $item['html'] = array_filter(explode('◎', $html));
-            } elseif (strpos($html, '◆') !== false) {
-                $item['html'] = array_filter(explode('◆', $html));
-            } elseif (strpos($html, '[') !== false) {
-                $item['html'] = array_filter(explode('[', $html));
-            } else {
-                return false;
-            }
-            return $item;
-        });
-        if (!$content[0]) {
-            return false;
-        }
-//        print_r($content);
-//        dd($content);
-        foreach ($content[0]['html'] as $key => $value) {
-            //添加了评分值
-            $value = trim($value);
-            if (mb_strpos($value, '评分') !== false) {
-                $marest = preg_match('/\d+(\.\d+)?/', $value, $matchs);
-                if ($marest === 1) {
-                    $restArr['grade'] = $matchs[0];
-                } else {
-                    $restArr['grade'] = 5;
-                }
-            }
-//            $lastPosition = mb_strrpos($value, '　', 0, 'utf-8');
-            if (strpos($value, '：') !== false) {
-                $lastPosition = mb_strpos($value, '：', 0, 'utf-8');
-            } else {
-                $lastPosition = mb_strrpos($value, '　', 0, 'utf-8');
-            }
-            if ($lastPosition === false) {
-                continue;
-            }
-            $prefix = strtr(mb_substr($value, 0, $lastPosition, 'utf-8'), array('　' => '', ' ' => ''));
-            $vrest = strtr(mb_substr($value, $lastPosition + 1, null, 'utf-8'), array('　' => '', ' ' => ''));
-            echo $prefix . PHP_EOL;
-            echo $vrest . PHP_EOL;
-
-            switch ($prefix) {
-                case '译名':
-                    if (isset($restArr['mname']) === true) {
-                        break;
-                    }
-                    if (strpos($vrest, '/') !== false) {
-                        $vrest = explode('/', $vrest);
-                        $vrest = $vrest[0];
-                    }
-                    $restArr['mname'] = $vrest;
-                    break;
-                case '片名':
-                    if (isset($restArr['mname']) === true) {
-                        break;
-                    }
-                    if (strpos($vrest, '/') !== false) {
-                        $vrest = explode('/', $vrest);
-                        $vrest = $vrest[0];
-                    }
-                    $restArr['mname'] = $vrest;
-                    break;
-                case '年代':
-                    if (isset($restArr['myear']) === true || strlen($vrest) > 20) {
-                        break;
-                    }
-                    $restArr['myear'] = $vrest;
-                    break;
-                case '类别':
-                    if (isset($restArr['types']) === true || strlen($vrest) > 250) {
-                        break;
-                    }
-                    $restArr['types'] = str_replace('/', ',', $vrest);
-                    break;
-                case '语言':
-                    if (isset($restArr['lan_guage']) === true || strlen($vrest) > 50) {
-                        break;
-                    }
-                    $restArr['lan_guage'] = str_replace('/', ',', $vrest);
-                    break;
-                case '集数':
-                    preg_match('/\d+/', $vrest, $matchs);
-                    $restArr['episode_nums'] = $matchs[0];
-                    break;
-                default:
-                    $value = str_replace('　', '', $value);
-                    if (mb_stripos($prefix, '导演') !== false && isset($restArr['director']) === false) {
-//                        $director = '';
-                        $director = str_replace('导演', '', $value);
-
-                        $marest = preg_match_all('/[\x{4e00}-\x{9fa5}]+/u', $director, $matchs);
-                        if ($marest) {
-                            $director = $matchs[0];
-                            $director = implode(',', $director);
-                        } else {
-                            if (strpos($director, '/') !== false) {
-                                $director = explode('/', $director);
-                                $director = $director[0];
-                            }
-                        }
-
-                        if (strlen($director) > 10) {
-                            $director = mb_substr($director, 0, 10);
-                        }
-                        $restArr['director'] = $director;
-                    } elseif ((mb_stripos($prefix, '主演') !== false || mb_stripos($prefix, '演员') !== false) && isset($restArr['actors']) === false) {
-//                        $actors = '';
-//                        $value = str_replace(array('主演','演员'), array('',''), $value);
-                        $marest = preg_match_all('/[\x{4e00}-\x{9fa5}]+/u', $vrest, $matchs);
-                        if ($marest) {
-                            $actors = $matchs[0];
-                            $actors = array_slice($actors, 0, 5);
-                            $actors = implode(',', $actors);
-//                            if (strlen($actors) > 250) {
-//                                break;
-//                            }
-                        } else {
-                            $actors = preg_split('/\.+/', $vrest);
-                            $actors = array_slice($actors, 0, 5);
-                            $actors = implode(',', $actors);
-                        }
-                        $restArr['actors'] = $actors;
-                    } elseif (mb_strpos($prefix, '简介') !== false && isset($restArr['body']) === false) {
-                        $body = $vrest;
-                        if (isset($content[0]['con_pic']) === true && empty($content[0]['con_pic']) === false) {
-                            $mname = isset($restArr['mname']) ? $restArr['mname'] : '';
-                            $body .= '<img src="' . $content[0]['con_pic'] . '" alt="' . $mname . '">';
-                        }
-                        $restArr['body'] = $body;
-                    }
-                    break;
-            }
-        }
-//        dd(222);
-//        dd($restArr);
-//        print_r($restArr);
-        unset($restArr['mname']);
-        $restArr = array_merge($restArr, ['litpic' => $content[0]['litpic'], 'down_link' => implode(',', $content[0]['down_link'])]);
-        return $restArr;
-    }
-
-
-    /**
      * 只得到下载链接
      */
-    public function getOtherConSaveArr($url)
+    public function getConSaveArr($url,$isclear = false)
     {
-        $this->curl->add()->opt_targetURL($url)->done();
-        $this->curl->run();
-        $html = $this->curl->getAll();
-        $html = $html['body'];
-        $html = iconv('gb2312', 'utf-8//IGNORE', $html);
-
-
-        $content = QueryList::Query($html, array(
+        static $restArr;
+        if($isclear === true){
+            $restArr = array();
+        }
+        $content = QueryList::Query($url, array(
             'litpic' => array('img:first()', 'src'),
             'down_link' => array('table', 'html'),
-        ), '.co_content8')->getData(function ($item) {
+        ), '.co_content8','utf-8','gbk',true)->getData(function ($item) {
             if (strlen($item['litpic']) > 250) {
                 $item['litpic'] = '';
             }
@@ -434,11 +226,15 @@ trait Ygdy8
             });
             return $item;
         });
-
-        $restArr = array(
-            'litpic' => $content[0]['litpic'],
-            'down_link' => implode(',', $content[0]['down_link'])
-        );
+        if(empty($content)) {
+            $url = str_replace('.com', '.net', $url);
+            $this->getConSaveArr($url);
+        }else {
+            $restArr = array(
+                'litpic' => $content[0]['litpic'],
+                'down_link' => implode(',', $content[0]['down_link'])
+            );
+        }
         return $restArr;
     }
 

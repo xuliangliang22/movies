@@ -14,12 +14,17 @@ trait NewsY3600
 {
     public $curl;
     public $listInfo;
+    public $listNum;
+    public $contentNum;
 
     public function MovieInit()
     {
+        $this->listNum = 0;
+        $this->contentNum = 0;
+
         if (empty($this->curl)) {
             $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'curl' . DIRECTORY_SEPARATOR . 'curl.php';
-            include $path;
+            require_once $path;
             $this->curl = new \curl();
         }
     }
@@ -72,7 +77,7 @@ trait NewsY3600
                             'con_url' => $value['con_url'],
                             'm_time' => $value['m_time'],
                             //描述信息
-                            'down_link' => $value['body'],
+                            'down_link' => SpHtml2Text($value['body']),
                             'litpic'=>$value['litpic'],
                             'typeid' => $this->typeId,
                             'is_douban'=>0,
@@ -82,6 +87,7 @@ trait NewsY3600
                     }
 
                     if ($rs) {
+                        $this->listNum++;
                         $this->info($value['title'] . ' list ' . $isNewType . ' success');
                     } else {
                         $this->info($value['title'] . ' list ' . $isNewType . ' fail');
@@ -90,7 +96,7 @@ trait NewsY3600
             }
             $this->info('list save end');
         }catch (\ErrorException $e){
-            echo "save list error exception {$e->getMessage()} \n";
+            $this->info("save list error exception {$e->getMessage()} \n");
             $listInfoArr = explode('-',$this->listInfo);
             if($listInfoArr[1] -  $listInfoArr[0] < 2){
                 return;
@@ -98,7 +104,7 @@ trait NewsY3600
                 $this->movieList($listInfoArr[0],$listInfoArr[1],$listInfoArr[2],$listInfoArr[3]);
             }
         }catch (\Exception $e){
-            echo "save list exception {$e->getMessage()} \n";
+            $this->info("save list exception {$e->getMessage()} \n");
             $listInfoArr = explode('-',$this->listInfo);
             if($listInfoArr[1] -  $listInfoArr[0] < 2){
                 return;
@@ -113,7 +119,7 @@ trait NewsY3600
      */
     public function getList($url)
     {
-        echo $url."\n";
+//        echo $url."\n";
         $host = 'http://www.y3600.com';
         $list = QueryList::Query($url,array(
             'title'=>array('ol a','text'),
@@ -155,13 +161,12 @@ trait NewsY3600
                         DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
                         continue;
                     }
+                    //内容主体
+                    $conSaveArr = SpHtml2Text($conSaveArr[0]['con']);
 
-                    echo "================================\n";
-                    echo ($conSaveArr[0]['con'])."\n";
-                    echo "================================\n";
-
-                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body'=>$conSaveArr[0]['con']]);
+                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body'=>$conSaveArr]);
                     if ($rest) {
+                        $this->contentNum++;
                         DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
                         $this->info('save con success');
                     } else {
@@ -191,10 +196,10 @@ trait NewsY3600
     public function getConSaveArr($url)
     {
         $content = QueryList::Query($url,array(
-            'con' => array('#article','text','img -.content_head -.editor'),
+            'con' => array('#article','text','img -.content_head -.editor -script'),
         ))->getData(function ($item){
-            $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/','/height\s*=\s*[\'"](.*?)[\'"]/','/style\s*=\s*[\'"](.*?)[\'"]/','/<script>(.*?)<\/script>/is','/\(function\(\)(.*)\)/is');
-            $replace = array('','','','','');
+            $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/is','/height\s*=\s*[\'"](.*?)[\'"]/is');
+            $replace = array('','');
             $item['con'] = preg_replace($pattern,$replace,$item['con']);
             return $item;
         });
@@ -202,25 +207,5 @@ trait NewsY3600
         return $content;
     }
 
-    /**
-     * dede生成栏目页
-     */
-    public function makeLanmu()
-    {
-        $url = config('qiniu.qiniu_data.dede_url') . 'makehtml_list_action.php?typeid=' . $this->typeId . '&maxpagesize=50&upnext=1';
-        //dd($url);
-        $this->dedeLogin(config('qiniu.qiniu_data.dede_url'). 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
-        $this->curl->add()
-            ->opt_targetURL($url)
-            ->opt_sendHeader('cookie', $this->cookie)
-            ->done('get');
-        $this->curl->run();
-        $content = $this->curl->getAll();
-        if (mb_strpos($content['body'], '栏目列表更新',0, 'utf-8') !== false) {
-            $this->info("{$this->typeId}  lanmu list make success !");
-        } else {
-            $this->error("{$this->typeId}  lanmu list make fail !");
-        }
-    }
 }
 

@@ -14,7 +14,7 @@ class DedeNewPost extends Command
      *
      * @var string
      */
-    protected $signature = 'send:dedenewpost {channel_id}{typeid}{aid?}';
+    protected $signature = 'send:dedenewpost{db_name}{table_name}{channel_id}{typeid}{aid?}';
 
     /**
      * The console command description.
@@ -71,6 +71,8 @@ class DedeNewPost extends Command
     {
         global $isSend;
         $isSend = false;
+        $dbName = $this->argument('db_name');
+        $tableName = $this->argument('table_name');
         //
         $dede_data = array(
             'channelid' => 1,
@@ -89,9 +91,6 @@ class DedeNewPost extends Command
             'autokey' => 1,
             'description' => '',
             'dede_addonfields' => '',
-            'remote' => 1,
-            'autolitpic' => 1,
-            'needwatermark' => 1,
             'sptype' => 'hand',
             'spsize' => 5,
             'body' => 'source body',
@@ -100,7 +99,7 @@ class DedeNewPost extends Command
             'click' => 52,
             'sortup' => 0,
             'color' => '',
-            'arcrank' => -1,
+            'arcrank' => 0,
             'money' => 0,
             'pubdate' => '2017-02-15 21:30:50',
             'ishtml' => 1,
@@ -117,13 +116,13 @@ class DedeNewPost extends Command
         $this->channelId = $this->argument('channel_id');
         $this->typeId = $this->argument('typeid');
         //取出最大的id加1
-        $maxId = DB::connection('dedea67')->table('gather_dedea67')->where('typeid', $this->typeId)->max('id');
+        $maxId = DB::connection($dbName)->table($tableName)->where('typeid', $this->typeId)->max('id');
         $maxId = empty($this->argument('aid')) ? $maxId + 1 : $this->argument('aid');
 //        dd($minId);
 
         do {
             //提交数据
-            $archives = DB::connection('dedea67')->table('gather_dedea67')->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post', '-1')->orderBy('id', 'desc')->take($take)->get();
+            $archives = DB::connection($dbName)->table($tableName)->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post', '-1')->orderBy('id', 'desc')->take($take)->get();
             $tot = count($archives);
             foreach ($archives as $key => $value) {
                 $maxId = $value->id;
@@ -153,13 +152,11 @@ class DedeNewPost extends Command
                 ];
 //                dd($rel_data);
                 $data = array_merge($dede_data, $rel_data);
-                dd($data);
                 $rest = $this->getCurl($addUrl, 'post', $data);
-//                dd($rest);
                 if (stripos($rest, '成功发布文') !== false) {
                     $isSend = true;
                     //成功提交后更新is_post
-                    DB::connection('dedea67')->table('gather_dedea67')->where('id', $value->id)->update(['is_post' => 0]);
+                    DB::connection($dbName)->table($tableName)->where('id', $value->id)->update(['is_post' => 0]);
                     $this->info('dede post archive success');
                 } else {
                     $this->error('dede post archive fail');

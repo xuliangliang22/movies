@@ -24,7 +24,6 @@ trait DedeLogin
 
         if (file_exists($cookieFile) && time()-filemtime($cookieFile) < 28800) {
             $this->cookie = file_get_contents($cookieFile);
-//            dd($this->cookie);
             return true;
         }
 //        dd($this->cookie);

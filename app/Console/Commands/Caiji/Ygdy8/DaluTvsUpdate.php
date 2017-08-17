@@ -75,7 +75,7 @@ class DaluTvsUpdate extends Command
         echo "list and content and douban begin ! \n";
         $this->MovieInit();
         $this->movieList($pageTot, $url, true);
-        $this->getContent('other', true);
+        $this->getContent(true);
         $this->aid = $aid;
         $this->perfectContent();
         echo "list and content and douban end ! \n";

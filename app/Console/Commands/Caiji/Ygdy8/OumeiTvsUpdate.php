@@ -75,7 +75,8 @@ class OumeiTvsUpdate extends Command
         $this->MovieInit();
         //true代表跟踪采集
         $this->movieList($pageStart,$pageTot, $url, true);
-        $this->getContent('other', true);
+        $this->getContent(true);
+//        dd(222);
         $this->aid = $aid;
         $this->perfectContent();
         echo "list and content and douban end ! \n";

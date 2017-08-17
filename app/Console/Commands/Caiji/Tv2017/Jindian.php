@@ -4,13 +4,11 @@ namespace App\Console\Commands\Caiji\Tv2017;
 
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Tv2017;
-use App\Console\Commands\Mytraits\Douban;
 use App\Console\Commands\Mytraits\DedeLogin;
 
 class Jindian extends Command
 {
     use Tv2017;
-    use Douban;
     use DedeLogin;
     /**
      * The name and signature of the console command.
@@ -63,7 +61,7 @@ class Jindian extends Command
         $aid = empty($this->argument('aid')) ? 0 : $this->argument('aid');
         $this->aid = $aid;
         //下载图片
-        $qiniuDir = 'tvs/imgs/';
+        $qiniuDir = 'movies/imgs/';
         //欧美 13 http://www.ygdy8.net/html/tv/oumeitv/index.html http://www.ygdy8.net/html/tv/oumeitv/list_9_2.html
         $url = 'http://www.2015tt.com/list/index1.html';
         $pageStart = 1;
@@ -71,28 +69,19 @@ class Jindian extends Command
         //得到所有的列表页
         $this->MovieInit();
         $this->movieList($pageStart,$pageTot,$url);
-        dd(22222);
         $this->aid = $aid;
-        $this->getContent('other');
-        $this->aid = $aid;
-        //更新douban信息
-        $this->perfectContent();
+        $this->getContent();
 
         //内容页图片
-        //9450
-        $this->call('xiazai:imgdownygdy8', ['type' => 'body', 'qiniu_dir' => $qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
         //缩略图
         $this->call('xiazai:imgdownygdy8', ['type' => 'litpic', 'qiniu_dir' => $qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
-        //百度图片
-        $this->call('caiji:baidulitpic',['qiniu_dir'=>$qiniuDir,'type_id'=>$this->typeId,'key_word_suffix'=>'电视剧']);
+        $this->call('caiji:baidulitpic',['db_name'=>$this->dbName,'table_name'=>$this->tableName,'qiniu_dir'=>$qiniuDir,'type_id'=>$this->typeId,'key_word_suffix'=>'电影']);
 
         echo "====================================\n";
         echo "add dede admin begin ! \n";
-        //node格式化下载链接
-        $this->nodeDownLink();
         //将新添加数据提交到dede后台 is_post = -1
         $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
-        if ($isSend = true) {
+        if ($isSend) {
             //更新列表页
             $this->makeLanmu();
         }

@@ -52,7 +52,14 @@ class ImgDownYgdy8 extends Command
      */
     public function handle()
     {
-        //
+        //判断运行环境
+//        if (substr(php_sapi_name(), 0, 3) == 'cgi') {
+//            //cgi
+//            define('IS_CGI',true);
+//        } else {
+//            //no cgi
+//            define('IS_CGI',false);
+//        }
         $type = $this->argument('type');
         $qiniuDir = $this->argument('qiniu_dir');
         $this->typeId = $this->argument('type_id');
@@ -126,7 +133,7 @@ class ImgDownYgdy8 extends Command
                     //判断图片文件是否有效
                     $isPic = $this->judgeImg($fv);
                     if ($isPic === true) {
-                        $ossImg[$fk] = str_replace($this->savePath, $this->qiniuKey, $fv);
+                        $ossImg[$fk] = str_replace($this->savePath, $this->qiniuKey, $fv).'?imageslim';
                     } else {
                         if(file_exists($fv)){
                             unlink($fv);
@@ -137,7 +144,7 @@ class ImgDownYgdy8 extends Command
                 $body = str_replace($matchs[1],$ossImg,$value->body);
                 $body = preg_replace('/<img(.*)src=""(.*)>/isU','',$body);
 //                dd($body);
-                echo $body."\n";
+                $this->info($body."\n");
 //                //更新数据库
                 $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $body, 'is_body' => 0]);
                 if ($rest) {
@@ -187,6 +194,7 @@ class ImgDownYgdy8 extends Command
                 if ($isPic === true) {
                     //更新数据库信息
                     $ossImg = str_replace($this->savePath, $this->qiniuKey, $fileName);
+                    $ossImg = $ossImg.'?imageslim';
                 } else {
                     unlink($fileName);
                 }

@@ -54,8 +54,8 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\Ygdy8\RhanTvsUpdate::class,
         //采集阳光电影8所有欧美电视剧
         Commands\Caiji\Ygdy8\OumeiTvs::class,
-        //采集阳光电影8所有港台电视剧
-        Commands\Caiji\Ygdy8\GantaiTvs::class,
+        //跟踪采集欧美电视剧
+        Commands\Caiji\Ygdy8\OumeiTvsUpdate::class,
 
         //跟踪采集大陆电影
         Commands\Caiji\Ygdy8\DaluMoviesUpdate::class,
@@ -63,14 +63,29 @@ class Kernel extends ConsoleKernel
         //Tv2017
         //经典电影采集
         Commands\Caiji\Tv2017\Jindian::class,
+        //跟踪采集经典电影
+        Commands\Caiji\Tv2017\JindianUpdate::class,
 
         //Y3600
         //娱乐新闻采集
         Commands\Caiji\News\Y3600::class,
+        //跟踪采集娱乐新闻
+        Commands\Caiji\News\Y3600Update::class,
+
+
+        //sitemap curls.txt
+        Commands\SiteMap\Baidu::class,
 
 
         //将没有的缩略图从面度上截取
         Commands\Caiji\BaiduLitpic::class,
+
+        //修改dede_archives的litpic名称
+        Commands\Ca2722\Litpic::class,
+
+        //生成dede页面
+        Commands\Dede\MakeHtml::class,
+
 
 
     ];
