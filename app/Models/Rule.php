@@ -8,11 +8,11 @@ class Rule extends Model
 {
     protected $table = 'ca_rules';
     /**
-     * 与采集链接表关联,一对一
+     * 与分类表关联,一对多
      */
-    public function gurls()
+    public function arctypes()
     {
-        return $this->belongsTo('App\Models\Gurl', 'gurl_id', 'id');
+        return $this->belongsTo('App\Models\Arctype', 'type_id', 'id');
     }
 
 }

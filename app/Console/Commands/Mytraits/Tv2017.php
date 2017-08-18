@@ -15,12 +15,14 @@ trait Tv2017
 {
     public $curl;
     public $listInfo;
+    public $listNum;
+    public $contentNum;
 
     public function MovieInit()
     {
         if (empty($this->curl)) {
             $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'curl' . DIRECTORY_SEPARATOR . 'curl.php';
-            include $path;
+            require_once $path;
             $this->curl = new \curl();
         }
     }
@@ -34,12 +36,9 @@ trait Tv2017
 
             $url = substr($baseListUrl, 0, strrpos($baseListUrl, '.'));
 
-            //取出最大的时间
-            $maxTime = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->max('m_time');
-
             for ($i = $start; $i <= $pageTot; $i++) {
                 $this->listInfo = $i . '-' . $pageTot . '-' . $baseListUrl . '-' . $isNew;
-                $this->info("this is page {$i}");
+                //$this->info("this is page {$i}");
                 if ($i == 1) {
                     $listUrl = $url . '.html';
                 } else {
@@ -75,15 +74,16 @@ trait Tv2017
                     }
 
                     if ($rs) {
-                        $this->info($value['title'] . ' list ' . $isNewType . ' success');
+                        $this->listNum++;
+                        //$this->info($value['title'] . ' list ' . $isNewType . ' success');
                     } else {
-                        $this->info($value['title'] . ' list ' . $isNewType . ' fail');
+                        //$this->info($value['title'] . ' list ' . $isNewType . ' fail');
                     }
                 }
             }
-            $this->info('list save end');
+            //$this->info('list save end');
         } catch (\ErrorException $e) {
-            echo 'jindian movies error exception ' . $e->getMessage() . "\n";
+            $this->info('jindian movies error exception ' . $e->getMessage() . "\n");
             $listInfoArr = explode('-', $this->listInfo);
             if ($listInfoArr[1] - $listInfoArr[0] < 2) {
                 return;
@@ -91,7 +91,7 @@ trait Tv2017
                 $this->movieList($listInfoArr[0], $listInfoArr[1], $listInfoArr[2], $listInfoArr[3]);
             }
         } catch (\Exception $e) {
-            echo 'jindian movies exception ' . $e->getMessage() . "\n";
+            $this->info('jindian movies exception ' . $e->getMessage() . "\n");
             $listInfoArr = explode('-', $this->listInfo);
             if ($listInfoArr[1] - $listInfoArr[0] < 2) {
                 return;
@@ -129,18 +129,16 @@ trait Tv2017
      */
     public function getContent()
     {
-//
         try {
             do {
                 $take = 10;
                 $arc = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $this->aid)->where('is_con', -1)->where('typeid', $this->typeId)->take($take)->orderBy('id')->get();
-//                $arc = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('body','like','%src=""%')->take($take)->get();
 //                dd($arc);
                 $tot = count($arc);
 
                 foreach ($arc as $key => $value) {
                     $this->aid = $value->id;
-                    $this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
+                    //$this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
 
                     //得到保存的数组
 //                    $conSaveArr = $this->getConSaveArr($value->con_url);
@@ -151,28 +149,27 @@ trait Tv2017
                     }
                     $conSaveArr = implode(',', $conSaveArr);
 //                    dd($conSaveArr);
-                    print_r($conSaveArr) . "\n";
+//                    print_r($conSaveArr) . "\n";
 
                     $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['down_link' => $conSaveArr]);
                     if ($rest) {
+                        $this->contentNum++;
                         DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
-                        $this->info('save con success');
+                        //$this->info('save con success');
                     } else {
-                        $this->error('save con fail');
+                        //$this->error('save con fail');
                     }
                 }
             } while ($tot > 0);
         } catch (\ErrorException $e) {
             $this->info('get content error exception ' . $e->getMessage());
-//            $this->call('caiji:movieygdy8',['aid'=>$this->aid]);
             $this->getContent($this->aid);
         } catch (\Exception $e) {
             $this->info('get content exception ' . $e->getMessage());
-//            $this->call('caiji:movieygdy8',['aid'=>$this->aid]);
             $this->getContent($this->aid);
         }
         //电视剧需要更新,还要再添加一个字段
-        $this->info('save con end');
+        //$this->info('save con end');
         $this->aid = 0;
         //删除下载链接为空的数据
         DB::connection($this->dbName)->table($this->tableName)->whereNull('down_link')->delete();
@@ -180,7 +177,6 @@ trait Tv2017
 
 
     /**
-     * 得到内容页的保存数组,以◎分割
      * @param $url 内容页的网址链接
      */
     public function getConSaveArr($url)

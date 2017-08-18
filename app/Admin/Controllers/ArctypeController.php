@@ -26,8 +26,8 @@ class ArctypeController extends Controller
     public function index()
     {
         return Admin::content(function (Content $content) {
-            $content->header(trans('admin::lang.menu'));
-            $content->description(trans('admin::lang.list'));
+            $content->header('Arctypes');
+            $content->description('List');
 
             $content->row(function (Row $row) {
                 $row->column(6, $this->treeView()->render());
@@ -40,10 +40,6 @@ class ArctypeController extends Controller
                     $form->text('dede_id', '对应dede系统中栏目id')->rules('required');
                     $form->text('dede_typename', '对应dede系统中栏目名称')->rules('required');
 
-//                    $form->hasMany('gurls', function (Form\NestedForm $form) {
-//                        $form->text('site_name');
-//                        $form->text('gurl');
-//                    });
                     $column->append((new Box(trans('admin::lang.new'), $form))->style('success'));
                 });
             });

@@ -43,7 +43,7 @@ trait NewsY3600
 
             for ($i = $start; $i <= $pageTot; $i++) {
                 $this->listInfo = $i.'-'.$pageTot.'-'.$baseListUrl.'-'.$isNew;
-                $this->info("this is page {$i}");
+                //$this->info("this is page {$i}");
                 if ($i == 1) {
                     $listUrl = $url . '.html';
                 } else {
@@ -88,13 +88,13 @@ trait NewsY3600
 
                     if ($rs) {
                         $this->listNum++;
-                        $this->info($value['title'] . ' list ' . $isNewType . ' success');
+                        //$this->info($value['title'] . ' list ' . $isNewType . ' success');
                     } else {
-                        $this->info($value['title'] . ' list ' . $isNewType . ' fail');
+                        //$this->info($value['title'] . ' list ' . $isNewType . ' fail');
                     }
                 }
             }
-            $this->info('list save end');
+            //$this->info('list save end');
         }catch (\ErrorException $e){
             $this->info("save list error exception {$e->getMessage()} \n");
             $listInfoArr = explode('-',$this->listInfo);
@@ -151,7 +151,7 @@ trait NewsY3600
 
                 foreach ($arc as $key => $value) {
                     $this->aid = $value->id;
-                    $this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
+                    //$this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
 
                     //得到保存的数组
 //                    $conSaveArr = $this->getConSaveArr($value->con_url);
@@ -168,9 +168,9 @@ trait NewsY3600
                     if ($rest) {
                         $this->contentNum++;
                         DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
-                        $this->info('save con success');
+                        //$this->info('save con success');
                     } else {
-                        $this->error('save con fail');
+                        //$this->error('save con fail');
                     }
                 }
             } while ($tot > 0);
@@ -182,7 +182,7 @@ trait NewsY3600
             $this->getContent($this->aid);
         }
         //电视剧需要更新,还要再添加一个字段
-        $this->info('save con end');
+        //$this->info('save con end');
         $this->aid = 0;
         //删除下载链接为空的数据
         DB::connection($this->dbName)->table($this->tableName)->whereNull('down_link')->delete();

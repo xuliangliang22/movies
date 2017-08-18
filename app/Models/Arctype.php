@@ -24,11 +24,11 @@ class Arctype extends Model
     }
 
     /**
-     * 与下载链接表,ca_gurls,一对多
+     * 与规则表,ca_rules,一对多
      */
-    public function gurls()
+    public function rules()
     {
-        return $this->hasMany('App\Models\Gurl','arctype_id','id');
+        return $this->hasMany('App\Models\Rule','type_id','id');
     }
 
 }

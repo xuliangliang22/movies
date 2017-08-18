@@ -16,25 +16,17 @@
 
     </div>
 </form>
-<div id="shade" style="position:absolute;top:0px;left: 0px;width:100%;height:100%;z-index: 100;background: rgba(0,0,0,.3);;display: none;text-align: center;color: #f00;font-size: 25px;font-style: italic;box-sizing: border-box;padding-top: 300px;overflow: auto;">请等待,不要点击或刷新..</div>
+<div id="shade" style="position:absolute;top:0px;left: 0px;width:100%;height:100%;z-index: 100;background: rgba(0,0,0,.3);;display: none;text-align: center;color: #f00;font-size: 25px;font-style: italic;box-sizing: border-box;padding-top: 300px;overflow: auto;"></div>
 
 <script>
     $(function(){
+        //当选择分类时,联动改变其对应的采集命令规则
         $('select[name=arctype]').change(function(){
+            $('#shade').text('请等待,不要点击或刷新..');
             var typeid = $(this).val();
-            $('form .gurl').parent().parent().remove();
-            $('form .rule').remove();
-            $.get('/admin/rule_run?type=gurl&id='+typeid,function(data){
-                if(data != ''){
-                    $('form .box-body').append(data);
-                }
-            },'html');
-        });
-
-        $('form').on('change','select[name=gurl]',function(data){
-            var gurlid = $(this).val();
-            $('form .rule').remove();
-            $.get('/admin/rule_run?type=rule&id='+gurlid,function(data){
+            $('form .rules').parent().parent().remove();
+            $('.rule').remove();
+            $.get('/admin/rule_run?type=arctype&id='+typeid,function(data){
                 if(data != ''){
                     $('form .box-body').append(data);
                 }
@@ -42,11 +34,23 @@
         });
     });
 
+    //当选择命令规则时,取出它下面的参数列表
+    $('form').on('change','select[name=rules]',function () {
+        $('#shade').text('请等待,不要点击或刷新..');
+        var rule_id = $(this).val();
+        $('.rule').remove();
+        $.get('/admin/rule_run?type=rule&id='+rule_id,function(data){
+            if(data != ''){
+                $('form .box-body').append(data);
+            }
+        },'html');
+    });
+
 
     //保存列表页的内容
     $('#running').click(function () {
         //做一个遮罩效果
-        $('#shade').show();
+        $('#shade').show().text('请等待,不要点击或刷新..');
         _run_interval(false);
 
         var args = _get_ruleid_args();

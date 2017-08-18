@@ -35,7 +35,7 @@ class Y3600Update extends Command
     public $aid;
     public $typeId;
     public $channelId = 1;
-    public $qiniuDir = 'new/imgs';
+    public $qiniuDir = 'news/imgs';
 
     /**
      * Create a new command instance.
