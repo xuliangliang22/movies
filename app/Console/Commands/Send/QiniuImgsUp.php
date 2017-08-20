@@ -30,6 +30,11 @@ class QiniuImgsUp extends Command
     protected $accessKey;
     protected $secretKey;
 
+    //日志保存路径
+    public $commandLogsFile;
+    //是否开启日志
+    public $isCommandLogs;
+
 
     /**
      * Create a new command instance.
@@ -42,6 +47,10 @@ class QiniuImgsUp extends Command
         $this->bucket = config('qiniu.qiniu_data.bucket');
         $this->accessKey = config('qiniu.qiniu_data.access_key');
         $this->secretKey = config('qiniu.qiniu_data.secret_key');
+
+
+        $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
+        $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
     }
 
     /**
@@ -93,10 +102,17 @@ class QiniuImgsUp extends Command
         if ($err !== null) {
             //失败
             $this->error('fail');
+            if($this->isCommandLogs === true) {
+                file_put_contents($this->commandLogsFile, var_export($err, true)."\n", FILE_APPEND);
+            }
+            exit;
 //            var_dump($err);
         } else {
             $this->info('success');
 //            var_dump($ret);
+            if($this->isCommandLogs === true) {
+                file_put_contents($this->commandLogsFile, var_export($ret, true)."\n", FILE_APPEND);
+            }
         }
     }
 

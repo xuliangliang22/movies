@@ -145,8 +145,6 @@ trait NewsY3600
             do {
                 $take = 10;
                 $arc = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $this->aid)->where('is_con', -1)->where('typeid', $this->typeId)->take($take)->orderBy('id')->get();
-//                $arc = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('body','like','%src=""%')->take($take)->get();
-//                dd($arc);
                 $tot = count($arc);
 
                 foreach ($arc as $key => $value) {

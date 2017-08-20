@@ -37,6 +37,11 @@ class Y3600Update extends Command
     public $channelId = 1;
     public $qiniuDir = 'news/imgs';
 
+    //日志保存路径
+    public $commandLogsFile;
+    //是否开启日志
+    public $isCommandLogs;
+
     /**
      * Create a new command instance.
      *
@@ -47,6 +52,9 @@ class Y3600Update extends Command
         parent::__construct();
         $this->dbName = config('qiniu.qiniu_data.db_name');
         $this->tableName = config('qiniu.qiniu_data.table_name');
+
+        $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
+        $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
     }
 
     /**
@@ -66,30 +74,60 @@ class Y3600Update extends Command
         $aid = empty($this->argument('aid')) ? 0 : $this->argument('aid');
         $this->aid = $aid;
         $url = 'http://www.y3600.com/news/index.html';
+        //得到这条命令
+        if($this->isCommandLogs === true) {
+            $command = date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
         //得到所有的列表页
         $this->MovieInit();
+        if($this->isCommandLogs === true) {
+            $command = "开始采集列表页\n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
         if($queueName == 'all' || $queueName == 'list') {
             $this->movieList($pageStart, $pageTot, $url,true);
             echo "列表页采集完成,一共 {$this->listNum} 条! \n";
+            if($this->isCommandLogs === true) {
+                $command = "列表页采集完成,一共 {$this->listNum} 条! \n\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
             if ($queueName == 'list') {
                 exit;
             }
         }
-        if($queueName == 'list' && $this->listNum < 1){
+        if(empty($this->listNum) === false && $this->listNum < 1){
+            echo "列表页为空,结束! \n";
+            if($this->isCommandLogs === true) {
+                $command = "列表页为空,结束! \n\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
             exit;
         }
 
         //内容页
+        if($this->isCommandLogs === true) {
+            $command = "开始采集内容页 \n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
         if($queueName == 'all' || $queueName == 'content') {
             $this->aid = $aid;
             $this->getContent();
             echo "内容页采集完成,一共 {$this->contentNum} 条! \n";
+            if($this->isCommandLogs === true) {
+                $command = "内容页采集完成,一共 {$this->contentNum} 条! \n\n";
+                file_put_contents($this->commandLogsFile,$command,FILE_APPEND);
+            }
             if ($queueName == 'content') {
                 exit;
             }
         }
 
         //下载图片
+        if($this->isCommandLogs === true) {
+            $command = "开始下载图片 \n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
         if($queueName == 'all' || $queueName == 'pic') {
             //内容页图片
             //9450
@@ -100,12 +138,20 @@ class Y3600Update extends Command
             $this->callSilent('caiji:baidulitpic', ['db_name'=>$this->dbName,'table_name'=>$this->tableName,'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => '娱乐']);
 
             echo "图片采集完成! \n";
+            if($this->isCommandLogs === true) {
+                $command = "图片采集完成! \n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
             if ($queueName == 'pic') {
                 exit;
             }
         }
 
         //将新添加数据提交到dede后台 is_post = -1
+        if($this->isCommandLogs === true) {
+            $command = "将新添加数据提交到dede后台 \n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
         if($queueName == 'all' || $queueName == 'dede') {
             //将新添加数据提交到dede后台 is_post = -1
             $this->callSilent('send:dedenewpost', ['db_name'=>$this->dbName,'table_name'=>$this->tableName,'channel_id' => $this->channelId, 'typeid' => $this->typeId]);
@@ -114,12 +160,20 @@ class Y3600Update extends Command
                 $this->callSilent('dede:makehtml',['type'=>'list','typeid'=>$this->typeId]);
             }
             echo "上线部署完成! \n";
+            if($this->isCommandLogs === true) {
+                $command = "上线部署完成! \n\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
             if ($queueName == 'dede') {
                 exit;
             }
         }
 
-
+        //cdn
+        if($this->isCommandLogs === true) {
+            $command = "开始上传图片 qiniu\n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
         //只有新增了数据才会去上传图片
         if($queueName == 'all' || $queueName == 'cdn') {
             //只有新增了数据才会去上传图片
@@ -133,11 +187,20 @@ class Y3600Update extends Command
                 $this->callSilent('send:qiniuimgs', ['local_dir' =>$localDir, 'qiniu_dir' => trim($this->qiniuDir, '/') . '/' . date('ymd') . $this->typeId . '/']);
             }
             echo "cdn传输完成,dirname {$localDir}!\n";
+            if($this->isCommandLogs === true) {
+                $command = "cdn传输完成,dirname {$localDir}!\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
             if($queueName == 'cdn'){
                 exit;
             }
         }
         echo "内容更新完成! \n";
+        if($this->isCommandLogs === true) {
+            $command = "内容更新完成! \n\n\n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
     }
+
 }
 

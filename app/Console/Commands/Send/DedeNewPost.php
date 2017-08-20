@@ -49,6 +49,11 @@ class DedeNewPost extends Command
      */
     protected $cookie;
 
+    //日志保存路径
+    public $commandLogsFile;
+    //是否开启日志
+    public $isCommandLogs;
+
     /**
      * Create a new command instance.
      *
@@ -60,6 +65,9 @@ class DedeNewPost extends Command
         $this->dedeUrl = config('qiniu.qiniu_data.dede_url');
         $this->dedeUser = config('qiniu.qiniu_data.dede_user');
         $this->dedePwd = config('qiniu.qiniu_data.dede_pwd');
+
+        $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
+        $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
     }
 
     /**
@@ -127,10 +135,19 @@ class DedeNewPost extends Command
             foreach ($archives as $key => $value) {
                 $maxId = $value->id;
                 $this->info("{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id}");
+                if($this->isCommandLogs === true) {
+                    $command = "{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id} \n";
+                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                }
+
 
                 //判断是否登录
                 if (!$this->dedeLogin($loginUrl, $this->dedeUser, $this->dedePwd)) {
                     $this->error('登录失败!');
+                    if($this->isCommandLogs === true) {
+                        $command = "登录失败\n";
+                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                    }
                     exit;
                 }
 
@@ -158,13 +175,25 @@ class DedeNewPost extends Command
                     //成功提交后更新is_post
                     DB::connection($dbName)->table($tableName)->where('id', $value->id)->update(['is_post' => 0]);
                     $this->info('dede post archive success');
+                    if($this->isCommandLogs === true) {
+                        $command = "dede post archive success aid is {$value->id} \n";
+                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                    }
                 } else {
                     $this->error('dede post archive fail');
+                    if($this->isCommandLogs === true) {
+                        $command = "dede post archive fail aid is {$value->id} \n";
+                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                    }
+                    exit;
                 }
-//                dd(22);
             }
         } while ($tot > 0);
         $this->info('dede post archive end');
+        if($this->isCommandLogs === true) {
+            $command = "dede post archive end\n\n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
     }
 
 }
