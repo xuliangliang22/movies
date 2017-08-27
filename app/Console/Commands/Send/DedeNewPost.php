@@ -135,11 +135,11 @@ class DedeNewPost extends Command
             foreach ($archives as $key => $value) {
                 $maxId = $value->id;
                 $this->info("{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id}");
+
                 if($this->isCommandLogs === true) {
                     $command = "{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id} \n";
                     file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
                 }
-
 
                 //判断是否登录
                 if (!$this->dedeLogin($loginUrl, $this->dedeUser, $this->dedePwd)) {

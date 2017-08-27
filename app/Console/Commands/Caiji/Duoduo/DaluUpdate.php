@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Console\Commands\Caiji\Tv2017;
+namespace App\Console\Commands\Caiji\Duoduo;
 
 use Illuminate\Console\Command;
-use App\Console\Commands\Mytraits\Tv2017;
+use App\Console\Commands\Mytraits\Duoduo;
 use App\Console\Commands\Mytraits\DedeLogin;
 
-class JindianUpdate extends Command
+class DaluUpdate extends Command
 {
-    use Tv2017;
+    use Duoduo;
     use DedeLogin;
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'caiji:tv2017_jindian_update {page_start}{page_tot}{type_id}{aid?} {--queue=}';
+    protected $signature = 'caiji:duoduo_dalu_update {page_start}{page_tot}{type_id}{aid?} {--queue=}';
 
     /**
      * The console command description.
@@ -35,7 +35,7 @@ class JindianUpdate extends Command
     //出错的时候调用大于这个aid的数据
     public $aid;
     public $typeId;
-    public $channelId = 17;
+    public $channelId = 13;
     public $qiniuDir = 'movies/imgs';
 
     //日志保存路径
@@ -65,6 +65,7 @@ class JindianUpdate extends Command
      */
     public function handle()
     {
+        dd(222);
         global $isSend;
         //
         $queueName = $this->option('queue');
@@ -74,11 +75,11 @@ class JindianUpdate extends Command
 
         $aid = empty($this->argument('aid')) ? 0 : $this->argument('aid');
         $this->aid = $aid;
-        $url = 'http://www.2015tt.com/list/index1.html';
+        $url = 'http://www.duotv.cc/index.php?s=vod-type-id-1-area-%25E5%25A4%25A7%25E9%2599%2586-picm-1.html';
         //得到这条命令los
         if($this->isCommandLogs === true) {
             $command = "=========================================\n";
-            $command .= date('Y-m-d H:i:s') . "\ncaiji:tv2017_jindian_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
+            $command .= date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
         //得到所有的列表页
@@ -92,6 +93,7 @@ class JindianUpdate extends Command
         if($queueName == 'all' || $queueName == 'list') {
             $this->movieList($pageStart,$pageTot,$url,true);
             echo "列表页采集完成,一共 {$this->listNum} 条! \n";
+            exit;
             //logs
             if($this->isCommandLogs === true) {
                 $command = "列表页采集完成,一共 {$this->listNum} 条! \n\n";

@@ -154,6 +154,31 @@ class Dedea67Post extends Command
                     exit;
                 }
 
+                //随机导演
+                if(empty($value->director)){
+                    $value->director = '详见内页';
+                }
+                //随机演员
+                if(empty($value->actors)){
+                    $value->actors = '详见内页';
+                }
+
+                //随机年代
+                if(empty($value->myear)){
+                    $myearArr = ['10年代','00年代','90年代','80年代','更早'];
+                    shuffle($myearArr);
+                    $myearArr = array_shift($myearArr);
+                    $value->myear = $myearArr;
+                }
+                //随机分类
+                if(empty($value->types)){
+                    $value->types = _getRandType();
+                }
+                //随机评分
+                if(empty($value->grade)){
+                    $value->grade = mt_rand(0,10);
+                }
+
                 //提交数据
                 $rel_data = [
                     'channelid' => $this->channelId,

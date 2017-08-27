@@ -4,12 +4,10 @@ namespace App\Console\Commands\Caiji\Ygdy8;
 
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
-use App\Console\Commands\Mytraits\Douban;
 
 class DaluTvs extends Command
 {
     use Ygdy8;
-    use Douban;
     /**
      * The name and signature of the console command.
      *

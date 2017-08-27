@@ -23,11 +23,12 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\DongGatherNihan::class,
 
         //dedea67电影网采集
-        Commands\Caiji\MovieYgdy8::class,
         Commands\Xiazai\ImgDownYgdy8::class,
 
         //豆瓣网更新影视详情信息
         Commands\Caiji\Douban::class,
+        //百科取出简介信息
+        Commands\Caiji\Baike::class,
 
         //测试使用
         Commands\Caiji\Test::class,
@@ -48,8 +49,6 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\Ygdy8\DaluTvs::class,
         //跟踪采集大陆电视剧
         Commands\Caiji\Ygdy8\DaluTvsUpdate::class,
-        //采集阳光电影8所有日韩电视剧
-        Commands\Caiji\Ygdy8\RhanTvs::class,
         //跟踪采集日韩电视剧
         Commands\Caiji\Ygdy8\RhanTvsUpdate::class,
         //采集阳光电影8所有欧美电视剧
@@ -65,6 +64,11 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\Tv2017\Jindian::class,
         //跟踪采集经典电影
         Commands\Caiji\Tv2017\JindianUpdate::class,
+
+        //duoduo
+        //大陆电影
+        Commands\Caiji\Duoduo\DaluUpdate::class,
+
 
         //Y3600
         //娱乐新闻采集

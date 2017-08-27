@@ -35,7 +35,7 @@ class MakeHtml extends Command
     public function __construct()
     {
         parent::__construct();
-        if(empty($this->curl)) {
+        if (empty($this->curl)) {
             $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'curl' . DIRECTORY_SEPARATOR . 'curl.php';
             require_once $path;
             $this->curl = new \curl();
@@ -52,21 +52,29 @@ class MakeHtml extends Command
         //
         $type = $this->argument('type');
         $typeid = $this->argument('typeid');
-        if($type == 'list'){
-            if($typeid === null) {
+        if ($type == 'list') {
+            if ($typeid === null) {
                 $this->error('生成栏目内容必须输入typeid!');
                 exit;
             }
             $this->makeLanmu($typeid);
-        }elseif ($type == 'index') {
+        } elseif ($type == 'index') {
             $this->makeIndex();
-        }elseif ($type == 'update'){
+        } elseif ($type == 'update') {
             //update电视剧更新集数的时候使用
-            if($typeid === null){
+            if ($typeid === null) {
                 $this->error('有更新数据,但你没有传入typeid,不能正确执行!');
                 exit;
             }
             $this->dedeDownLinkUpdate($typeid);
+        } elseif ($type == 'arc') {
+            if ($typeid === null) {
+                $this->error('生成内容页必须输入typeid!');
+                exit;
+            }
+            $startaid = $this->argument('start_aid');
+            $endaid = $this->argument('end_aid');
+            $this->makeArc($typeid, $startaid, $endaid);
         }
     }
 
@@ -77,8 +85,8 @@ class MakeHtml extends Command
     {
         $url = config('qiniu.qiniu_data.dede_url') . 'makehtml_list_action.php?typeid=' . $typeId . '&maxpagesize=50&upnext=1';
         //dd($url);
-        $rest = $this->dedeLogin(config('qiniu.qiniu_data.dede_url'). 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
-        if($rest) {
+        $rest = $this->dedeLogin(config('qiniu.qiniu_data.dede_url') . 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
+        if ($rest) {
             $this->curl->add()
                 ->opt_targetURL($url)
                 ->opt_sendHeader('cookie', $this->cookie)
@@ -99,9 +107,9 @@ class MakeHtml extends Command
     public function makeIndex()
     {
         $url = config('qiniu.qiniu_data.dede_url') . 'makehtml_homepage.php';
-        $rest = $this->dedeLogin(config('qiniu.qiniu_data.dede_url'). 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
+        $rest = $this->dedeLogin(config('qiniu.qiniu_data.dede_url') . 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
 
-        if($rest) {
+        if ($rest) {
             $this->curl->add()
                 ->opt_targetURL($url)
                 ->opt_sendHeader('cookie', $this->cookie)
@@ -125,6 +133,33 @@ class MakeHtml extends Command
 
 
     /**
+     * 更新内容页
+     * @param $aid
+     */
+    public function makeArc($typeid, $startaid, $endaid)
+    {
+        $num = $endaid - $startaid + 1;
+        $url = config('qiniu.qiniu_data.dede_url') . 'makehtml_archives_action.php?typeid=' . $typeid . '&startid=' . $startaid . '&endid=' . $endaid . '&pagesize=' . $num;
+
+        $rest = $this->dedeLogin(config('qiniu.qiniu_data.dede_url') . 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
+        if ($rest) {
+            $this->curl->add()
+                ->opt_targetURL($url)
+                ->opt_sendHeader('cookie', $this->cookie)
+                ->done('get');
+            $this->curl->run();
+            $content = $this->curl->getAll();
+            if (mb_strpos($content['body'], '完成创建文件', 0, 'utf-8') !== false) {
+                $this->info("{$startaid} -- {$endaid} arc make success !");
+            } else {
+                $this->error("{$startaid} -- {$endaid} arc make fail !");
+            }
+        }
+
+    }
+
+
+    /**
      * 将更新的数据替换到dede后台
      */
     public function dedeDownLinkUpdate($typeId)
@@ -143,7 +178,7 @@ class MakeHtml extends Command
             $this->info("{$key}/{$tot} id is {$value->id}");
             //echo $value->down_link."\n";
             //先登录
-            $rest = $this->dedeLogin(config('qiniu.qiniu_data.dede_url'). 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
+            $rest = $this->dedeLogin(config('qiniu.qiniu_data.dede_url') . 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
 
             if ($rest) {
                 $this->curl->add()
@@ -155,9 +190,14 @@ class MakeHtml extends Command
                     ->done('post');
                 $this->curl->run();
                 $content = $this->curl->getAll();
-                $body = explode("\r\n\r\n", $content['body'], 2);
-                if (isset($body[1]) && $body[1] == 'update ok') {
+                $body = explode("\r\n\r\n",$content['body'],2);
+                if (stripos($body[1], 'update ok') !== false) {
                     $isUpdate = true;
+                    //自动更新内容页,得到更新的文章id
+                    if (preg_match('/\d+/', $body[1], $matchs)) {
+                        $aid = $matchs[0];
+                        $this->makeArc($typeId, $aid, $aid);
+                    }
                     //更新数据库is_update
                     $this->info("dede down_link update {$value->title} update ok !");
                 } else {

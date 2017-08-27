@@ -194,7 +194,7 @@ trait NewsY3600
     public function getConSaveArr($url)
     {
         $content = QueryList::Query($url,array(
-            'con' => array('#article','text','img -.content_head -.editor -script'),
+            'con' => array('#article','text','img -.content_head -.editor -script -.show_author'),
         ))->getData(function ($item){
             $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/is','/height\s*=\s*[\'"](.*?)[\'"]/is');
             $replace = array('','');

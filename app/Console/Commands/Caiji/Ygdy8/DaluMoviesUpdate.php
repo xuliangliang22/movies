@@ -4,13 +4,11 @@ namespace App\Console\Commands\Caiji\Ygdy8;
 
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
-use App\Console\Commands\Mytraits\Douban;
 use App\Console\Commands\Mytraits\DedeLogin;
 
 class DaluMoviesUpdate extends Command
 {
     use Ygdy8;
-    use Douban;
     use DedeLogin;
     /**
      * The name and signature of the console command.

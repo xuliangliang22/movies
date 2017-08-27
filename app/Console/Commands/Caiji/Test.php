@@ -39,8 +39,9 @@ class Test extends Command
     public function handle()
     {
         //
-        return 1;
-
+        $str = '123 abcd ef';
+        preg_match('/\d+/',$str,$matchs);
+        print_r($matchs);
     }
 
 }

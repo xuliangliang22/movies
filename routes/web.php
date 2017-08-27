@@ -19,7 +19,7 @@ Route::get('/test', function () {
     //参数不需按照顺序排列
 //    Artisan::call('caiji:ygdy8_rhantvs_update',['page_start'=>1,'type_id'=>18,'page_tot'=>1,'--queue' => 'list']);
     $rest = Artisan::call('caiji:test');
-    echo $rest;
+//    echo $rest;
 });
 
 

@@ -7,11 +7,10 @@
  */
 namespace App\Console\Commands\Mytraits;
 
-use DiDom\Query;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
 
-trait Tv2017
+trait Duoduo
 {
     public $curl;
     public $listInfo;
@@ -33,15 +32,13 @@ trait Tv2017
     public function movieList($start, $pageTot, $baseListUrl, $isNew = false)
     {
         try {
+            dd($baseListUrl);
 
             $url = substr($baseListUrl, 0, strrpos($baseListUrl, '.'));
 
             for ($i = $start; $i <= $pageTot; $i++) {
                 $this->listInfo = $i . '-' . $pageTot . '-' . $baseListUrl . '-' . $isNew;
-                //cli
-                if(config('qiniu.qiniu_data.is_cli')) {
-                    $this->info("this is page {$i}");
-                }
+                //$this->info("this is page {$i}");
                 if ($i == 1) {
                     $listUrl = $url . '.html';
                 } else {
@@ -78,15 +75,9 @@ trait Tv2017
 
                     if ($rs) {
                         $this->listNum++;
-                        //cli
-                        if(config('qiniu.qiniu_data.is_cli')) {
-                            $this->info($value['title'] . ' list ' . $isNewType . ' success');
-                        }
+                        //$this->info($value['title'] . ' list ' . $isNewType . ' success');
                     } else {
-                        //cli
-                        if(config('qiniu.qiniu_data.is_cli')) {
-                            $this->info($value['title'] . ' list ' . $isNewType . ' fail');
-                        }
+                        //$this->info($value['title'] . ' list ' . $isNewType . ' fail');
                     }
                 }
             }
@@ -147,54 +138,38 @@ trait Tv2017
 
                 foreach ($arc as $key => $value) {
                     $this->aid = $value->id;
-                    //cli
-                    if(config('qiniu.qiniu_data.is_cli')) {
-                        $this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
-                    }
+                    //$this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
 
                     //得到保存的数组
+//                    $conSaveArr = $this->getConSaveArr($value->con_url);
                     $conSaveArr = $this->getConSaveArr($value->con_url);
                     if (!$conSaveArr) {
-                        DB::connection($this->dbName)->table($this->tableName)->where('id', $this->aid)->delete();
+                        DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
                         continue;
                     }
                     $conSaveArr = implode(',', $conSaveArr);
-                    //cli
-                    if(config('qiniu.qiniu_data.is_cli')) {
-                        echo $conSaveArr . "\n";
-                    }
+//                    dd($conSaveArr);
+//                    print_r($conSaveArr) . "\n";
 
                     $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['down_link' => $conSaveArr]);
                     if ($rest) {
                         $this->contentNum++;
                         DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
-
-                        //cli
-                        if(config('qiniu.qiniu_data.is_cli')) {
-                            $this->info('save con success');
-                        }
+                        //$this->info('save con success');
                     } else {
-                        //cli
-                        if(config('qiniu.qiniu_data.is_cli')) {
-                            $this->error('save con fail');
-                        }
+                        //$this->error('save con fail');
                     }
                 }
             } while ($tot > 0);
         } catch (\ErrorException $e) {
             $this->info('get content error exception ' . $e->getMessage());
-            DB::connection($this->dbName)->table($this->tableName)->where('id', $this->aid)->delete();
             $this->getContent($this->aid);
         } catch (\Exception $e) {
             $this->info('get content exception ' . $e->getMessage());
-            DB::connection($this->dbName)->table($this->tableName)->where('id', $this->aid)->delete();
             $this->getContent($this->aid);
         }
-        //电视剧需要更新,还要再添加一个字段,内容页更新结束
-        //cli
-        if(config('qiniu.qiniu_data.is_cli')) {
-            $this->info('save con end');
-        }
+        //电视剧需要更新,还要再添加一个字段
+        //$this->info('save con end');
         $this->aid = 0;
         //删除下载链接为空的数据
         DB::connection($this->dbName)->table($this->tableName)->whereNull('down_link')->delete();

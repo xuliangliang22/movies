@@ -76,7 +76,8 @@ class Y3600Update extends Command
         $url = 'http://www.y3600.com/news/index.html';
         //得到这条命令
         if($this->isCommandLogs === true) {
-            $command = date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
+            $command = "=========================================\n";
+            $command .= date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
         //得到所有的列表页

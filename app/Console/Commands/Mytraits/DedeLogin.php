@@ -26,7 +26,6 @@ trait DedeLogin
             $this->cookie = file_get_contents($cookieFile);
             return true;
         }
-//        dd($this->cookie);
 
         // 获取 PHPSEESION
         $headerStr = $this->getCurl($loginUrl);
@@ -40,6 +39,10 @@ trait DedeLogin
         if (strpos($headerStr, '成功登录') !== false) {
             //将数据提交到后台
             $this->info('login ok');
+            if(isset($this->isCommandLogs) === true && $this->isCommandLogs === true) {
+                $command = "login ok!\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
             $this->cookie .= $this->parseCookie($headerStr);
             $is_login = true;
         }
@@ -73,7 +76,6 @@ trait DedeLogin
         }
 
         $info = curl_exec($ch);
-//        dd($info);
         curl_close($ch);
         return $info;
     }
