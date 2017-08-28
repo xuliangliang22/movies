@@ -69,7 +69,7 @@ trait Ygdy8
                                 continue;
                             }
                             //更新这样记录的下载链接,将is_con=-1,down_link = '',is_update=-1//default 0
-                            $rs = DB::connection($this->dbName)->table($this->tableName)->where('id', $rest->id)->update(['down_link' => '', 'is_con' => -1, 'is_update' => -1]);
+                            $rs = DB::connection($this->dbName)->table($this->tableName)->where('id', $rest->id)->update(['down_link' => '','m_time'=>$value['m_time'] ,'is_con' => -1, 'is_update' => -1]);
 
                         } else {
                             continue;

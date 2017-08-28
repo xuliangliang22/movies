@@ -190,7 +190,11 @@ class MakeHtml extends Command
                     ->done('post');
                 $this->curl->run();
                 $content = $this->curl->getAll();
+//                print_r($content);
                 $body = explode("\r\n\r\n",$content['body'],2);
+                if(isset($body[1]) === false){
+                    $body[1] = $content['body'];
+                }
                 if (stripos($body[1], 'update ok') !== false) {
                     $isUpdate = true;
                     //自动更新内容页,得到更新的文章id

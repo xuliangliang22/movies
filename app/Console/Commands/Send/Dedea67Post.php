@@ -205,7 +205,6 @@ class Dedea67Post extends Command
                 $data = array_merge($dede_data, $rel_data);
 //                dd($data);
                 $rest = $this->getCurl($addUrl, 'post', $data);
-//                dd($rest);
                 if (stripos($rest, '成功发布文') !== false) {
                     $isSend = true;
                     //成功提交后更新is_post

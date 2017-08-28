@@ -155,9 +155,8 @@ class RhanTvsUpdate extends Command
             //缩略图
             $this->callSilent('xiazai:imgdownygdy8', ['type' => 'litpic', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
             //百度图片
-            $this->callSilent('caiji:baidulitpic', ['qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => '电视剧']);
+            $this->callSilent('caiji:baidulitpic', ['db_name'=>$this->dbName,'table_name'=>$this->tableName,'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => '电视剧']);
 
-            //logs
             echo "图片采集完成! \n";
             if ($this->isCommandLogs === true) {
                 $command = "图片采集完成! \n";
@@ -177,10 +176,10 @@ class RhanTvsUpdate extends Command
         if ($queueName === null || $queueName == 'dede') {
             //node格式化下载链接
             $this->nodeDownLink();
-            //将更新数据提交到dede后台,直接替换数据库
-            $this->callSilent('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
             //将新添加数据提交到dede后台 is_post = -1
             $this->callSilent('send:dedea67post', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'channel_id' => $this->channelId, 'typeid' => $this->typeId]);
+            //将更新数据提交到dede后台,直接替换数据库
+            $this->callSilent('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
             if ($isUpdate || $isSend) {
                 //更新列表页
                 $this->callSilent('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
