@@ -72,7 +72,7 @@ class QiniuImgsUp extends Command
         }
         foreach ($files as $fkey => $file) {
             $this->info("{$fkey}/{$tot}");
-            $filePath = $localDir . DIRECTORY_SEPARATOR . $file;
+            $filePath = rtrim($localDir,'/') . '/' . $file;
             $key = trim($qiniuDir, '/') . '/' . $file;
 
             if ($file === '.' || $file === '..') {

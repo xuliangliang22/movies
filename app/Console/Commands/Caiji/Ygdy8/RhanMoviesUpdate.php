@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
 
-class DaluMoviesUpdate extends Command
+class RhanMoviesUpdate extends Command
 {
     use Ygdy8;
     use DedeLogin;
@@ -15,14 +15,14 @@ class DaluMoviesUpdate extends Command
      *
      * @var string
      */
-    protected $signature = 'caiji:ygdy8_dalumovies_update {page_start}{page_tot}{type_id}{aid?} {--queue=}';
+    protected $signature = 'caiji:ygdy8_rhanmovies_update {page_start}{page_tot}{type_id}{aid?} {--queue=}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '更新阳光电影8的大陆电影信息';
+    protected $description = '更新阳光电影8的日韩电影信息';
 
     //库名与表名
     public $dbName;
@@ -77,12 +77,12 @@ class DaluMoviesUpdate extends Command
         $aid = empty($this->argument('aid')) ? 0 : $this->argument('aid');
         $this->aid = $aid;
 
-        // max_page_tot = 93
-        $url = 'http://www.ygdy8.com/html/gndy/china/list_4_2.html';
+        // max_page_tot = 27 typeid = 14
+        $url = 'http://www.ygdy8.net/html/gndy/rihan/list_6_2.html';
         //得到这条命令logs
         if ($this->isCommandLogs === true) {
             $command = "=========================================\n";
-            $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_dalumovies_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
+            $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_rhanmovies_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
         $this->MovieInit();

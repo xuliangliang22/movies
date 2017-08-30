@@ -15,7 +15,7 @@ class OumeiTvsUpdate extends Command
      *
      * @var string
      */
-    protected $signature = 'caiji:ygdy8_oumeitvs_update {aid?}';
+    protected $signature = 'caiji:ygdy8_oumeitvs_update {page_start}{page_tot}{type_id}{aid?} {--queue=}';
 
     /**
      * The console command description.
@@ -34,8 +34,14 @@ class OumeiTvsUpdate extends Command
 
     //出错的时候调用大于这个aid的数据
     public $aid;
-    public $typeId = 19;
+    public $typeId;
     public $channelId = 17;
+    public $qiniuDir = 'tvs/imgs';
+
+    //日志保存路径
+    public $commandLogsFile;
+    //是否开启日志
+    public $isCommandLogs;
 
 
     /**
@@ -48,6 +54,9 @@ class OumeiTvsUpdate extends Command
         parent::__construct();
         $this->dbName = config('qiniu.qiniu_data.db_name');
         $this->tableName = config('qiniu.qiniu_data.table_name');
+
+        $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
+        $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
     }
 
     /**
@@ -58,63 +67,167 @@ class OumeiTvsUpdate extends Command
     public function handle()
     {
         global $isSend;
+        global $isUpdate;
+
+        $queueName = $this->option('queue');
+        $pageStart = $this->argument('page_start');
+        $pageTot = $this->argument('page_tot');
+        $this->typeId = $this->argument('type_id');
+
         $aid = empty($this->argument('aid')) ? 0 : $this->argument('aid');
         $this->aid = $aid;
 
+        // max_page_tot = 13 typeid = 19
         $url = 'http://www.ygdy8.net/html/tv/oumeitv/list_9_2.html';
-        $pageStart = 1;
-        $pageTot = 13;
-        //下载图片
-        $qiniuDir = 'tvs/imgs';
-        //得到所有的列表页
-        echo "update start\n";
-        echo "====================================\n";
-        echo "list and content and douban begin ! \n";
+        //得到这条命令logs
+        if ($this->isCommandLogs === true) {
+            $command = "=========================================\n";
+            $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_oumeitvs_update  {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
         $this->MovieInit();
-        //true代表跟踪采集
-        $this->movieList($pageStart,$pageTot, $url, true);
-        $this->getContent(true);
-//        dd(222);
-        $this->aid = $aid;
-        $this->perfectContent();
-        echo "list and content and douban end ! \n";
-        echo "====================================\n\n";
 
-        echo "====================================\n";
-        echo "img down begin ! \n";
-        //内容页图片
-        $this->call('xiazai:imgdownygdy8', ['type' => 'body', 'qiniu_dir' => $qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
-        //缩略图
-        $this->call('xiazai:imgdownygdy8', ['type' => 'litpic', 'qiniu_dir' => $qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
-        //百度图片
-        $this->call('caiji:baidulitpic', ['qiniu_dir' => $qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => '电视剧']);
-        echo "img down end ! \n";
-        echo "====================================\n\n";
-//
-        echo "====================================\n";
-        echo "update dede admin begin ! \n";
-        //node格式化下载链接
-        $this->nodeDownLink();
-        //将更新数据提交到dede后台,直接替换数据库
-        $isUpdate = $this->dedeDownLinkUpdate();
-        //将新添加数据提交到dede后台 is_post = -1
-        $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
-        if ($isUpdate || $isSend) {
-            //更新列表页
-            $this->makeLanmu();
+        //得到所有的列表页
+        //logs
+        if ($this->isCommandLogs === true) {
+            $command = "开始采集列表页\n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
-        echo "update dede admin end ! \n";
-        echo "====================================\n\n";
 
-        echo "====================================\n";
-        echo "send to qiniu imgs begin !\n";
-        //只有新增了数据才会去上传图片
-        if ($isSend) {
-            //图片上传
-            $this->call('send:qiniuimgs', ['local_dir' => config('qiniu.qiniu_data.www_root') . '/' . date('ymd') . $this->typeId, 'qiniu_dir' => trim($qiniuDir,'/') .'/'. date('ymd') .$this->typeId. '/']);
+        if ($queueName === null || $queueName == 'list') {
+            $this->movieList($pageStart, $pageTot, $url, true);
+            //logs
+            echo "列表页采集完成,一共 {$this->listNum} 条! \n";
+            if ($this->isCommandLogs === true) {
+                $command = "列表页采集完成,一共 {$this->listNum} 条! \n\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+            if ($queueName == 'list') {
+                exit;
+            }
         }
-        echo "send to qiniu imgs end !\n";
-        echo "====================================\n\n";
+        if ($queueName == 'list' && $this->listNum < 1) {
+            //logs
+            if ($this->isCommandLogs === true) {
+                $command = "列表页为空,结束! \n\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+            exit;
+        }
+
+        //内容页
+        //logs
+        if ($this->isCommandLogs === true) {
+            $command = "开始采集内容页 \n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
+
+        if ($queueName === null || $queueName == 'content') {
+            $this->getContent(true);
+            $this->aid = $aid;
+            //豆瓣数据填充
+            $this->callSilent('caiji:douban', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
+            $this->callSilent('caiji:baike', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
+
+            //logs
+            echo "内容页采集完成,一共 {$this->contentNum} 条! \n";
+            if ($this->isCommandLogs === true) {
+                $command = "内容页采集完成,一共 {$this->contentNum} 条! \n\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+
+            if ($queueName == 'content') {
+                exit;
+            }
+        }
+
+        //下载图片
+        //logs
+        if ($this->isCommandLogs === true) {
+            $command = "开始下载图片 \n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
+
+        if ($queueName === null || $queueName == 'pic') {
+            //内容页图片
+            $this->callSilent('xiazai:imgdownygdy8', ['type' => 'body', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
+            //缩略图
+            $this->callSilent('xiazai:imgdownygdy8', ['type' => 'litpic', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
+            //百度图片
+            $this->callSilent('caiji:baidulitpic', ['db_name'=>$this->dbName,'table_name'=>$this->tableName,'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => '电视剧']);
+
+            echo "图片采集完成! \n";
+            if ($this->isCommandLogs === true) {
+                $command = "图片采集完成! \n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+            if ($queueName == 'pic') {
+                exit;
+            }
+        }
+
+        //上线部署
+        //logs
+        if ($this->isCommandLogs === true) {
+            $command = "将新添加数据提交到dede后台 \n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
+        if ($queueName === null || $queueName == 'dede') {
+            //node格式化下载链接
+            $this->nodeDownLink();
+            //将新添加数据提交到dede后台 is_post = -1
+            $this->callSilent('send:dedea67post', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'channel_id' => $this->channelId, 'typeid' => $this->typeId]);
+            //将更新数据提交到dede后台,直接替换数据库
+            $this->callSilent('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
+            if ($isUpdate || $isSend) {
+                //更新列表页
+                $this->callSilent('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
+            }
+            //logs
+            echo "上线部署完成! \n";
+            if ($this->isCommandLogs === true) {
+                $command = "上线部署完成! \n\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+            if ($queueName == 'dede') {
+                exit;
+            }
+        }
+
+        //上传图片
+        //logs
+        if ($this->isCommandLogs === true) {
+            $command = "开始上传图片 qiniu\n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
+
+        if ($queueName === null || $queueName == 'cdn') {
+            //只有新增了数据才会去上传图片
+            if ($queueName == 'cdn') {
+                $isSend = true;
+            }
+            $localDir = '';
+            if ($isSend) {
+                //图片上传
+                $localDir = rtrim(config('qiniu.qiniu_data.www_root'),'/') . '/' . date('ymd') . $this->typeId;
+                $this->callSilent('send:qiniuimgs', ['local_dir' => $localDir, 'qiniu_dir' => trim($this->qiniuDir, '/') . '/' . date('ymd') . $this->typeId . '/']);
+            }
+            //logs
+            echo "cdn传输完成,dirname {$localDir}!\n";
+            if ($this->isCommandLogs === true) {
+                $command = "cdn传输完成,dirname {$localDir}!\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+            if ($queueName == 'cdn') {
+                exit;
+            }
+        }
+        //logs
+        echo "内容更新完成! \n";
+        if ($this->isCommandLogs === true) {
+            $command = "内容更新完成! \n\n\n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }
     }
 
 

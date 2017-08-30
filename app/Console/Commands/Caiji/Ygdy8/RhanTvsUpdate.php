@@ -78,12 +78,12 @@ class RhanTvsUpdate extends Command
         $aid = empty($this->argument('aid')) ? 0 : $this->argument('aid');
         $this->aid = $aid;
 
-        // max_page_tot = 35
+        // max_page_tot = 35 typeid = 18
         $url = 'http://www.ygdy8.net/html/tv/rihantv/list_8_2.html';
         //得到这条命令logs
         if ($this->isCommandLogs === true) {
             $command = "=========================================\n";
-            $command .= date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
+            $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_rhantvs_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
         $this->MovieInit();
@@ -155,7 +155,7 @@ class RhanTvsUpdate extends Command
             //缩略图
             $this->callSilent('xiazai:imgdownygdy8', ['type' => 'litpic', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
             //百度图片
-            $this->callSilent('caiji:baidulitpic', ['db_name'=>$this->dbName,'table_name'=>$this->tableName,'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => '电视剧']);
+            $this->callSilent('caiji:baidulitpic', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => '电视剧']);
 
             echo "图片采集完成! \n";
             if ($this->isCommandLogs === true) {
@@ -210,7 +210,7 @@ class RhanTvsUpdate extends Command
             $localDir = '';
             if ($isSend) {
                 //图片上传
-                $localDir = config('qiniu.qiniu_data.www_root') . '/' . date('ymd') . $this->typeId;
+                $localDir = rtrim(config('qiniu.qiniu_data.www_root'), '/') . '/' . date('ymd') . $this->typeId;
                 $this->callSilent('send:qiniuimgs', ['local_dir' => $localDir, 'qiniu_dir' => trim($this->qiniuDir, '/') . '/' . date('ymd') . $this->typeId . '/']);
             }
             //logs

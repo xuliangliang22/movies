@@ -86,7 +86,6 @@ class ImgDownYgdy8 extends Command
 
     public function bodyImg()
     {
-
         do {
             $addonarchives = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_body', -1)->orderBy('id')->take(10)->get();
 

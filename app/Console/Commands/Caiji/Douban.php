@@ -66,71 +66,54 @@ class Douban extends Command
                     break;
                 }
 
-                $updateArr = [];
                 foreach ($movies as $key => $row) {
                     $aid = $row->id;
                     //cli
                     $this->info("this is id {$row->id} title {$row->title}");
                     $rest = $this->getList($row->title);
+//                    dd($rest);
                     if (!$rest) {
                         continue;
                     }
 
+                    $updateArr = [];
                     foreach ($rest as $k => $v) {
                         switch ($k) {
                             case 'grade':
-                                if ((empty($v) || $v > 10) && isset($douban_data['grade'])) {
-                                    $updateArr['grade'] = $douban_data['grade'];
-                                }
+                                $updateArr['grade'] = trim($v);
                                 break;
                             case 'litpic':
-                                if (empty($v) && isset($douban_data['litpic'])) {
-                                    $updateArr['litpic'] = $douban_data['litpic'];
-                                }
+                                $updateArr['litpic'] = trim($v);
                                 break;
                             case 'body':
-                                if (empty($v) && isset($douban_data['body'])) {
-                                    $body = $douban_data['body'];
-                                    if (mb_strlen($body) > 250) {
-                                        $body = mb_substr($body, 0, 250) . '....';
+                                if (mb_strlen($v) > 250) {
+                                    $v = mb_substr($v, 0, 225,'utf-8') . '....';
+                                }
+                                $updateArr['body'] = trim($v);
+                                break;
+                            case 'html':
+                                foreach ($v as $key=>$value){
+                                    switch ($key)
+                                    {
+                                        case 'director':
+                                            $updateArr['director'] = trim($value);
+                                            break;
+                                        case 'actors':
+                                            $updateArr['actors'] = trim($value);
+                                            break;
+                                        case 'year':
+                                            $updateArr['myear'] = trim($value);
+                                            break;
+                                        case 'language':
+                                            $updateArr['lan_guage'] = trim($value);
+                                            break;
+                                        case 'types':
+                                            $updateArr['types'] = trim($value);
+                                            break;
+                                        case 'episode_nums':
+                                            $updateArr['episode_nums'] = trim($value);
+                                            break;
                                     }
-                                    $updateArr['body'] = $body;
-                                }
-                                break;
-                            case 'director':
-                                if (empty($v) && isset($douban_data['html']['director'])) {
-                                    $updateArr['director'] = $douban_data['html']['director'];
-                                }
-                                break;
-                            case 'actors':
-                                if (empty($v) && isset($douban_data['html']['actors'])) {
-                                    $actors = $douban_data['html']['actors'];
-                                    if (mb_strlen($actors, 'utf-8') > 250) {
-                                        $actors = explode(',', $actors);
-                                        $actors = array_slice($actors, 0, 5);
-                                        $actors = implode(',', $actors);
-                                    }
-                                    $updateArr['actors'] = $actors;
-                                }
-                                break;
-                            case 'myear':
-                                if ((empty($v) || preg_match('/^\d{4}$/', $v) === 0) && isset($douban_data['html']['year'])) {
-                                    $updateArr['myear'] = $douban_data['html']['year'];
-                                }
-                                break;
-                            case 'lan_guage':
-                                if (empty($v) && isset($douban_data['html']['language'])) {
-                                    $updateArr['lan_guage'] = $douban_data['html']['language'];
-                                }
-                                break;
-                            case 'types':
-                                if (empty($v) && isset($douban_data['html']['types'])) {
-                                    $updateArr['types'] = $douban_data['html']['types'];
-                                }
-                                break;
-                            case 'episode_nums':
-                                if (empty($v) && isset($douban_data['html']['episode_nums'])) {
-                                    $updateArr['episode_nums'] = intval($douban_data['html']['episode_nums']);
                                 }
                                 break;
                         }
@@ -148,9 +131,8 @@ class Douban extends Command
                             //cli
                             $this->error('perfect content update fail');
                         }
-                    } else {
-                        DB::connection($this->dbName)->table($this->tableName)->where('id', $row->id)->update(['is_douban' => 0]);
                     }
+                    usleep(500);
                 }
             } while ($tot > 0);
         } catch (\ErrorException $e) {
@@ -270,6 +252,15 @@ class Douban extends Command
                         }
                         $rest['year'] = $vret;
                         break;
+                    case '上映日期':
+                        $marest = preg_match('/\d{4}/', $vret, $matchs);
+                        if ($marest === 1) {
+                            $vret = $matchs[0];
+                        } else {
+                            $vret = '';
+                        }
+                        $rest['year'] = $vret;
+                        break;
                     case '集数':
                         $rest['episode_nums'] = $vret;
                         break;
@@ -279,7 +270,6 @@ class Douban extends Command
             $item['body'] = strtr($item['body'], array("\r" => '', "\n" => '', '©豆瓣' => '', '豆瓣' => '', ' ' => ''));
             return $item;
         });
-//        dd($douban_data);
         if (is_array($douban_data)) {
             $douban_data = $douban_data[0];
         }

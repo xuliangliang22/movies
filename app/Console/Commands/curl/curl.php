@@ -74,6 +74,7 @@ class curl
      */
     public function __construct($default = array())
     {
+        //线程管理实例
         $this->threadManager = new curlThreadManager();
 
         if (isset($default['header']) === true) {
@@ -86,6 +87,7 @@ class curl
                 $default['header'][implode('-', $name)] = $value;
             }
         }
+        //curl本置实例
         $this->run = new curlRun($default);
     }
 

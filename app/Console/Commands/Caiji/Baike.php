@@ -48,7 +48,7 @@ class Baike extends Command
         $take = 10;
 
         do {
-            $movies = DB::connection($dbName)->table($tableName)->where('id', '>', $minId)->where('typeid', $typeId)->whereNull('body')->take($take)->get();
+            $movies = DB::connection($dbName)->table($tableName)->where('id', '>', $minId)->where('typeid', $typeId)->where('is_douban',-1)->take($take)->get();
             $tot = count($movies);
             if ($tot < 1) {
                 //cli
@@ -59,6 +59,8 @@ class Baike extends Command
             foreach ($movies as $key=>$value){
                 $minId = $value->id;
                 $this->info("{$key}/{$tot} -- {$value->title}");
+                //
+                DB::connection($dbName)->table($tableName)->where('id',$value->id)->update(['is_douban'=>0]);
 
                 $url = 'https://baike.baidu.com/search?word=' . urlencode($value->title) . '&pn=0&rn=0&enc=utf8';
                 $data = QueryList::Query($url,array(

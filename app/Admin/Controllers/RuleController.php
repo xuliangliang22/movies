@@ -80,7 +80,14 @@ class RuleController extends Controller
             $grid->column('site_url','网站链接地址');
 
             //分类名称
-            $grid->arctypes()->dede_typename('所属分类');
+            $grid->arctypes()->id('所属分类')->display(function ($item){
+                //得到其父类id
+                $parentId = Arctype::find($item);
+                $topName = Arctype::find($parentId->top_id);
+                $topName = $topName->dede_typename;
+                $typeName = $parentId->dede_typename;
+                return "<span class='label label-default'>$topName -- $typeName -- <i style='color: #f00'>{$parentId->dede_id}</i></span>";
+            });
 
             //命令
             $grid->column('rule_command','命令');

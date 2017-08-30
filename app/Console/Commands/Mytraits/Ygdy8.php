@@ -40,7 +40,7 @@ trait Ygdy8
             }
 
             //取出最大的时间
-            $maxTime = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->max('m_time');
+            $maxTime = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_post',0)->max('m_time');
 
             for ($i = $start; $i <= $pageTot; $i++) {
                 $this->listInfo = $i.'-'.$pageTot.'-'.$baseListUrl.'-'.$isNew;
@@ -213,7 +213,7 @@ trait Ygdy8
         }
         $this->aid = 0;
         //删除下载链接为空的数据
-        DB::connection($this->dbName)->table($this->tableName)->whereNull('down_link')->delete();
+        DB::connection($this->dbName)->table($this->tableName)->whereNull('down_link')->orWhere('down_link','')->delete();
     }
 
 
@@ -231,18 +231,24 @@ trait Ygdy8
      */
     public function getConSaveArr($url)
     {
-        $content = QueryList::Query($url, array(
+        $this->curl->add()->opt_targetURL($url)->done();
+        $this->curl->run();
+        $data = $this->curl->getAll();
+        $data = $data['body'];
+        $data = mb_convert_encoding($data,'utf-8','gbk,gb2312,big5');
+
+        $content = QueryList::Query($data, array(
             'litpic' => array('img:first()', 'src'),
-        ), '.co_content8','utf-8','gbk',true)->getData(function ($item) {
+        ), '.co_content8')->getData(function ($item) {
             if (strlen($item['litpic']) > 250) {
                 $item['litpic'] = '';
             }
             return $item['litpic'];
         });
 
-        $content2 = QueryList::Query($url,array(
-            'down_link'=>array('','text'),
-        ),'#Zoom table a','utf-8','gbk',true)->getData(function ($item){
+        $content2 = QueryList::Query($data,array(
+            'down_link'=>array('','href'),
+        ),'#Zoom table a')->getData(function ($item){
             return $item['down_link'];
         });
 
