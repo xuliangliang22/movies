@@ -91,6 +91,10 @@ class JindianUpdate extends Command
 
         if($queueName == 'all' || $queueName == 'list') {
             $this->movieList($pageStart,$pageTot,$url,true);
+
+            if(empty($this->listNum)){
+                $this->listNum = 0;
+            }
             echo "列表页采集完成,一共 {$this->listNum} 条! \n";
             //logs
             if($this->isCommandLogs === true) {
@@ -101,7 +105,7 @@ class JindianUpdate extends Command
                 exit;
             }
         }
-        if($queueName == 'list' && $this->listNum < 1){
+        if($this->listNum < 1){
             echo "列表页为空,结束! \n";
             //logs
             if($this->isCommandLogs === true) {

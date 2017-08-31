@@ -94,8 +94,12 @@ class OumeiMoviesUpdate extends Command
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
 
-        if ($queueName === null || $queueName == 'list') {
+        if ($queueName === 'all' || $queueName == 'list') {
             $this->movieList($pageStart, $pageTot, $url, true);
+
+            if(empty($this->listNum)){
+                $this->listNum = 0;
+            }
             //logs
             echo "列表页采集完成,一共 {$this->listNum} 条! \n";
             if ($this->isCommandLogs === true) {
@@ -122,19 +126,21 @@ class OumeiMoviesUpdate extends Command
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
 
-        if ($queueName === null || $queueName == 'content') {
+        if ($queueName === 'all' || $queueName == 'content') {
             $this->getContent(true);
+
+            //logs
+            echo "内容页采集完成,一共 {$this->contentNum} 条! \n";
+            if ($this->isCommandLogs === true) {
+                $command = "内容页采集完成,一共 {$this->contentNum} 条! \n";
+                $command .= "开始豆瓣与百科!\n\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+
             $this->aid = $aid;
             //豆瓣数据填充
             $this->callSilent('caiji:douban', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
             $this->callSilent('caiji:baike', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
-//
-            //logs
-            echo "内容页采集完成,一共 {$this->contentNum} 条! \n";
-            if ($this->isCommandLogs === true) {
-                $command = "内容页采集完成,一共 {$this->contentNum} 条! \n\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
 
             if ($queueName == 'content') {
                 exit;
@@ -148,7 +154,7 @@ class OumeiMoviesUpdate extends Command
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
 
-        if ($queueName === null || $queueName == 'pic') {
+        if ($queueName === 'all' || $queueName == 'pic') {
             //内容页图片
             $this->callSilent('xiazai:imgdownygdy8', ['type' => 'body', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
             //缩略图
@@ -172,8 +178,13 @@ class OumeiMoviesUpdate extends Command
             $command = "将新添加数据提交到dede后台 \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
-        if ($queueName === null || $queueName == 'dede') {
+        if ($queueName === 'all' || $queueName == 'dede') {
             //node格式化下载链接
+            if ($this->isCommandLogs === true) {
+                $command = "执行node \n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+
             $this->nodeDownLink();
             //将新添加数据提交到dede后台 is_post = -1
             $this->callSilent('send:dedea67post', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'channel_id' => $this->channelId, 'typeid' => $this->typeId]);
@@ -201,7 +212,7 @@ class OumeiMoviesUpdate extends Command
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
 
-        if ($queueName === null || $queueName == 'cdn') {
+        if ($queueName === 'all' || $queueName == 'cdn') {
             //只有新增了数据才会去上传图片
             if ($queueName == 'cdn') {
                 $isSend = true;

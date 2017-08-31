@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers;
 
+use Encore\Admin\Auth\Permission;
 use Encore\Admin\Form;
 use Encore\Admin\Facades\Admin;
 use Encore\Admin\Layout\Content;
@@ -71,6 +72,8 @@ class ArctypeController extends Controller
      */
     public function edit($id)
     {
+        Permission::check('edit-arctype');
+
         return Admin::content(function (Content $content) use ($id) {
             $content->header(trans('admin::lang.menu'));
             $content->description(trans('admin::lang.edit'));
@@ -86,6 +89,8 @@ class ArctypeController extends Controller
      */
     public function form()
     {
+        Permission::check('create-arctype');
+
         return Arctype::form(function (Form $form) {
             $form->display('id', 'ID');
 

@@ -12,6 +12,7 @@
         "jaeger/querylist-ext-login": "^1.0",
         "jaeger/querylist-ext-multi": "^1.0",
         "jaeger/querylist-ext-request": "^1.0",
+        "kartik-v/bootstrap-fileinput": "^4.4",
         "laravel/framework": "5.4.*",
         "laravel/scout": "^3.0",
         "qiniu/php-sdk": "^7.1",

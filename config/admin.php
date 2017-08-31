@@ -30,7 +30,7 @@ return [
     /*
      * Laravel-admin html title.
      */
-    'title'  => 'Admin',
+    'title'  => 'll-system',
 
     /*
      * Laravel-admin auth setting.
@@ -53,7 +53,11 @@ return [
             'file'   => 'file',
         ],
 
-        'host' => 'http://localhost:8000/upload/',
+        //'host' => 'http://localhost:8000/upload/',
+
+        //===this is my modify
+        'host' => env('APP_URL').'/upload',
+        //===this is my modify
     ],
 
     /*
@@ -103,7 +107,7 @@ return [
     |               | skin-green                              |
     |---------------------------------------------------------|
      */
-    'skin'    => 'skin-blue',
+    'skin'    => 'skin-black',
 
     /*
     |---------------------------------------------------------|
@@ -119,5 +123,5 @@ return [
     /*
      * Version displayed in footer.
      */
-    'version'   => '1.0',
+//    'version'   => '1.0',
 ];

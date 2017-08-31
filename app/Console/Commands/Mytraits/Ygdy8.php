@@ -276,7 +276,12 @@ trait Ygdy8
         foreach ($isNoDownLinks as $key => $value) {
             //cli
             if(config('qiniu.qiniu_data.is_cli')) {
-                $this->info("node parse down_link {$key}/{$tot} id -- ".$value->id);
+                $this->info("node parse down_link {$key}/{$tot} id -- {$value->id}");
+            }
+            //log
+            if ($this->isCommandLogs === true) {
+                $command = "node parse down_link {$key}/{$tot} id -- $value->id\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
             }
             $url = config('qiniu.qiniu_data.node_url') . '?aid=' . $value->id . '&down_link=' . urlencode($value->down_link);
             $this->curl->runSmall($url);
@@ -284,6 +289,11 @@ trait Ygdy8
         //cli
         if(config('qiniu.qiniu_data.is_cli')) {
             $this->info("node parse down_link end");
+        }
+        //log
+        if ($this->isCommandLogs === true) {
+            $command = "node parse down_link end\n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
     }
 

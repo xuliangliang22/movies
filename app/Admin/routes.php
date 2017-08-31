@@ -21,3 +21,12 @@ Route::group([
     $router->resource('rule_run', 'RuleRunController');
 
 });
+
+Route::group([
+    'prefix'        => config('admin.prefix'),
+    'namespace'     => Admin::controllerNamespace(),
+    'middleware'    => ['web', 'admin','admin.permission:deny,editor'],
+], function (Router $router) {
+    //采集规则管理
+    $router->resource('rules', 'RuleController');
+});

@@ -88,6 +88,10 @@ class Y3600Update extends Command
         }
         if($queueName == 'all' || $queueName == 'list') {
             $this->movieList($pageStart, $pageTot, $url,true);
+
+            if(empty($this->listNum)){
+                $this->listNum = 0;
+            }
             echo "列表页采集完成,一共 {$this->listNum} 条! \n";
             if($this->isCommandLogs === true) {
                 $command = "列表页采集完成,一共 {$this->listNum} 条! \n\n";
@@ -97,7 +101,7 @@ class Y3600Update extends Command
                 exit;
             }
         }
-        if(empty($this->listNum) === false && $this->listNum < 1){
+        if($this->listNum < 1){
             echo "列表页为空,结束! \n";
             if($this->isCommandLogs === true) {
                 $command = "列表页为空,结束! \n\n";
