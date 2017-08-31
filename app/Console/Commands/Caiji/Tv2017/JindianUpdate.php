@@ -57,11 +57,7 @@ class JindianUpdate extends Command
         $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
         $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
 
-        //---------this is my modify-------------
-        if(!is_dir(public_path('command_logs'))){
-            mkdir(public_path('command_logs'),0755,true);
-        }
-        //-------------------------
+
     }
 
     /**
@@ -110,16 +106,19 @@ class JindianUpdate extends Command
             if ($queueName == 'list') {
                 exit;
             }
-        }
-        if($this->listNum < 1){
-            echo "列表页为空,结束! \n";
-            //logs
-            if($this->isCommandLogs === true) {
-                $command = "列表页为空,结束! \n\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+
+            //
+            if($this->listNum < 1){
+                echo "列表页为空,结束! \n";
+                //logs
+                if($this->isCommandLogs === true) {
+                    $command = "列表页为空,结束! \n\n";
+                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                }
+                exit;
             }
-            exit;
         }
+
 
         //内容页
         //logs

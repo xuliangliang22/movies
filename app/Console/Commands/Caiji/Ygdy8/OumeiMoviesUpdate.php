@@ -115,15 +115,17 @@ class OumeiMoviesUpdate extends Command
             if ($queueName == 'list') {
                 exit;
             }
-        }
-        if ($queueName == 'list' && $this->listNum < 1) {
-            //logs
-            if ($this->isCommandLogs === true) {
-                $command = "列表页为空,结束! \n\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            //
+            if ($this->listNum < 1) {
+                //logs
+                if ($this->isCommandLogs === true) {
+                    $command = "列表页为空,结束! \n\n";
+                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                }
+                exit;
             }
-            exit;
         }
+
 
         //内容页
         //logs
