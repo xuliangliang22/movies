@@ -27,6 +27,11 @@ class MakeHtml extends Command
     public $curl;
     public $cookie;
 
+    //日志保存路径
+    public $commandLogsFile;
+    //是否开启日志
+    public $isCommandLogs;
+
     /**
      * Create a new command instance.
      *
@@ -35,6 +40,10 @@ class MakeHtml extends Command
     public function __construct()
     {
         parent::__construct();
+        $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
+        $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
+
+
         if (empty($this->curl)) {
             $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'curl' . DIRECTORY_SEPARATOR . 'curl.php';
             require_once $path;
@@ -93,9 +102,19 @@ class MakeHtml extends Command
                 ->done('get');
             $this->curl->run();
             $content = $this->curl->getAll();
-            if (mb_strpos($content['body'], '栏目列表更新', 0, 'utf-8') !== false) {
+            if (mb_strpos($content['body'], '完成所有栏目列表更新', 0, 'utf-8') !== false) {
+                //logs
+                if ($this->isCommandLogs === true) {
+                    $command = "{$typeId}  lanmu list make success ! \n";
+                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                }
                 $this->info("{$typeId}  lanmu list make success !");
             } else {
+                //logs
+                if ($this->isCommandLogs === true) {
+                    $command = "{$typeId}  lanmu list make fail ! \n";
+                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                }
                 $this->error("{$typeId}  lanmu list make fail !");
             }
         }
