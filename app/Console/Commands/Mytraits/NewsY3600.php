@@ -57,7 +57,6 @@ trait NewsY3600
                     $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
                     if ($rest) {
                         if ($isNew === true) {
-                            $isNewType = 'update';
                             //判断时间,更新的时候不需要判断名字的重复
                             if (strtotime($maxTime) >= strtotime($value['m_time'])) {
                                 break 2;
@@ -70,7 +69,6 @@ trait NewsY3600
                         }
                     } else {
                         //不是更新的时候判断名字的重复
-                        $isNewType = 'save';
                         $listSaveArr = [
                             'title' => trim($value['title']),
                             'title_hash' => md5(trim($value['title'])),
@@ -88,9 +86,6 @@ trait NewsY3600
 
                     if ($rs) {
                         $this->listNum++;
-                        //$this->info($value['title'] . ' list ' . $isNewType . ' success');
-                    } else {
-                        //$this->info($value['title'] . ' list ' . $isNewType . ' fail');
                     }
                 }
             }
@@ -152,7 +147,6 @@ trait NewsY3600
                     //$this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
 
                     //得到保存的数组
-//                    $conSaveArr = $this->getConSaveArr($value->con_url);
                     $conSaveArr = $this->getConSaveArr($value->con_url);
                     if (!$conSaveArr) {
                         //内容不存在则删除这条记录
@@ -174,10 +168,10 @@ trait NewsY3600
             } while ($tot > 0);
         } catch (\ErrorException $e) {
             $this->info('get content error exception ' . $e->getMessage());
-            $this->getContent($this->aid);
+            $this->getContent();
         } catch (\Exception $e) {
             $this->info('get content exception ' . $e->getMessage());
-            $this->getContent($this->aid);
+            $this->getContent();
         }
         //电视剧需要更新,还要再添加一个字段
         //$this->info('save con end');

@@ -184,11 +184,9 @@ trait Tv2017
         } catch (\ErrorException $e) {
             $this->info('get content error exception ' . $e->getMessage());
             DB::connection($this->dbName)->table($this->tableName)->where('id', $this->aid)->delete();
-            $this->getContent($this->aid);
         } catch (\Exception $e) {
             $this->info('get content exception ' . $e->getMessage());
             DB::connection($this->dbName)->table($this->tableName)->where('id', $this->aid)->delete();
-            $this->getContent($this->aid);
         }
         //电视剧需要更新,还要再添加一个字段,内容页更新结束
         //cli
