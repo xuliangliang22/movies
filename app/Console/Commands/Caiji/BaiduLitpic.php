@@ -62,7 +62,6 @@ class BaiduLitpic extends Command
             $minId =0;
             $take = 100;
             do {
-//                $conArr = DB::connection($dbName)->table($tableName)->where('id', '>', $minId)->where('typeid', $typeId)->where('litpic', '')->orderBy('id', 'asc')->take($take)->get();
                 $conArr = DB::connection($dbName)->table($tableName)->where('id', '>', $minId)->where('typeid', $typeId)->where('litpic', '')->where('is_post','-1')->orderBy('id', 'asc')->take($take)->get();
                 $tot = count($conArr);
 //                dd($tot);
@@ -70,6 +69,7 @@ class BaiduLitpic extends Command
                 $factory->getSelfObj('baidupic');
                 $baiduobj = $factory->factoryObj;
 
+                //下载图片
                 $factory->getSelfObj('picdown');
                 $picdownObj = $factory->factoryObj;
 
@@ -78,6 +78,7 @@ class BaiduLitpic extends Command
                     $this->info("==============//===================\n");
                     $this->info($value->title . "\n");
                     $this->info("{$key}/{$tot} id is {$value->id}");
+                    //得到百度图片数组
                     $ret = $baiduobj->getPic($value->title . ' ' . $keyWordSuffix,array('size'=>2));
 //                    dd($ret);
                     if (empty($ret)) {

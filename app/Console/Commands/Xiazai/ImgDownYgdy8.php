@@ -71,7 +71,7 @@ class ImgDownYgdy8 extends Command
 
         $this->savePath = config('qiniu.qiniu_data.www_root') . date('ymd') . $this->typeId . '/';
         if (!is_dir($this->savePath)) {
-            mkdir($this->savePath, 0777, true);
+            mkdir($this->savePath, 0755, true);
         }
 
         $this->qiniuKey = rtrim(config('qiniu.qiniu_data.qiniu_dns'), '/') . '/' . trim($qiniuDir, '/') . '/' . date('ymd') . $this->typeId . '/';

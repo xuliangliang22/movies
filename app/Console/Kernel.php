@@ -108,20 +108,20 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
-        $schedule->command('caiji:ygdy8_dalumovies_update',['page_start'=>1,'page_tot'=>2,'type_id'=>13,'--queue'=>'all'])->daily()->withoutOverlapping();;
-        $schedule->command('caiji:ygdy8_rhanmovies_update',['page_start'=>1,'page_tot'=>2,'type_id'=>14,'--queue'=>'all'])->daily()->withoutOverlapping();;
-        $schedule->command('caiji:ygdy8_oumeimovies_update',['page_start'=>1,'page_tot'=>2,'type_id'=>15,'--queue'=>'all'])->daily()->withoutOverlapping();;
+        $schedule->command('caiji:ygdy8_dalumovies_update',['page_start'=>1,'page_tot'=>2,'type_id'=>13,'--queue'=>'all'])->weekly()->mondays()->at('00:30')->withoutOverlapping();;
+        $schedule->command('caiji:ygdy8_rhanmovies_update',['page_start'=>1,'page_tot'=>2,'type_id'=>14,'--queue'=>'all'])->weekly()->tuesdays()->at('00:30')->withoutOverlapping();;
+        $schedule->command('caiji:ygdy8_oumeimovies_update',['page_start'=>1,'page_tot'=>2,'type_id'=>15,'--queue'=>'all'])->weekly()->wednesdays()->at('00:30')->withoutOverlapping();;
 
-        $schedule->command('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>2,'type_id'=>17,'--queue'=>'all'])->daily()->withoutOverlapping();;
-        $schedule->command('caiji:ygdy8_rhantvs_update',['page_start'=>1,'page_tot'=>2,'type_id'=>18,'--queue'=>'all'])->daily()->withoutOverlapping();;
-        $schedule->command('caiji:ygdy8_oumeitvs_update',['page_start'=>1,'page_tot'=>2,'type_id'=>19,'--queue'=>'all'])->daily()->withoutOverlapping();;
+        $schedule->command('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>2,'type_id'=>17,'--queue'=>'all'])->weekly()->thursdays()->at('00:30')->withoutOverlapping();;
+        $schedule->command('caiji:ygdy8_rhantvs_update',['page_start'=>1,'page_tot'=>2,'type_id'=>18,'--queue'=>'all'])->weekly()->fridays()->at('00:30')->withoutOverlapping();;
+        $schedule->command('caiji:ygdy8_oumeitvs_update',['page_start'=>1,'page_tot'=>2,'type_id'=>19,'--queue'=>'all'])->weekly()->sundays()->at('00:30')->withoutOverlapping();;
 
         //2015tv经典
-        $schedule->command('caiji:tv2017_jindian_update',['page_start'=>1,'page_tot'=>1,'type_id'=>23,'--queue'=>'all'])->daily()->withoutOverlapping();;
+        $schedule->command('caiji:tv2017_jindian_update',['page_start'=>1,'page_tot'=>1,'type_id'=>23,'--queue'=>'all'])->weekly()->saturdays()->at('00:30')->withoutOverlapping();;
 
 
         //新闻
-        $schedule->command('caiji:news_y3600_update',['page_start'=>1,'page_tot'=>1,'type_id'=>22,'--queue'=>'all'])->daily()->withoutOverlapping();;
+        $schedule->command('caiji:news_y3600_update',['page_start'=>1,'page_tot'=>1,'type_id'=>22,'--queue'=>'all'])->twiceDaily(1,13)->withoutOverlapping();;
     }
 
     /**
