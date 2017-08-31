@@ -34,7 +34,6 @@ trait NewsY3600
      */
     public function movieList($start, $pageTot, $baseListUrl)
     {
-        file_put_contents($this->commandLogsFile, "this is movieList \n", FILE_APPEND);
         $url = substr($baseListUrl, 0, strrpos($baseListUrl, '.'));
 
         for ($i = $start; $i <= $pageTot; $i++) {
@@ -44,10 +43,12 @@ trait NewsY3600
             } else {
                 $listUrl = $url . '_' . $i . '.html';
             }
-            $list = $this->getList($listUrl);
 
+            $list = $this->getList($listUrl);
+            
             //保存进数据库中去
             foreach ($list as $key => $value) {
+
                 $rs = null;
                 $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
                 if ($rest) {
@@ -65,8 +66,7 @@ trait NewsY3600
                         'typeid' => $this->typeId,
                         'is_douban' => 0,
                     ];
-                    file_put_contents($this->commandLogsFile, var_export($listSaveArr,true), FILE_APPEND);
-//                        dd($listSaveArr);
+
                     $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
                     if ($rs) {
                         $this->listNum++;
@@ -94,6 +94,7 @@ trait NewsY3600
             $item['m_time'] = date('Y') . '-' . trim(strstr($item['m_time'], '['), '][');
             return $item;
         });
+
         return $list;
     }
 
