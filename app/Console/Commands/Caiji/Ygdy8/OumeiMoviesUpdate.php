@@ -135,7 +135,7 @@ class OumeiMoviesUpdate extends Command
         }
 
         if ($queueName === 'all' || $queueName == 'content') {
-            $this->getContent(true);
+            $this->getContent();
             //logs
             echo "内容页采集完成,一共 {$this->contentNum} 条! \n";
             if ($this->isCommandLogs === true) {

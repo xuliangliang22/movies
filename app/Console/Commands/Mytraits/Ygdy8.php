@@ -29,7 +29,7 @@ trait Ygdy8
     /**
      * 保存电影电视剧列表页
      */
-    public function movieList($start,$pageTot, $baseListUrl, $isNew = false)
+    public function movieList($start, $pageTot, $baseListUrl, $isNew = false)
     {
         try {
 
@@ -40,12 +40,12 @@ trait Ygdy8
             }
 
             //取出最大的时间
-            $maxTime = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_post',0)->max('m_time');
+            $maxTime = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_post', 0)->max('m_time');
 
             for ($i = $start; $i <= $pageTot; $i++) {
-                $this->listInfo = $i.'-'.$pageTot.'-'.$baseListUrl.'-'.$isNew;
+                $this->listInfo = $i . '-' . $pageTot . '-' . $baseListUrl . '-' . $isNew;
                 //cli
-                if(config('qiniu.qiniu_data.is_cli')) {
+                if (config('qiniu.qiniu_data.is_cli')) {
                     $this->info("this is page {$i} maxtime {$maxTime}");
                 }
                 if ($i == 1) {
@@ -69,7 +69,7 @@ trait Ygdy8
                                 continue;
                             }
                             //更新这样记录的下载链接,将is_con=-1,down_link = '',is_update=-1//default 0
-                            $rs = DB::connection($this->dbName)->table($this->tableName)->where('id', $rest->id)->update(['down_link' => '','m_time'=>$value['m_time'] ,'is_con' => -1, 'is_update' => -1]);
+                            $rs = DB::connection($this->dbName)->table($this->tableName)->where('id', $rest->id)->update(['down_link' => '', 'm_time' => $value['m_time'], 'is_con' => -1, 'is_update' => -1]);
 
                         } else {
                             continue;
@@ -91,33 +91,33 @@ trait Ygdy8
                     if ($rs) {
                         $this->listNum++;
                         //cli
-                        if(config('qiniu.qiniu_data.is_cli')) {
+                        if (config('qiniu.qiniu_data.is_cli')) {
                             $this->info($value['title'] . ' list ' . $isNewType . ' success');
                         }
                     } else {
                         //cli
-                        if(config('qiniu.qiniu_data.is_cli')) {
+                        if (config('qiniu.qiniu_data.is_cli')) {
                             $this->info($value['title'] . ' list ' . $isNewType . ' fail');
                         }
                     }
                 }
             }
             $this->info('list save end');
-        }catch (\ErrorException $e){
-            $this->info('list error exception '.$e->getMessage());
-            $listInfoArr = explode('-',$this->listInfo);
-            if($listInfoArr[1] -  $listInfoArr[0] < 2){
+        } catch (\ErrorException $e) {
+            $this->info('list error exception ' . $e->getMessage());
+            $listInfoArr = explode('-', $this->listInfo);
+            if ($listInfoArr[1] - $listInfoArr[0] < 2) {
                 return;
-            }else{
-                $this->movieList($listInfoArr[0],$listInfoArr[1],$listInfoArr[2],$listInfoArr[3]);
+            } else {
+                $this->movieList($listInfoArr[0], $listInfoArr[1], $listInfoArr[2], $listInfoArr[3]);
             }
-        }catch (\Exception $e){
-            $this->info('list exception '.$e->getMessage());
-            $listInfoArr = explode('-',$this->listInfo);
-            if($listInfoArr[1] -  $listInfoArr[0] < 2){
+        } catch (\Exception $e) {
+            $this->info('list exception ' . $e->getMessage());
+            $listInfoArr = explode('-', $this->listInfo);
+            if ($listInfoArr[1] - $listInfoArr[0] < 2) {
                 return;
-            }else{
-                $this->movieList($listInfoArr[0],$listInfoArr[1],$listInfoArr[2],$listInfoArr[3]);
+            } else {
+                $this->movieList($listInfoArr[0], $listInfoArr[1], $listInfoArr[2], $listInfoArr[3]);
             }
         }
     }
@@ -128,15 +128,15 @@ trait Ygdy8
     public function getList($url)
     {
         $list = null;
-        $scheme = parse_url($url,PHP_URL_SCHEME);
-        $host = parse_url($url,PHP_URL_HOST);
-        $host = $scheme.'://'.$host;
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        $host = parse_url($url, PHP_URL_HOST);
+        $host = $scheme . '://' . $host;
 
         $list = QueryList::Query($url, array(
             'title' => array('.ulink:last()', 'html'),
             'con_url' => array('.ulink:last()', 'href'),
             'm_time' => array('tr:eq(2) td:eq(1)', 'text') //影片更新的时间
-        ), '.co_content8 table','utf-8','gbk',true)->getData(function ($item) use($host){
+        ), '.co_content8 table', 'utf-8', 'gbk', true)->getData(function ($item) use ($host) {
             $marest = preg_match('/《(.*?)》/i', $item['title'], $matchs);
             if ($marest === 1) {
                 $item['title'] = $matchs[1];
@@ -160,12 +160,12 @@ trait Ygdy8
      * 采信内容页
      * @param  $type 1.movie(下载电影) 2.other(只下载链接)
      */
-    public function getContent($isNew = false)
+    public function getContent()
     {
         try {
             do {
                 $take = 10;
-                $arc = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $this->aid)->where('is_con', -1)->where('typeid', $this->typeId)->take($take)->orderBy('id')->get();
+                $arc = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $this->aid)->where('is_con', -1)->where('typeid', $this->typeId)->take($take)->get();
                 $tot = count($arc);
 
                 foreach ($arc as $key => $value) {
@@ -181,7 +181,7 @@ trait Ygdy8
 //                        DB::connection($this->dbName)->table($this->tableName)->where('id', $this->aid)->delete();
                         continue;
                     }
-                    if ($isNew === true && $value->is_update == -1) {
+                    if ($value->is_update == -1) {
                         unset($conSaveArr['litpic']);
                     }
                     //cli
@@ -217,31 +217,35 @@ trait Ygdy8
             ->where('is_post', '=', -1)
             ->where(function ($query) {
                 $query->whereNull('down_link')
-                    ->orWhere('down_link','');
+                    ->orWhere('down_link', '');
             })->delete();
 
         //判断链接是否有空值,如果有空值则说明,编码没有替换好
         $isDownLinkNull = DB::connection($this->dbName)->table($this->tableName)
-            ->where('typeid',$this->typeId)
-            ->whereNull('down_link')
+            ->where('typeid', $this->typeId)
+            ->where(function ($query) {
+                $query->whereNull('down_link')
+                    ->orWhere('down_link', '');
+            })
             ->get();
-        if(count($isDownLinkNull) > 0){
-            if($this->isCommandLogs) {
+        if (count($isDownLinkNull) > 0) {
+            if ($this->isCommandLogs) {
                 $command = "下载链接为空,再次进行下载链接的采集 \n";
                 file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
             }
-            $this->getContent(true);
+            $this->getContent();
         }
+
         //logs,判断内容是否为空
         $isContent = DB::connection($this->dbName)->table($this->tableName)
             ->where('typeid', $this->typeId)
-            ->where(function ($query){
-                $query->where('is_post',-1)
-                    ->orWhere('is_update',-1);
+            ->where(function ($query) {
+                $query->where('is_post', -1)
+                    ->orWhere('is_update', -1);
             })
             ->get();
-        if(count($isContent) < 1){
-            if($this->isCommandLogs) {
+        if (count($isContent) < 1) {
+            if ($this->isCommandLogs) {
                 $command = "内容页为空,退出采集 \n";
                 file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
             }
@@ -256,7 +260,7 @@ trait Ygdy8
     public function contentExcRun($message,$file,$line)
     {
         $this->info('get content error exception ' . $message.' file is '.$file .' line is '.$line);
-        $this->getContent($this->aid);
+        $this->getContent();
     }
 
     /**
@@ -264,11 +268,13 @@ trait Ygdy8
      */
     public function getConSaveArr($url)
     {
+        $restArr = [];
         $this->curl->add()->opt_targetURL($url)->done();
         $this->curl->run();
         $data = $this->curl->getAll();
+//        dd($data);
         $data = $data['body'];
-        $data = mb_convert_encoding($data,'utf-8','gbk,gb2312');
+        $data = mb_convert_encoding($data, 'utf-8', 'gbk,gb2312,big5,ASCII');
 
         $content = QueryList::Query($data, array(
             'litpic' => array('img:first()', 'src'),
@@ -279,16 +285,17 @@ trait Ygdy8
             return $item['litpic'];
         });
 
-        $content2 = QueryList::Query($data,array(
-            'down_link'=>array('','href'),
-        ),'#Zoom table a')->getData(function ($item){
+        $content2 = QueryList::Query($data, array(
+            'down_link' => array('', 'href'),
+        ), '#Zoom table a')->getData(function ($item) {
             return $item['down_link'];
         });
-
-        $restArr = array(
-            'litpic' => $content[0],
-            'down_link' => implode(',', $content2)
-        );
+        if (empty($content) === false) {
+            $restArr['litpic'] = $content[0];
+        }
+        if (empty($content2) === false) {
+            $restArr['down_link'] = implode(',', $content2);
+        }
         return $restArr;
     }
 

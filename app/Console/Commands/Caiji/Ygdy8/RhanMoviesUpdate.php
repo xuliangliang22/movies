@@ -136,7 +136,7 @@ class RhanMoviesUpdate extends Command
         }
 
         if ($queueName === 'all' || $queueName == 'content') {
-            $this->getContent(true);
+            $this->getContent();
             $this->aid = $aid;
             //豆瓣数据填充
             $this->callSilent('caiji:douban', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);

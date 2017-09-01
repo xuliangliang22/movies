@@ -128,6 +128,7 @@ class DaluTvsUpdate extends Command
         }
 
 
+        sleep(20);
         //内容页
         //logs
         if ($this->isCommandLogs === true) {
@@ -136,7 +137,7 @@ class DaluTvsUpdate extends Command
         }
 
         if ($queueName === 'all' || $queueName == 'content') {
-            $this->getContent(true);
+            $this->getContent();
             $this->aid = $aid;
             //豆瓣数据填充
             $this->callSilent('caiji:douban', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);

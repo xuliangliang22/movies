@@ -5,7 +5,6 @@ namespace App\Console\Commands\Caiji\Ygdy8;
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
-use Illuminate\Support\Facades\DB;
 
 class RhanTvsUpdate extends Command
 {
@@ -129,6 +128,7 @@ class RhanTvsUpdate extends Command
         }
 
 
+        sleep(20);
         //内容页
         //logs
         if ($this->isCommandLogs === true) {
@@ -137,9 +137,7 @@ class RhanTvsUpdate extends Command
         }
 
         if ($queueName === 'all' || $queueName == 'content') {
-            $this->getContent(true);
-
-
+            $this->getContent();
             $this->aid = $aid;
             //豆瓣数据填充
             $this->callSilent('caiji:douban', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
