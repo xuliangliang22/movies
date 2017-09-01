@@ -213,7 +213,40 @@ trait Ygdy8
         }
         $this->aid = 0;
         //删除下载链接为空的数据
-        DB::connection($this->dbName)->table($this->tableName)->whereNull('down_link')->orWhere('down_link','')->delete();
+        DB::connection($this->dbName)->table($this->tableName)
+            ->where('is_post', '=', -1)
+            ->where(function ($query) {
+                $query->whereNull('down_link')
+                    ->orWhere('down_link','');
+            })->delete();
+
+        //判断链接是否有空值,如果有空值则说明,编码没有替换好
+        $isDownLinkNull = DB::connection($this->dbName)->table($this->tableName)
+            ->where('typeid',$this->typeId)
+            ->whereNull('down_link')
+            ->get();
+        if(count($isDownLinkNull) > 0){
+            if($this->isCommandLogs) {
+                $command = "下载链接为空,再次进行下载链接的采集 \n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+            $this->getContent(true);
+        }
+        //logs,判断内容是否为空
+        $isContent = DB::connection($this->dbName)->table($this->tableName)
+            ->where('typeid', $this->typeId)
+            ->where(function ($query){
+                $query->where('is_post',-1)
+                    ->orWhere('is_update',-1);
+            })
+            ->get();
+        if(count($isContent) < 1){
+            if($this->isCommandLogs) {
+                $command = "内容页为空,退出采集 \n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+            exit;
+        }
     }
 
 
@@ -235,7 +268,7 @@ trait Ygdy8
         $this->curl->run();
         $data = $this->curl->getAll();
         $data = $data['body'];
-        $data = mb_convert_encoding($data,'utf-8','gbk,gb2312,big5');
+        $data = mb_convert_encoding($data,'utf-8','gbk,gb2312');
 
         $content = QueryList::Query($data, array(
             'litpic' => array('img:first()', 'src'),

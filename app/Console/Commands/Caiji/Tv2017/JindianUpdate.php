@@ -119,7 +119,6 @@ class JindianUpdate extends Command
             }
         }
 
-
         //内容页
         //logs
         if($this->isCommandLogs === true) {

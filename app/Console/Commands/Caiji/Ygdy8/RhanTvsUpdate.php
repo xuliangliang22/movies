@@ -5,6 +5,7 @@ namespace App\Console\Commands\Caiji\Ygdy8;
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
+use Illuminate\Support\Facades\DB;
 
 class RhanTvsUpdate extends Command
 {
@@ -138,14 +139,6 @@ class RhanTvsUpdate extends Command
         if ($queueName === 'all' || $queueName == 'content') {
             $this->getContent(true);
 
-            //logs
-            if($this->contentNum < 1){
-                if ($this->isCommandLogs === true) {
-                    $command = "内容页采集为空完成,一共 {$this->contentNum} 条! \n";
-                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-                }
-                exit;
-            }
 
             $this->aid = $aid;
             //豆瓣数据填充
