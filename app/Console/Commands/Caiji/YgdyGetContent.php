@@ -13,7 +13,7 @@ class YgdyGetContent extends Command
      *
      * @var string
      */
-    protected $signature = 'caiji:ygdy_get_content {db_name} {table_name} {type_id}';
+    protected $signature = 'caiji:ygdy_get_content {type_id}';
 
     /**
      * The console command description.
@@ -54,8 +54,9 @@ class YgdyGetContent extends Command
         require_once $path;
         $this->curl = new \curl();
 
-        $this->dbName = $this->argument('db_name');
-        $this->tableName = $this->argument('table_name');
+        $this->dbName = config('qiniu.qiniu_data.db_name');
+        $this->tableName = config('qiniu.qiniu_data.table_name');
+
         $this->typeId = $this->argument('type_id');
 
         $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
@@ -179,7 +180,8 @@ class YgdyGetContent extends Command
         $data = $this->curl->getAll();
         $this->curl->free();
         $data = $data['body'];
-        $data = mb_convert_encoding($data, 'utf-8', 'gbk,gb2312,big5,ASCII');
+        $data = mb_convert_encoding($data, 'utf-8', 'gbk,gb2312,big5,ASCII,unicode,utf-16,ISO-8859-1');
+        $data = preg_replace('/<meta(.*?)>/is','',$data);
 
         $content = QueryList::Query($data, array(
             'litpic' => array('img:first()', 'src'),
@@ -195,12 +197,14 @@ class YgdyGetContent extends Command
         ), '#Zoom table a')->getData(function ($item) {
             return $item['down_link'];
         });
+
         if (empty($content) === false) {
             $restArr['litpic'] = $content[0];
         }
         if (empty($content2) === false) {
             $restArr['down_link'] = implode(',', $content2);
         }
+
         return $restArr;
     }
 }

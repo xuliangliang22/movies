@@ -119,7 +119,9 @@ class Douban extends Command
                         }
                     }
                     //cli
-                    print_r($updateArr);
+                    if(config('qiniu.qiniu_data.is_cli')) {
+                        print_r($updateArr);
+                    }
 
                     if (!empty($updateArr)) {
                         //保存到数据库
@@ -180,7 +182,9 @@ class Douban extends Command
 
                     $title = $value['title'];
                     $title = _filterSpuerChar($title);
-                    echo $title . "\n";
+                    if(config('qiniu.qiniu_data.is_cli')) {
+                        echo $title . "\n";
+                    }
                     if (mb_strpos($keyword, $title, 0, 'utf-8') !== false || mb_strpos($title, $keyword, 0, 'utf-8') !== false) {
                         $rest = $value;
                         break;
