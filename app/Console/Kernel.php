@@ -117,15 +117,15 @@ class Kernel extends ConsoleKernel
 //        $schedule->command('caiji:ygdy8_oumeitvs_update 1 10 19 --queue=all')->weekly()->sundays()->at('00:30')->withoutOverlapping();
 
         //大陆电视剧
-        $schedule->command('php artisan caiji:ygdy8_get_content 17')
+        $schedule->command('caiji:ygdy8_get_content 17')
             ->dailyAt('15:40')
             ->before(function () {
                 // Task is about to start...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'typeid'=>17,'--queue'=>'list']);
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>17,'--queue'=>'list']);
             })
             ->after(function () {
                 // Task is complete...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'typeid'=>17,'--queue'=>'other']);
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>17,'--queue'=>'other']);
             });
 
 
