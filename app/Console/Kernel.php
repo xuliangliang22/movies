@@ -4,6 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Artisan;
 
 class Kernel extends ConsoleKernel
 {
@@ -50,7 +51,7 @@ class Kernel extends ConsoleKernel
 
 
         //阳光电影得到内容页信息***
-        Commands\Caiji\YgdyGetContent::class,
+        Commands\Caiji\Ygdy8GetContent::class,
         //跟踪采集大陆电视剧
         Commands\Caiji\Ygdy8\DaluTvsUpdate::class,
         //跟踪采集日韩电视剧
@@ -106,14 +107,27 @@ class Kernel extends ConsoleKernel
         //          ->hourly();
 
         //电影
-        $schedule->command('caiji:ygdy8_dalumovies_update 1 10 13 --queue=all')->weekly()->mondays()->at('00:30')->withoutOverlapping();
-        $schedule->command('caiji:ygdy8_rhanmovies_update 1 10 14 --queue=all')->weekly()->tuesdays()->at('00:30')->withoutOverlapping();
-        $schedule->command('caiji:ygdy8_oumeimovies_update 1 10 15 --queue=all')->weekly()->wednesdays()->at('00:30')->withoutOverlapping();
+//        $schedule->command('caiji:ygdy8_dalumovies_update 1 10 13 --queue=all')->weekly()->mondays()->at('00:30')->withoutOverlapping();
+//        $schedule->command('caiji:ygdy8_rhanmovies_update 1 10 14 --queue=all')->weekly()->tuesdays()->at('00:30')->withoutOverlapping();
+//        $schedule->command('caiji:ygdy8_oumeimovies_update 1 10 15 --queue=all')->weekly()->wednesdays()->at('00:30')->withoutOverlapping();
 
         //电视剧
-        $schedule->command('caiji:ygdy8_dalutvs_update 1 10 17 --queue=all')->weekly()->thursdays()->at('00:30')->withoutOverlapping();
-        $schedule->command('caiji:ygdy8_rhantvs_update 1 10 18 --queue=all')->weekly()->fridays()->at('00:30')->withoutOverlapping();
-        $schedule->command('caiji:ygdy8_oumeitvs_update 1 10 19 --queue=all')->weekly()->sundays()->at('00:30')->withoutOverlapping();
+//        $schedule->command('caiji:ygdy8_dalutvs_update 1 10 17 --queue=all')->weekly()->thursdays()->at('00:30')->withoutOverlapping();
+//        $schedule->command('caiji:ygdy8_rhantvs_update 1 10 18 --queue=all')->weekly()->fridays()->at('00:30')->withoutOverlapping();
+//        $schedule->command('caiji:ygdy8_oumeitvs_update 1 10 19 --queue=all')->weekly()->sundays()->at('00:30')->withoutOverlapping();
+
+        //大陆电视剧
+        $schedule->command('php artisan caiji:ygdy8_get_content 17')
+            ->dailyAt('15:40')
+            ->before(function () {
+                // Task is about to start...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'typeid'=>17,'--queue'=>'list']);
+            })
+            ->after(function () {
+                // Task is complete...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'typeid'=>17,'--queue'=>'other']);
+            });
+
 
         //2015tv经典
         $schedule->command('caiji:tv2017_jindian_update 1 5 23 --queue=all')->weekly()->saturdays()->at('00:30')->withoutOverlapping();

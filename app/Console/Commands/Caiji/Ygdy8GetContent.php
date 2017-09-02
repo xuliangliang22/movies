@@ -6,14 +6,14 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
 
-class YgdyGetContent extends Command
+class Ygdy8GetContent extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'caiji:ygdy_get_content {type_id}';
+    protected $signature = 'caiji:ygdy8_get_content {type_id}';
 
     /**
      * The console command description.
@@ -156,6 +156,9 @@ class YgdyGetContent extends Command
             $command = "内容页为空,退出采集 \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
             exit;
+        }else {
+            $command = "内容页下载链接与缩略图采集完成 \n";
+            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
     }
 
