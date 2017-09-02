@@ -106,19 +106,45 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')
         //          ->hourly();
 
-        //电影
-//        $schedule->command('caiji:ygdy8_dalumovies_update 1 10 13 --queue=all')->weekly()->mondays()->at('00:30')->withoutOverlapping();
-//        $schedule->command('caiji:ygdy8_rhanmovies_update 1 10 14 --queue=all')->weekly()->tuesdays()->at('00:30')->withoutOverlapping();
-//        $schedule->command('caiji:ygdy8_oumeimovies_update 1 10 15 --queue=all')->weekly()->wednesdays()->at('00:30')->withoutOverlapping();
+        //大陆电影
+        $schedule->command('caiji:ygdy8_get_content 13')
+            ->weekly()->mondays()->at('00:30')
+            ->before(function () {
+                // Task is about to start...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>13,'--queue'=>'olist']);
+            })
+            ->after(function () {
+                // Task is complete...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>13,'--queue'=>'other']);
+            });
 
-        //电视剧
-//        $schedule->command('caiji:ygdy8_dalutvs_update 1 10 17 --queue=all')->weekly()->thursdays()->at('00:30')->withoutOverlapping();
-//        $schedule->command('caiji:ygdy8_rhantvs_update 1 10 18 --queue=all')->weekly()->fridays()->at('00:30')->withoutOverlapping();
-//        $schedule->command('caiji:ygdy8_oumeitvs_update 1 10 19 --queue=all')->weekly()->sundays()->at('00:30')->withoutOverlapping();
+        //日韩电影
+        $schedule->command('caiji:ygdy8_get_content 14')
+            ->weekly()->tuesdays()->at('00:30')
+            ->before(function () {
+                // Task is about to start...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>14,'--queue'=>'olist']);
+            })
+            ->after(function () {
+                // Task is complete...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>14,'--queue'=>'other']);
+            });
 
+        //欧美电影
+        $schedule->command('caiji:ygdy8_get_content 15')
+            ->weekly()->wednesdays()->at('00:30')
+            ->before(function () {
+                // Task is about to start...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>15,'--queue'=>'olist']);
+            })
+            ->after(function () {
+                // Task is complete...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>15,'--queue'=>'other']);
+            });
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //大陆电视剧
         $schedule->command('caiji:ygdy8_get_content 17')
-            ->dailyAt('15:40')
+            ->weekly()->thursdays()->at('00:30')
             ->before(function () {
                 // Task is about to start...
                 Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>17,'--queue'=>'olist']);
@@ -128,12 +154,36 @@ class Kernel extends ConsoleKernel
                 Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>17,'--queue'=>'other']);
             });
 
+        //日韩电视剧
+        $schedule->command('caiji:ygdy8_get_content 18')
+            ->weekly()->fridays()->at('00:30')
+            ->before(function () {
+                // Task is about to start...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>18,'--queue'=>'olist']);
+            })
+            ->after(function () {
+                // Task is complete...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>18,'--queue'=>'other']);
+            });
 
+        //欧美电视剧
+        $schedule->command('caiji:ygdy8_get_content 19')
+            ->weekly()->sundays()->at('00:30')
+            ->before(function () {
+                // Task is about to start...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>19,'--queue'=>'olist']);
+            })
+            ->after(function () {
+                // Task is complete...
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>19,'--queue'=>'other']);
+            });
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //2015tv经典
         $schedule->command('caiji:tv2017_jindian_update 1 5 23 --queue=all')->weekly()->saturdays()->at('00:30')->withoutOverlapping();
 
         //新闻
-        $schedule->command('caiji:news_y3600_update 1 1 22 --queue=all')->dailyAt('22:41')->withoutOverlapping();
+        $schedule->command('caiji:news_y3600_update 1 1 22 --queue=all')->dailyAt('03:30')->withoutOverlapping();
+
     }
 
     /**

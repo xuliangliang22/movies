@@ -283,7 +283,6 @@ trait Ygdy8
 
             //node格式化下载链接
             $this->nodeDownLink();
-            dd(2222);
             //将新添加数据提交到dede后台 is_post = -1
             $this->callSilent('send:dedea67post', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'channel_id' => $this->channelId, 'typeid' => $this->typeId]);
             //将更新数据提交到dede后台,直接替换数据库
@@ -317,7 +316,7 @@ trait Ygdy8
             $localDir = '';
             if ($isSend) {
                 //图片上传
-                $localDir = trim(config('qiniu.qiniu_data.www_root'), '/') . '/' . date('ymd') . $this->typeId;
+                $localDir = rtrim(config('qiniu.qiniu_data.www_root'), '/') . '/' . date('ymd') . $this->typeId;
                 $this->callSilent('send:qiniuimgs', ['local_dir' => $localDir, 'qiniu_dir' => trim($this->qiniuDir, '/') . '/' . date('ymd') . $this->typeId . '/']);
             }
             //logs
