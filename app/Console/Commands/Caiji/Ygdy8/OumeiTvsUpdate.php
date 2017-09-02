@@ -15,7 +15,7 @@ class OumeiTvsUpdate extends Command
      *
      * @var string
      */
-    protected $signature = 'caiji:ygdy8_oumeitvs_update {page_start}{page_tot}{type_id}{aid?} {--queue=}';
+    protected $signature = 'caiji:ygdy8_oumeitvs_update {page_start}{page_tot}{type_id}{--queue=}';
 
     /**
      * The console command description.
@@ -61,13 +61,14 @@ class OumeiTvsUpdate extends Command
         }
 
         //得到所有的列表页
-        //logs
-        if ($this->isCommandLogs === true) {
-            $command = "开始采集列表页\n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-        }
+        //olist任务调度需要用到的参数
+        if ($queueName === 'all' || $queueName == 'list' || $queueName == 'olist') {
+            //logs
+            if ($this->isCommandLogs === true) {
+                $command = "开始采集列表页\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
 
-        if ($queueName === 'all' || $queueName == 'list') {
             $this->movieList($pageStart, $pageTot, $url, true);
 
             //logs

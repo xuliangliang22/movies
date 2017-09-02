@@ -61,15 +61,15 @@ class DaluMoviesUpdate extends Command
         }
 
         //得到所有的列表页
-        //logs
-        if ($this->isCommandLogs === true) {
-            $command = "开始采集列表页\n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-        }
+        //olist任务调度需要用到的参数
+        if ($queueName === 'all' || $queueName == 'list' || $queueName == 'olist') {
+            //logs
+            if ($this->isCommandLogs === true) {
+                $command = "开始采集列表页\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
 
-        if ($queueName === 'all' || $queueName == 'list') {
             $this->movieList($pageStart, $pageTot, $url, true);
-
             if(empty($this->listNum)){
                 $this->listNum = 0;
             }

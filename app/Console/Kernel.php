@@ -121,7 +121,7 @@ class Kernel extends ConsoleKernel
             ->dailyAt('15:40')
             ->before(function () {
                 // Task is about to start...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>17,'--queue'=>'list']);
+                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>17,'--queue'=>'olist']);
             })
             ->after(function () {
                 // Task is complete...

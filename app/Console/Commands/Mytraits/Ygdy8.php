@@ -38,8 +38,8 @@ trait Ygdy8
         $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
 
         //---------this is my modify-------------
-        if(!is_dir(public_path('command_logs'))){
-            mkdir(public_path('command_logs'),0755,true);
+        if (!is_dir(public_path('command_logs'))) {
+            mkdir(public_path('command_logs'), 0755, true);
         }
         //-------------------------
     }
@@ -174,8 +174,6 @@ trait Ygdy8
     }
 
 
-
-
     /**
      * 使用node去格式化下载链接
      */
@@ -192,7 +190,7 @@ trait Ygdy8
 
         foreach ($isNoDownLinks as $key => $value) {
             //cli
-            if(config('qiniu.qiniu_data.is_cli')) {
+            if (config('qiniu.qiniu_data.is_cli')) {
                 $this->info("node parse down_link {$key}/{$tot} id -- {$value->id}");
             }
             //log
@@ -204,7 +202,7 @@ trait Ygdy8
             $this->curl->runSmall($url);
         }
         //cli
-        if(config('qiniu.qiniu_data.is_cli')) {
+        if (config('qiniu.qiniu_data.is_cli')) {
             $this->info("node parse down_link end");
         }
         //log
@@ -215,7 +213,6 @@ trait Ygdy8
     }
 
 
-
     /**
      * 填充豆瓣内容,下载图片,提交dede后台,上传cdn
      *
@@ -223,19 +220,18 @@ trait Ygdy8
      * @param $keyWordSuffix 百度搜索图片时的后缀
      *
      */
-    public function runOther($queueName,$keyWordSuffix)
+    public function runOther($queueName, $keyWordSuffix)
     {
         global $isSend;
         global $isUpdate;
 
         //内容页
-        //logs
-        if ($this->isCommandLogs === true) {
-            $command = "开始采集内容页 \n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-        }
-
         if ($queueName === 'all' || $queueName == 'content' || $queueName == 'other') {
+            //logs
+            if ($this->isCommandLogs === true) {
+                $command = "开始采集内容页 \n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
             // php artisan caiji:ygdy8_get_content 17(type_id)
             //豆瓣数据填充
             $this->callSilent('caiji:douban', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
@@ -253,13 +249,13 @@ trait Ygdy8
         }
 
         //下载图片
-        //logs
-        if ($this->isCommandLogs === true) {
-            $command = "开始下载图片 \n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-        }
-
         if ($queueName === 'all' || $queueName == 'pic' || $queueName == 'other') {
+            //logs
+            if ($this->isCommandLogs === true) {
+                $command = "开始下载图片 \n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+
             //内容页图片
             $this->callSilent('xiazai:imgdownygdy8', ['type' => 'body', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
             //缩略图
@@ -278,12 +274,13 @@ trait Ygdy8
         }
 
         //上线部署
-        //logs
-        if ($this->isCommandLogs === true) {
-            $command = "将新添加数据提交到dede后台 \n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-        }
         if ($queueName === 'all' || $queueName == 'dede' || $queueName == 'other') {
+            //logs
+            if ($this->isCommandLogs === true) {
+                $command = "将新添加数据提交到dede后台 \n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
+
             //node格式化下载链接
             $this->nodeDownLink();
             dd(2222);
@@ -307,13 +304,12 @@ trait Ygdy8
         }
 
         //上传图片
-        //logs
-        if ($this->isCommandLogs === true) {
-            $command = "开始上传图片 qiniu\n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-        }
-
         if ($queueName === 'all' || $queueName == 'cdn' || $queueName == 'other') {
+            //logs
+            if ($this->isCommandLogs === true) {
+                $command = "开始上传图片 qiniu\n";
+                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            }
             //只有新增了数据才会去上传图片
             if ($queueName == 'cdn') {
                 $isSend = true;
@@ -334,6 +330,7 @@ trait Ygdy8
                 exit;
             }
         }
+
         //logs
         echo "内容更新完成! \n";
         if ($this->isCommandLogs === true) {
