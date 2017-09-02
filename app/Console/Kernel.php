@@ -55,6 +55,8 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\Ygdy8\OumeiTvs::class,
 
 
+        //阳光电影得到内容页信息
+        Commands\Caiji\YgdyGetContent::class,
         //跟踪采集大陆电视剧
         Commands\Caiji\Ygdy8\DaluTvsUpdate::class,
         //跟踪采集日韩电视剧

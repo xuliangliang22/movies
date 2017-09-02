@@ -63,6 +63,7 @@ class DaluTvsUpdate extends Command
             mkdir(public_path('command_logs'),0755,true);
         }
         //-------------------------
+        $this->MovieInit();
     }
 
     /**
@@ -91,7 +92,6 @@ class DaluTvsUpdate extends Command
             $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_dalutvs_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
-        $this->MovieInit();
 
         //得到所有的列表页
         //logs
@@ -128,7 +128,6 @@ class DaluTvsUpdate extends Command
         }
 
 
-        sleep(20);
         //内容页
         //logs
         if ($this->isCommandLogs === true) {
@@ -137,7 +136,8 @@ class DaluTvsUpdate extends Command
         }
 
         if ($queueName === 'all' || $queueName == 'content') {
-            $this->getContent();
+//            $this->getContent();
+            $this->call('caiji:ygdy_get_content',['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
             $this->aid = $aid;
             //豆瓣数据填充
             $this->callSilent('caiji:douban', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
@@ -188,6 +188,7 @@ class DaluTvsUpdate extends Command
         if ($queueName === 'all' || $queueName == 'dede') {
             //node格式化下载链接
             $this->nodeDownLink();
+            dd(2222);
             //将新添加数据提交到dede后台 is_post = -1
             $this->callSilent('send:dedea67post', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'channel_id' => $this->channelId, 'typeid' => $this->typeId]);
             //将更新数据提交到dede后台,直接替换数据库
