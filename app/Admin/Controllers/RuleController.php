@@ -75,7 +75,9 @@ class RuleController extends Controller
         return Admin::grid(Rule::class, function (Grid $grid) {
 
             $grid->column('id','序号')->sortable();
-            $grid->column('rule_name','规则名称');
+            $grid->column('rule_name','规则名称')->display(function ($item){
+                return '<sapn class="label label-default">'.$item.'<span>';
+            });
             //网站链接地址
             $grid->column('site_url','网站链接地址');
 
@@ -92,7 +94,9 @@ class RuleController extends Controller
             //命令
             $grid->column('rule_command','命令');
             //参数
-            $grid->column('rule_args','参数');
+            $grid->column('rule_args','参数')->display(function ($item){
+                return '<span class="label label-primary">'.$item.'</span>';
+            });
             //对应的文件路径
             $grid->column('file_path','文件路径');
 

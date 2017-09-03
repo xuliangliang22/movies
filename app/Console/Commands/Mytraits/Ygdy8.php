@@ -225,8 +225,16 @@ trait Ygdy8
         global $isSend;
         global $isUpdate;
 
+        //采集内容的第一步,将缩略图与下载链接采集下来
+        if($queueName == 'all' || $queueName == 'content'){
+            $this->callSilent('caiji:ygdy8_get_content',['type_id'=>$this->typeId]);
+            if($queueName == 'content'){
+                exit;
+            }
+        }
+
         //内容页
-        if ($queueName === 'all' || $queueName == 'content' || $queueName == 'other') {
+        if ($queueName == 'all' || $queueName == 'douban' || $queueName == 'other') {
             //logs
             if ($this->isCommandLogs === true) {
                 $command = "开始采集内容页 \n";
@@ -243,13 +251,13 @@ trait Ygdy8
                 $command = "内容页采集完成! \n\n";
                 file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
             }
-            if ($queueName == 'content') {
+            if ($queueName == 'douban') {
                 exit;
             }
         }
 
         //下载图片
-        if ($queueName === 'all' || $queueName == 'pic' || $queueName == 'other') {
+        if ($queueName == 'all' || $queueName == 'pic' || $queueName == 'other') {
             //logs
             if ($this->isCommandLogs === true) {
                 $command = "开始下载图片 \n";
@@ -274,7 +282,7 @@ trait Ygdy8
         }
 
         //上线部署
-        if ($queueName === 'all' || $queueName == 'dede' || $queueName == 'other') {
+        if ($queueName == 'all' || $queueName == 'dede' || $queueName == 'other') {
             //logs
             if ($this->isCommandLogs === true) {
                 $command = "将新添加数据提交到dede后台 \n";
@@ -303,7 +311,7 @@ trait Ygdy8
         }
 
         //上传图片
-        if ($queueName === 'all' || $queueName == 'cdn' || $queueName == 'other') {
+        if ($queueName == 'all' || $queueName == 'cdn' || $queueName == 'other') {
             //logs
             if ($this->isCommandLogs === true) {
                 $command = "开始上传图片 qiniu\n";

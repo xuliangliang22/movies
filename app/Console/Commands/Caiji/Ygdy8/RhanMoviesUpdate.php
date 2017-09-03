@@ -62,7 +62,7 @@ class RhanMoviesUpdate extends Command
 
         //得到所有的列表页
         //olist任务调度需要用到的参数
-        if ($queueName === 'all' || $queueName == 'list' || $queueName == 'olist') {
+        if ($queueName == 'all' || $queueName == 'list' || $queueName == 'olist') {
             //logs
             if ($this->isCommandLogs === true) {
                 $command = "开始采集列表页\n";

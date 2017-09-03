@@ -111,11 +111,11 @@ class Kernel extends ConsoleKernel
             ->weekly()->mondays()->at('00:30')
             ->before(function () {
                 // Task is about to start...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>13,'--queue'=>'olist']);
+                Artisan::call('caiji:ygdy8_dalumovies_update',['page_start'=>1,'page_tot'=>10,'type_id'=>13,'--queue'=>'olist']);
             })
             ->after(function () {
                 // Task is complete...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>13,'--queue'=>'other']);
+                Artisan::call('caiji:ygdy8_dalumovies_update',['page_start'=>1,'page_tot'=>10,'type_id'=>13,'--queue'=>'other']);
             });
 
         //日韩电影
@@ -123,11 +123,11 @@ class Kernel extends ConsoleKernel
             ->weekly()->tuesdays()->at('00:30')
             ->before(function () {
                 // Task is about to start...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>14,'--queue'=>'olist']);
+                Artisan::call('caiji:ygdy8_rhanmovies_update',['page_start'=>1,'page_tot'=>10,'type_id'=>14,'--queue'=>'olist']);
             })
             ->after(function () {
                 // Task is complete...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>14,'--queue'=>'other']);
+                Artisan::call('caiji:ygdy8_rhanmovies_update',['page_start'=>1,'page_tot'=>10,'type_id'=>14,'--queue'=>'other']);
             });
 
         //欧美电影
@@ -135,11 +135,11 @@ class Kernel extends ConsoleKernel
             ->weekly()->wednesdays()->at('00:30')
             ->before(function () {
                 // Task is about to start...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>15,'--queue'=>'olist']);
+                Artisan::call('caiji:ygdy8_oumeimovies_update',['page_start'=>1,'page_tot'=>10,'type_id'=>15,'--queue'=>'olist']);
             })
             ->after(function () {
                 // Task is complete...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>15,'--queue'=>'other']);
+                Artisan::call('caiji:ygdy8_oumeimovies_update',['page_start'=>1,'page_tot'=>10,'type_id'=>15,'--queue'=>'other']);
             });
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //大陆电视剧
@@ -159,11 +159,11 @@ class Kernel extends ConsoleKernel
             ->weekly()->fridays()->at('00:30')
             ->before(function () {
                 // Task is about to start...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>18,'--queue'=>'olist']);
+                Artisan::call('caiji:ygdy8_rhantvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>18,'--queue'=>'olist']);
             })
             ->after(function () {
                 // Task is complete...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>18,'--queue'=>'other']);
+                Artisan::call('caiji:ygdy8_rhantvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>18,'--queue'=>'other']);
             });
 
         //欧美电视剧
@@ -171,11 +171,11 @@ class Kernel extends ConsoleKernel
             ->weekly()->sundays()->at('00:30')
             ->before(function () {
                 // Task is about to start...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>19,'--queue'=>'olist']);
+                Artisan::call('caiji:ygdy8_oumeitvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>19,'--queue'=>'olist']);
             })
             ->after(function () {
                 // Task is complete...
-                Artisan::call('caiji:ygdy8_dalutvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>19,'--queue'=>'other']);
+                Artisan::call('caiji:ygdy8_oumeitvs_update',['page_start'=>1,'page_tot'=>10,'type_id'=>19,'--queue'=>'other']);
             });
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //2015tv经典
