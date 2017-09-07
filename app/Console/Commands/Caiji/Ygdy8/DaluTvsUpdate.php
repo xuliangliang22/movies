@@ -81,10 +81,11 @@ class DaluTvsUpdate extends Command
                 $command = "列表页采集完成,一共 {$this->listNum} 条! \n\n";
                 file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
             }
+
+            //如果只填写list,这边会停止,所以增加参数olist
             if ($queueName == 'list') {
                 exit;
             }
-
             //
             if ($this->listNum < 1) {
                 //logs

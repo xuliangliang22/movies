@@ -109,7 +109,7 @@ class HomeController extends Controller
                 [5, 'ipsa.aut@gmail.com', 'Ms. Antonietta Kozey Jr.', 'Braun Ltd', '2013-10-16 10:00:01', 'open'],
             ];
 
-            $content->row((new Box('Table', new Table($headers, $rows)))->style('info')->solid());
+            $content->row((new Box('Table', new Tab($headers, $rows)))->style('info')->solid());
         });
     }
 }

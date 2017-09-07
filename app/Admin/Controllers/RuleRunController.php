@@ -56,7 +56,7 @@ class RuleRunController extends Controller
 //                    $form->action(admin_url('rule_run'));
 
                     $form->select('arctype', '分类名称')->options(Arctype::selectOptions())
-                        ->help('对参数--queue说明:list(列表页)content(内容页,图片与下载链接,只在下载源为&nbsp;&nbsp;<i style="color: #f00">阳光</i>&nbsp;&nbsp;才有用)douban(内容页,剩余内容)pic(图片)dede(部署上线)cdn(上传文件)all(一键运行)<br/>&nbsp;&nbsp;&nbsp;<b style="color: #f00">最好进行分步操作!!</b>');
+                        ->help('对参数--queue说明:list(列表页)content(缩略图与下载链接)douban(剩余内容,只在下载源为&nbsp;&nbsp;<i style="color: #f00">阳光</i>&nbsp;&nbsp;才有用)pic(图片)dede(部署上线)cdn(上传文件)all(一键运行)<br/>&nbsp;&nbsp;&nbsp;<b style="color: #f00">最好进行分步操作!!</b>');
                     //不同的按扭怎么做
 
                     $column->append((new Box('规则运行', $form))->style('success'));

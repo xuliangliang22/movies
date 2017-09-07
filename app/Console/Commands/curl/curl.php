@@ -852,8 +852,8 @@ class curlRun
             return false;
         }
         //print_r($threadOptions['download']);
-        exit;
-        fclose($threadOptions['download'][0]);
+//        exit;
+//        fclose($threadOptions['download'][0]);
 
         $mime = '';
         if (extension_loaded('Fileinfo') === true) {
