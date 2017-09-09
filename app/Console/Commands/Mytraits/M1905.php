@@ -55,7 +55,7 @@ trait M1905
                     } else {
                         //不是更新的时候判断名字的重复
                         $listSaveArr = [
-                            'title' => trim($value['title']) . '(转载)',
+                            'title' => trim($value['title']),
                             'title_hash' => md5(trim($value['title'])),
                             'con_url' => $value['con_url'],
                             //描述信息
@@ -115,7 +115,7 @@ trait M1905
         $minId = 0;
         $take = 10;
         do {
-            $arc = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $minId)->where('is_con', -1)->where('typeid', $this->typeId)->take($take)->get();
+            $arc = DB::connection($this->dbName)->table($this->tableName)->where('is_con', -1)->where('typeid', $this->typeId)->where('id','>',$minId)->take($take)->get();
             $tot = count($arc);
 
             foreach ($arc as $key => $value) {
@@ -142,7 +142,6 @@ trait M1905
             }
         } while ($tot > 0);
         //$this->info('save con end');
-        $this->aid = 0;
     }
 
 
@@ -185,6 +184,7 @@ trait M1905
             }
             $con = implode('',$con);
             $con = $con.$last;
+            $con = strtr($con,array('1905电影网讯'=>'','1905'=>'','电影网'=>''));
             $item['con'] = trim($con);
             return $item;
         });

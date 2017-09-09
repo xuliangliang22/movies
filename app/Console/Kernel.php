@@ -184,7 +184,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('caiji:tv2017_jindian_update 1 5 23 --queue=all')->weekly()->saturdays()->at('00:30')->withoutOverlapping();
 
         //新闻
-        $schedule->command('caiji:news_y3600_update 1 1 22 --queue=all')->dailyAt('03:30')->withoutOverlapping();
+        $schedule->command('caiji:news_y3600_update 1 1 22 --queue=all')->dailyAt('02:30')->withoutOverlapping();
+        //影视评论
+        $schedule->command('caiji:news_m1905_update 1 2 24 --queue=all')->dailyAt('01:30')->withoutOverlapping();
 
     }
 
