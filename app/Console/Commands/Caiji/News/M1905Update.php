@@ -4,25 +4,25 @@ namespace App\Console\Commands\Caiji\News;
 
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\DedeLogin;
-use App\Console\Commands\Mytraits\NewsY3600;
+use App\Console\Commands\Mytraits\M1905;
 
-class Y3600Update extends Command
+class M1905Update extends Command
 {
     use DedeLogin;
-    use NewsY3600;
+    use M1905;
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'caiji:news_y3600_update {page_start}{page_tot}{type_id}{aid?} {--queue=}';
+    protected $signature = 'caiji:news_m1905_update {page_start}{page_tot}{type_id}{--queue=}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '更新采集y3600新闻信息';
+    protected $description = '更新采集m1905影评信息';
 
     //库名与表名
     protected $dbName;
@@ -32,7 +32,6 @@ class Y3600Update extends Command
 
 
     //出错的时候调用大于这个aid的数据
-    public $aid;
     public $typeId;
     public $channelId = 1;
     public $qiniuDir = 'news/imgs';
@@ -77,13 +76,11 @@ class Y3600Update extends Command
         $pageTot = $this->argument('page_tot');
         $this->typeId = $this->argument('type_id');
 
-        $aid = empty($this->argument('aid')) ? 0 : $this->argument('aid');
-        $this->aid = $aid;
-        $url = 'http://www.y3600.com/news/index.html';
+        $url = 'http://www.1905.com/api/content/index.php?m=converged&a=comment&page=%s&pagesize=20';
         //得到这条命令
         if($this->isCommandLogs === true) {
             $command = "=========================================\n";
-            $command .= date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$pageStart} {$pageTot} {$this->typeId} {$aid} {$queueName} \n the link is {$url} \n";
+            $command .= date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$pageStart} {$pageTot} {$this->typeId}{$queueName} \n the link is {$url} \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
         //得到所有的列表页
@@ -94,6 +91,7 @@ class Y3600Update extends Command
         }
         if($queueName == 'all' || $queueName == 'list') {
             file_put_contents($this->commandLogsFile, "list start in \n", FILE_APPEND);
+            //typeid = 24
             $this->movieList($pageStart, $pageTot, $url);
 
             if(empty($this->listNum)){
@@ -125,7 +123,6 @@ class Y3600Update extends Command
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
         if($queueName == 'all' || $queueName == 'content') {
-            $this->aid = $aid;
             $this->getContent();
             echo "内容页采集完成,一共 {$this->contentNum} 条! \n";
             if($this->isCommandLogs === true) {
@@ -145,7 +142,7 @@ class Y3600Update extends Command
         if($queueName == 'all' || $queueName == 'pic') {
             //内容页图片
             //9450
-//            $this->callSilent('xiazai:imgdownygdy8', ['type' => 'body', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
+            $this->callSilent('xiazai:imgdownygdy8', ['type' => 'body', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
             //缩略图
             $this->callSilent('xiazai:imgdownygdy8', ['type' => 'litpic', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
             //百度图片

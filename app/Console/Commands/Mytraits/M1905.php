@@ -7,10 +7,11 @@
  */
 namespace App\Console\Commands\Mytraits;
 
+use DiDom\Query;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
 
-trait NewsY3600
+trait M1905
 {
     public $curl;
     public $listInfo;
@@ -34,32 +35,29 @@ trait NewsY3600
      */
     public function movieList($start, $pageTot, $baseListUrl)
     {
-        $url = substr($baseListUrl, 0, strrpos($baseListUrl, '.'));
-
-        for ($i = $start; $i <= $pageTot; $i++) {
+        for ($i = $start-1; $i <= $pageTot; $i++) {
             //$this->info("this is page {$i}");
-            if ($i == 1) {
-                $listUrl = $url . '.html';
+            if ($i == 0) {
+                $listUrl = 'http://www.1905.com/pinglun/?fr=homepc_menu_cmt';
             } else {
-                $listUrl = $url . '_' . $i . '.html';
+                $listUrl = sprintf($baseListUrl,$i);
             }
 
             $list = $this->getList($listUrl);
             
             //保存进数据库中去
             foreach ($list as $key => $value) {
-
                 $rs = null;
                 $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
+                //判断重复性
                 if ($rest) {
                     continue;
                 } else {
                     //不是更新的时候判断名字的重复
                     $listSaveArr = [
-                        'title' => trim($value['title']),
+                        'title' => trim($value['title']).'(转载)',
                         'title_hash' => md5(trim($value['title'])),
                         'con_url' => $value['con_url'],
-                        'm_time' => $value['m_time'],
                         //描述信息
                         'down_link' => SpHtml2Text($value['body']),
                         'litpic' => $value['litpic'],
@@ -81,38 +79,47 @@ trait NewsY3600
      */
     public function getList($url)
     {
-//        echo $url."\n";
-        $host = 'http://www.y3600.com';
-        $list = QueryList::Query($url, array(
-            'title' => array('ol a', 'text'),
-            'litpic' => array('.img img', 'src'),
-            'con_url' => array('ol a', 'href'),
-            'body' => array('li', 'text'),
-            'm_time' => array('em', 'text')
-        ), '.wdls')->getData(function ($item) use ($host) {
-            $item['con_url'] = trim($host, '/') . $item['con_url'];
-            $item['m_time'] = date('Y') . '-' . trim(strstr($item['m_time'], '['), '][');
-            return $item;
-        });
-
+        $list = null;
+        if($url == 'http://www.1905.com/pinglun/?fr=homepc_menu_cmt'){
+            $list = QueryList::Query($url,array(
+                'title'=>array('.list-txt a','text'),
+                'litpic' => array('img','src'),
+                'con_url'=>array('.list-txt a','href'),
+                //description
+                'body'=>array('.list-txt .txt-abstract','text')
+            ),'.comment-list li')->data;
+        }else{
+            $data = QueryList::Query($url,array())->getHtml();
+            $data = json_decode($data,true);
+            if(isset($data['info'])) {
+                $data = $data['info'];
+                foreach ($data as $key=>$value) {
+                    $list[$key] = array(
+                        'title' => $value['title'],
+                        'litpic' => $value['thumb'],
+                        'con_url' => $value['url'],
+                        'body' => $value['description'],
+                    );
+                }
+            }
+        }
         return $list;
     }
-
 
     /**
      * 采信内容页
      */
     public function getContent()
     {
+        $minId = 0;
+        $take = 10;
         do {
-            $take = 10;
-            $arc = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $this->aid)->where('is_con', -1)->where('typeid', $this->typeId)->take($take)->orderBy('id')->get();
+            $arc = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $minId)->where('is_con', -1)->where('typeid', $this->typeId)->take($take)->get();
             $tot = count($arc);
 
             foreach ($arc as $key => $value) {
-                $this->aid = $value->id;
+                $minId = $value->id;
                 $this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
-
                 //得到保存的数组
                 $conSaveArr = $this->getConSaveArr($value->con_url);
                 if (!$conSaveArr) {
@@ -121,13 +128,15 @@ trait NewsY3600
                     continue;
                 }
                 //内容主体
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr[0]['con']]);
+                $conSaveArr = SpHtml2Text($conSaveArr[0]['con']);
+
+                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr]);
                 if ($rest) {
                     $this->contentNum++;
                     DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
-                    $this->info('save con success');
+                    //$this->info('save con success');
                 } else {
-                    $this->error('save con fail');
+                    //$this->error('save con fail');
                     DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delte();
                 }
             }
@@ -144,13 +153,14 @@ trait NewsY3600
     public function getConSaveArr($url)
     {
         $content = QueryList::Query($url, array(
-            'con' => array('#article', 'text', 'p -img -.content_head -.editor -script -.show_author -img_descr'),
+            'con' => array('#article', 'text', 'img -.content_head -.editor -script -.show_author'),
         ))->getData(function ($item) {
-            $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/is', '/height\s*=\s*[\'"](.*?)[\'"]/is','/style\s*=\s*["\'](.*?)["\']/is');
-            $replace = array('', '','');
+            $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/is', '/height\s*=\s*[\'"](.*?)[\'"]/is');
+            $replace = array('', '');
             $item['con'] = preg_replace($pattern, $replace, $item['con']);
             return $item;
         });
+//        dd($content);
         return $content;
     }
 

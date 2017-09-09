@@ -83,6 +83,8 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\News\Y3600::class,
         //跟踪采集娱乐新闻
         Commands\Caiji\News\Y3600Update::class,
+        //跟踪采集影视评论
+        Commands\Caiji\News\M1905Update::class,
         //================//=============//==========
 
 
