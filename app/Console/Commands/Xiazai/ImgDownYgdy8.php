@@ -86,23 +86,23 @@ class ImgDownYgdy8 extends Command
 
     public function bodyImg()
     {
+        $minId = 0;
+        $take = 10;
         do {
-            $addonarchives = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_body', -1)->orderBy('id')->take(10)->get();
-
+            $addonarchives = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_body', -1)->where('id','>',$minId)->take($take)->get();
             $tot = count($addonarchives);
-//            dd($tot);
+
             foreach ($addonarchives as $key => $value) {
+                $minId = $value->id;
                 $this->info("this is dong_img_down {$key}/{$tot} -- typeid is {$value->typeid} -- aid is {$value->id}");
 
                 //数据为空,则删除这条记录
                 if (empty($value->body) === true) {
 //                    DB::table('dong_gather')->delete($value->id);
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_body' => 0]);
                     continue;
                 }
                 //得到所有图片链接
-                $marest = preg_match_all('/<img\s*src=["\'](.*?)["\'][^>]*>/is', $value->body, $matchs);
-
+                $marest = preg_match_all('/<img\s*src\s*=\s*["\'](.*?)["\'][^>]*>/is', $value->body, $matchs);
                 //数据不完整,内容中没有图片,则更新这条记录
 //                dd($matchs);
                 if ($marest === 0) {
@@ -141,6 +141,7 @@ class ImgDownYgdy8 extends Command
                     }
                 }
                 $body = str_replace($matchs[1],$ossImg,$value->body);
+                //删除图片空链接
                 $body = preg_replace('/<img(.*)src=""(.*)>/isU','',$body);
 //                dd($body);
                 $this->info($body."\n");

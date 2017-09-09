@@ -47,27 +47,28 @@ trait M1905
             
             //保存进数据库中去
             foreach ($list as $key => $value) {
-                $rs = null;
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
-                //判断重复性
-                if ($rest) {
-                    continue;
-                } else {
-                    //不是更新的时候判断名字的重复
-                    $listSaveArr = [
-                        'title' => trim($value['title']).'(转载)',
-                        'title_hash' => md5(trim($value['title'])),
-                        'con_url' => $value['con_url'],
-                        //描述信息
-                        'down_link' => SpHtml2Text($value['body']),
-                        'litpic' => $value['litpic'],
-                        'typeid' => $this->typeId,
-                        'is_douban' => 0,
-                    ];
+                if (strpos($value['con_url'], 'news') !== false) {
+                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
+                    //判断重复性
+                    if ($rest) {
+                        continue;
+                    } else {
+                        //不是更新的时候判断名字的重复
+                        $listSaveArr = [
+                            'title' => trim($value['title']) . '(转载)',
+                            'title_hash' => md5(trim($value['title'])),
+                            'con_url' => $value['con_url'],
+                            //描述信息
+                            'down_link' => SpHtml2Text($value['body']),
+                            'litpic' => $value['litpic'],
+                            'typeid' => $this->typeId,
+                            'is_douban' => 0,
+                        ];
 
-                    $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
-                    if ($rs) {
-                        $this->listNum++;
+                        $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
+                        if ($rs) {
+                            $this->listNum++;
+                        }
                     }
                 }
             }
@@ -121,16 +122,15 @@ trait M1905
                 $minId = $value->id;
                 $this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
                 //得到保存的数组
-                $conSaveArr = $this->getConSaveArr($value->con_url);
-                if (!$conSaveArr) {
+                $conSaveArr = $this->getConSaveArr($value->con_url,$value->title);
+                if (empty($conSaveArr)) {
                     //内容不存在则删除这条记录
                     DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
                     continue;
                 }
                 //内容主体
-                $conSaveArr = SpHtml2Text($conSaveArr[0]['con']);
-
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr]);
+//                $conSaveArr = SpHtml2Text($conSaveArr[0]['con']);
+                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr[0]['con']]);
                 if ($rest) {
                     $this->contentNum++;
                     DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
@@ -150,14 +150,42 @@ trait M1905
      * 得到内容页的保存数组,以◎分割
      * @param $url 内容页的网址链接
      */
-    public function getConSaveArr($url)
+    public function getConSaveArr($url,$title)
     {
         $content = QueryList::Query($url, array(
-            'con' => array('#article', 'text', 'img -.content_head -.editor -script -.show_author'),
-        ))->getData(function ($item) {
-            $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/is', '/height\s*=\s*[\'"](.*?)[\'"]/is');
-            $replace = array('', '');
+            'con' => array('.pic-content', 'text', 'p img -a -script'),
+        ))->getData(function ($item) use($title){
+            $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/is', '/height\s*=\s*[\'"](.*?)[\'"]/is','/style\s*=\s*["\'](.*?)["\']/is');
+            $replace = array('', '','');
             $item['con'] = preg_replace($pattern, $replace, $item['con']);
+            if(!empty($item['con'])) {
+                $item['pic'] = QueryList::Query($item['con'], array(
+                    'pic' => array('img', 'src')
+                ))->data;
+            }
+            $item['con'] = preg_replace('/<img(.*?)>/is','%s',$item['con']);
+
+            //组织图片链接字符串
+            $picstr = '';
+            if(!empty($item['pic'])){
+//                $item['con'] = sprintf($item['con'],implode(',',$item['pic']));
+                foreach ($item['pic'] as $key=>$value){
+                    $alt = '迅雷电影下载_2017最新电影电视剧_ca2722电影网'.$title;
+                    $picstr .= '<img src = "'.$value['pic'].'" title="'.$alt.'" alt="'.$alt.'">,';
+                }
+                $picstr = rtrim($picstr,',');
+            }
+            unset($item['pic']);
+            $con = explode('%s',$item['con']);
+            $last = array_pop($con);
+            $picstr = explode(',',$picstr);
+
+            foreach ($con as $key=>&$value){
+                $value = $value.$picstr[$key];
+            }
+            $con = implode('',$con);
+            $con = $con.$last;
+            $item['con'] = trim($con);
             return $item;
         });
 //        dd($content);
