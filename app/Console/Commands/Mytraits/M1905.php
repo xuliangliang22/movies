@@ -152,7 +152,7 @@ trait M1905
     public function getConSaveArr($url,$title)
     {
         $content = QueryList::Query($url, array(
-            'con' => array('.pic-content', 'text', 'p img -a -script'),
+            'con' => array('.pic-content', 'text', 'p img -a -script -.atlas_placehoder'),
         ))->getData(function ($item) use($title){
             $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/is', '/height\s*=\s*[\'"](.*?)[\'"]/is','/style\s*=\s*["\'](.*?)["\']/is');
             $replace = array('', '','');
