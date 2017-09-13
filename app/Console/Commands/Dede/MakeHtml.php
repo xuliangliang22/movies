@@ -90,10 +90,16 @@ class MakeHtml extends Command
     /**
      * dede生成栏目页
      */
-    public function makeLanmu($typeId)
+    public function makeLanmu($typeId,$mkpage = 1,$url = '')
     {
-        $url = config('qiniu.qiniu_data.dede_url') . 'makehtml_list_action.php?typeid=' . $typeId . '&maxpagesize=50&upnext=1';
-        //dd($url);
+        //first http://localhost:8127/wldy/makehtml_list_action.php?typeid=15&maxpagesize=50&upnext=1
+        //second http://localhost:8127/wldy/makehtml_list_action.php?gotype=&uppage=0&mkpage=51&maxpagesize=50&typeid=15&pageno=0&isremote=0&serviterm=
+        //third http://localhost:8127/wldy/makehtml_list_action.php?gotype=&uppage=0&mkpage=101&maxpagesize=50&typeid=15&pageno=0&isremote=0&serviterm=
+        if($mkpage == 1) {
+            $url = config('qiniu.qiniu_data.dede_url') . 'makehtml_list_action.php?typeid=' . $typeId . '&maxpagesize=50&upnext=1';
+        }
+//        dd($url);
+        //登录
         $rest = $this->dedeLogin(config('qiniu.qiniu_data.dede_url') . 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
         if ($rest) {
             $this->curl->add()
@@ -101,8 +107,8 @@ class MakeHtml extends Command
                 ->opt_sendHeader('cookie', $this->cookie)
                 ->done('get');
             $this->curl->run();
-            $content = $this->curl->getAll();
-            if (mb_strpos($content['body'], '完成所有栏目列表更新', 0, 'utf-8') !== false) {
+            $content = $this->curl->get();
+            if (mb_strpos($content, '完成所有栏目列表更新', 0, 'utf-8') !== false) {
                 //logs
                 if ($this->isCommandLogs === true) {
                     $command = "{$typeId}  lanmu list make success ! \n";
@@ -111,11 +117,21 @@ class MakeHtml extends Command
                 $this->info("{$typeId}  lanmu list make success !");
             } else {
                 //logs
-                if ($this->isCommandLogs === true) {
-                    $command = "{$typeId}  lanmu list make fail ! \n";
-                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                if(mb_strpos($content,'继续进行操作',0,'utf-8') !== false) {
+                    $mkpage = $mkpage + 50;
+                    $url = config('qiniu.qiniu_data.dede_url').'makehtml_list_action.php?gotype=&uppage=0&mkpage='.$mkpage.'&maxpagesize=50&typeid='.$typeId.'&pageno=0&isremote=0&serviterm=';
+                    if ($this->isCommandLogs === true) {
+                        $command = "{$typeId} agin {$mkpage} list make ! \n";
+                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                    }
+                    $this->makeLanmu($typeId, $mkpage,$url);
+                }else {
+                    if ($this->isCommandLogs === true) {
+                        $command = "{$typeId}  lanmu list make fail ! \n";
+                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                    }
+                    $this->error("{$typeId}  lanmu list make fail !");
                 }
-                $this->error("{$typeId}  lanmu list make fail !");
             }
         }
     }
