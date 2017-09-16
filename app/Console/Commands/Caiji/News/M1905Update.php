@@ -141,12 +141,8 @@ class M1905Update extends Command
         }
         if($queueName == 'all' || $queueName == 'pic') {
             //内容页图片
-            //9450
-            $this->callSilent('xiazai:imgdownygdy8', ['type' => 'body', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
             //缩略图
             $this->callSilent('xiazai:imgdownygdy8', ['type' => 'litpic', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
-            //百度图片
-            $this->callSilent('caiji:baidulitpic', ['db_name'=>$this->dbName,'table_name'=>$this->tableName,'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => '娱乐']);
 
             echo "图片采集完成! \n";
             if($this->isCommandLogs === true) {

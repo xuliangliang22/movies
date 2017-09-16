@@ -152,39 +152,13 @@ trait M1905
     public function getConSaveArr($url,$title)
     {
         $content = QueryList::Query($url, array(
-            'con' => array('.pic-content', 'text', 'p img -a -script -.atlas_placehoder'),
+            'con' => array('.pic-content', 'text', 'p -img -a -script -.atlas_placehoder'),
         ))->getData(function ($item) use($title){
             $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/is', '/height\s*=\s*[\'"](.*?)[\'"]/is','/style\s*=\s*["\'](.*?)["\']/is');
             $replace = array('', '','');
-            $item['con'] = preg_replace($pattern, $replace, $item['con']);
-            if(!empty($item['con'])) {
-                $item['pic'] = QueryList::Query($item['con'], array(
-                    'pic' => array('img', 'src')
-                ))->data;
-            }
-            $item['con'] = preg_replace('/<img(.*?)>/is','%s',$item['con']);
+            $con = preg_replace($pattern, $replace, $item['con']);
 
-            //组织图片链接字符串
-            $picstr = '';
-            if(!empty($item['pic'])){
-//                $item['con'] = sprintf($item['con'],implode(',',$item['pic']));
-                foreach ($item['pic'] as $key=>$value){
-                    $alt = '迅雷电影下载_2017最新电影电视剧_ca2722电影网'.$title;
-                    $picstr .= '<img src = "'.$value['pic'].'" title="'.$alt.'" alt="'.$alt.'">,';
-                }
-                $picstr = rtrim($picstr,',');
-            }
-            unset($item['pic']);
-            $con = explode('%s',$item['con']);
-            $last = array_pop($con);
-            $picstr = explode(',',$picstr);
-
-            foreach ($con as $key=>&$value){
-                $value = $value.$picstr[$key];
-            }
-            $con = implode('',$con);
-            $con = $con.$last;
-            $con = strtr($con,array('1905电影网讯'=>'','1905'=>'','电影网'=>''));
+            $con = strtr($con,array('1905电影网讯'=>'','1905'=>'','电影网'=>'','下一页：'=>''));
             $item['con'] = trim($con);
             return $item;
         });
