@@ -65,6 +65,7 @@ trait NewsY3600
                         'litpic' => $value['litpic'],
                         'typeid' => $this->typeId,
                         'is_douban' => 0,
+                        'is_body'=>0,
                     ];
 
                     $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);

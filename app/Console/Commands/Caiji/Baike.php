@@ -43,7 +43,6 @@ class Baike extends Command
         $dbName = $this->argument('db_name');
         $tableName = $this->argument('table_name');
         $typeId = $this->argument('type_id');
-
         $minId = 0;
         $take = 10;
 
