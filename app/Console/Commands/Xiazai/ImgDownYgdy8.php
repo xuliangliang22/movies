@@ -106,7 +106,6 @@ class ImgDownYgdy8 extends Command
                 //数据不完整,内容中没有图片,则更新这条记录
 //                dd($matchs);
                 if ($marest === 0) {
-//                    DB::table('dong_gather')->delete($value->id);
                     DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_body' => 0]);
                     continue;
                 }

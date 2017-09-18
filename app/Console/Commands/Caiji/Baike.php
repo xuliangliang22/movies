@@ -40,6 +40,7 @@ class Baike extends Command
     public function handle()
     {
         //
+
         $dbName = $this->argument('db_name');
         $tableName = $this->argument('table_name');
         $typeId = $this->argument('type_id');
@@ -49,11 +50,6 @@ class Baike extends Command
         do {
             $movies = DB::connection($dbName)->table($tableName)->where('id', '>', $minId)->where('typeid', $typeId)->where('is_douban',-1)->take($take)->get();
             $tot = count($movies);
-            if ($tot < 1) {
-                //cli
-                $this->error('no content to baike');
-                break;
-            }
 
             foreach ($movies as $key=>$value){
                 $minId = $value->id;
@@ -62,7 +58,21 @@ class Baike extends Command
                 DB::connection($dbName)->table($tableName)->where('id',$value->id)->update(['is_douban'=>0]);
 
                 $url = 'https://baike.baidu.com/search?word=' . urlencode($value->title) . '&pn=0&rn=0&enc=utf8';
-                $data = QueryList::Query($url,array(
+                //更换ip去采集
+                $ip = getRandIp();
+                $ql = QueryList::run('Request',[
+                    'http' => [
+                        'target' => $url,
+                        'referrer' => 'https://baike.baidu.com',
+                        'method' => 'GET',
+                        'CLIENT-IP:'.$ip,
+                        'X-FORWARDED-FOR:'.$ip,
+                        'user_agent'=>'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0',
+                        //等等其它http相关参数，具体可查看Http类源码
+                    ],
+                ]);
+
+                $data = $ql->setQuery(array(
                     'body'=>array('.search-list .result-summary:first()','text'),
                 ))->data;
                 if(isset($data[0]) === false){

@@ -69,7 +69,7 @@ class RhanMoviesUpdate extends Command
                 file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
             }
 
-            $this->movieList($pageStart, $pageTot, $url, true);
+            $this->movieList($pageStart, $pageTot, $url);
 
             //logs
             if (empty($this->listNum)) {

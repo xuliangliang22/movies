@@ -60,12 +60,6 @@ class Douban extends Command
             do {
                 $movies = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $aid)->where('typeid', $this->typeId)->where('is_douban', -1)->take($take)->get();
                 $tot = count($movies);
-                if ($tot < 1) {
-                    //cli
-                    $this->error('no content to douban');
-                    break;
-                }
-
                 foreach ($movies as $key => $row) {
                     $aid = $row->id;
                     //cli
@@ -122,7 +116,6 @@ class Douban extends Command
                     if(config('qiniu.qiniu_data.is_cli')) {
                         print_r($updateArr);
                     }
-
                     if (!empty($updateArr)) {
                         //保存到数据库
                         $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $row->id)->update(array_merge($updateArr, ['is_douban' => 0]));
@@ -156,11 +149,27 @@ class Douban extends Command
         $keyword = _filterSpuerChar($keyword);
 
         $url = 'https://www.douban.com/search?q=' . $keyword;
-        $content = QueryList::Query($url, array(
+        $ip = getRandIp();
+        $ql = QueryList::run('Request',[
+            'http' => [
+                'target' => $url,
+                'referrer' => 'https://www.douban.com/',
+                'method' => 'GET',
+                'CLIENT-IP:'.$ip,
+                'X-FORWARDED-FOR:'.$ip,
+                'user_agent'=>'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0',
+                //等等其它http相关参数，具体可查看Http类源码
+            ],
+            'callback' => function($html,$args){
+                //处理html的回调方法
+                return $html;
+            },
+        ]);
+        $content = $ql->setQuery(array(
             'title' => array('a', 'text'),
             'con_url' => array('a', 'href'),
             'type' => array('span', 'text'),
-        ), '.result .title')->getData(function ($item) {
+        ),'.result .title')->getData(function ($item){
             $name = $item['title'];
             $last = mb_substr($name, -1, 1, 'utf-8');
             if ($last == ')') {
@@ -173,7 +182,6 @@ class Douban extends Command
             $item['title'] = mb_substr($name, 0, $pos, 'utf-8');
             return $item;
         });
-//        dd($content);
 
         $rest = '';
         if (empty($content) === false) {
@@ -197,7 +205,7 @@ class Douban extends Command
             return false;
         } else {
             //取内容页的信息
-            return $this->getContent($rest['con_url']);
+            return $this->getContent($rest['con_url'],$url);
         }
     }
 
@@ -205,14 +213,28 @@ class Douban extends Command
      * https　curl
      * @param $url
      */
-    public function getContent($url)
+    public function getContent($url,$refurl)
     {
-        $douban_data = QueryList::Query($url, array(
+        //更换ip去采集
+        $ip = getRandIp();
+        $ql = QueryList::run('Request',[
+            'http' => [
+                'target' => $url,
+                'referrer' => $refurl,
+                'method' => 'GET',
+                'CLIENT-IP:'.$ip,
+                'X-FORWARDED-FOR:'.$ip,
+                'user_agent'=>'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0',
+                //等等其它http相关参数，具体可查看Http类源码
+            ],
+        ]);
+
+        $douban_data = $ql->setQuery(array(
             'grade' => array('.rating_num', 'text'),
             'litpic' => array('#mainpic img', 'src'),
             'body' => array('#link-report', 'text'),
             'html' => array('#info', 'html'),
-        ))->getData(function ($item) {
+        ))->getData(function ($item){
             $html = explode('<br>', $item['html']);
             $html = array_map(function ($val) {
                 return strip_tags($val);
@@ -279,6 +301,5 @@ class Douban extends Command
         }
         return $douban_data;
     }
-
 
 }
