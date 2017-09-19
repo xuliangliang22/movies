@@ -280,6 +280,7 @@ trait Ygdy8
                 exit;
             }
         }
+        dd('end!!!!!');
 
         //上线部署
         if ($queueName == 'all' || $queueName == 'dede' || $queueName == 'other') {
