@@ -53,7 +53,7 @@ trait Tv2017
                 foreach ($list as $key => $value) {
 //                    dd($value);
                     $rs = null;
-                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
+                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
                     if ($rest) {
                         //如果存在则退出
                         continue;
