@@ -77,7 +77,7 @@ trait Ygdy8
                 //保存进数据库中去
                 foreach ($list as $key => $value) {
                     $rs = null;
-                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
+                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
                     if ($rest) {
                         if ($isNew === true) {
                             $isNewType = 'update';
@@ -280,7 +280,6 @@ trait Ygdy8
                 exit;
             }
         }
-        dd('end!!!!!');
 
         //上线部署
         if ($queueName == 'all' || $queueName == 'dede' || $queueName == 'other') {
