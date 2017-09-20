@@ -50,7 +50,7 @@ trait NewsY3600
             foreach ($list as $key => $value) {
 
                 $rs = null;
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
+                $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
                 if ($rest) {
                     continue;
                 } else {

@@ -48,7 +48,7 @@ trait M1905
             //保存进数据库中去
             foreach ($list as $key => $value) {
                 if (strpos($value['con_url'], 'news') !== false) {
-                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
+                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
                     //判断重复性
                     if ($rest) {
                         continue;

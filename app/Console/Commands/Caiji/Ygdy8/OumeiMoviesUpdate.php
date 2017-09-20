@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
 
+
 class OumeiMoviesUpdate extends Command
 {
     use Ygdy8;

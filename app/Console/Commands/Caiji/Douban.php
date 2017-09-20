@@ -52,7 +52,6 @@ class Douban extends Command
         $this->initDouban(0);
     }
 
-
     public function initDouban($aid)
     {
         $take = 10;

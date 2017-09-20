@@ -339,7 +339,7 @@ trait Ygdy8
         }
 
         //logs
-        echo "内容更新完成! \n";
+        //echo "内容更新完成! \n";
         if ($this->isCommandLogs === true) {
             $command = "内容更新完成! \n\n\n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);

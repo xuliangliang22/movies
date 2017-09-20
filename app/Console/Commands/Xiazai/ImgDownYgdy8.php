@@ -98,7 +98,7 @@ class ImgDownYgdy8 extends Command
 
                 //数据为空,则删除这条记录
                 if (empty($value->body) === true) {
-//                    DB::table('dong_gather')->delete($value->id);
+                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_body' => 0]);
                     continue;
                 }
                 //得到所有图片链接
