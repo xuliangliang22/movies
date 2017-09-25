@@ -117,6 +117,9 @@ class Douban extends Command
                     }
                     if (!empty($updateArr)) {
                         //保存到数据库
+                        if(empty($row->litpic) === false){
+                           unset($updateArr['litpic']);
+                        }
                         $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $row->id)->update(array_merge($updateArr, ['is_douban' => 0]));
                         if ($rest) {
                             //cli
