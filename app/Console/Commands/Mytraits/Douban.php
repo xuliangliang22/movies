@@ -7,6 +7,8 @@
  */
 namespace App\Console\Commands\Mytraits;
 
+use QL\QueryList;
+
 trait Douban
 {
 
