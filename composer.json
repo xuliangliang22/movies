@@ -15,8 +15,8 @@
         "kartik-v/bootstrap-fileinput": "^4.4",
         "laravel/framework": "5.4.*",
         "laravel/scout": "^3.0",
-        "qiniu/php-sdk": "^7.1",
-        "xuliangliang22/search": "9.0"
+        "xuliangliang22/search": "9.0",
+        "zgldh/qiniu-laravel-storage": "^0.8.4"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

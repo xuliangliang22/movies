@@ -5,15 +5,17 @@ namespace App\Console\Commands\Caiji;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
+use App\Console\Commands\Mytraits\Common;
 
 class Douban extends Command
 {
+    use Common;
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'caiji:douban {db_name}{table_name}{type_id}';
+    protected $signature = 'caiji:douban {type_id}';
 
     /**
      * The console command description.
@@ -22,11 +24,12 @@ class Douban extends Command
      */
     protected $description = '根据输入的关键词得到豆瓣信息';
 
+    protected $typeId;
 
-    public $dbName;
-    public $tableName;
-    public $typeId;
-
+    /**
+     * 七牛文件前缀
+     */
+    protected $savePath;
 
     /**
      * Create a new command instance.
@@ -36,6 +39,7 @@ class Douban extends Command
     public function __construct()
     {
         parent::__construct();
+        $this->initBegin();
     }
 
     /**
@@ -45,31 +49,30 @@ class Douban extends Command
      */
     public function handle()
     {
-        //
-        $this->dbName = $this->argument('db_name');
-        $this->tableName = $this->argument('table_name');
         $this->typeId = $this->argument('type_id');
         $this->initDouban(0);
     }
 
     public function initDouban($aid)
     {
+        $message = null;
         $take = 10;
         try {
             do {
-                $movies = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $aid)->where('typeid', $this->typeId)->where('is_douban', -1)->take($take)->get();
+                $movies = DB::connection($this->dbName)->table($this->tableName)->select('id','typeid','title','is_litpic')->where('id', '>', $aid)->where('typeid', $this->typeId)->where('is_douban', -1)->take($take)->get();
                 $tot = count($movies);
                 foreach ($movies as $key => $row) {
                     $aid = $row->id;
-                    //cli
-                    $this->info("this is id {$row->id} title {$row->title}");
-                    $rest = $this->getList($row->title);
-//                    dd($rest);
-                    if (!$rest) {
+                    $message = date('Y-m-d H:i:s')." this is id {$row->id} title {$row->title}".PHP_EOL;
+                    $this->info($message);
+                    $url = 'https://www.douban.com/search?q=' . $row->title;
+                    $conUrl = $this->getList($url);
+                    if (!$conUrl) {
                         continue;
                     }
-
+                    $rest = $this->getContent($conUrl,$url);
                     $updateArr = [];
+
                     foreach ($rest as $k => $v) {
                         switch ($k) {
                             case 'grade':
@@ -111,23 +114,35 @@ class Douban extends Command
                                 break;
                         }
                     }
-                    //cli
-                    if(config('qiniu.qiniu_data.is_cli')) {
-                        print_r($updateArr);
-                    }
-                    if (!empty($updateArr)) {
+
+                    if (empty($updateArr) === false) {
                         //保存到数据库
-                        if(empty($row->litpic) === false){
-                           unset($updateArr['litpic']);
+                        if($row->is_litpic == -1 && isset($updateArr['litpic']) === true){
+                            //上传这张图
+                            $this->savePath = config('admin.upload.directory.image').$row->typeid ;
+                            $file = $this->imgUpload($updateArr['litpic']);
+                            if($file){
+                                $ossImg = rtrim(config('filesystems.disks.qiniu.domains.default'),'/').'/'.ltrim($file,'/').config('qiniu.qiniu_data.qiniu_postfix');
+                                $updateArr['litpic'] = $ossImg;
+                                $updateArr['is_litpic'] = 0;
+                            }
+                        }else{
+                            unset($updateArr['litpic']);
                         }
-                        $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $row->id)->update(array_merge($updateArr, ['is_douban' => 0]));
+                        //更新
+                        $updateArr['is_douban'] = 0;
+                        $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $row->id)->update($updateArr);
                         if ($rest) {
-                            //cli
-                            $this->info('perfect content update success');
+                            $message .= "douban aid {$row->id} update success !!";
+                            $this->info($message);
                         } else {
-                            //cli
-                            $this->error('perfect content update fail');
+                            $message .= "douban aid {$row->id} update fail !!";
+                            $this->error($message);
                         }
+                    }
+                    //保存日志
+                    if($this->isCommandLogs === true){
+                        file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
                     }
                     usleep(500);
                 }
@@ -139,18 +154,21 @@ class Douban extends Command
             $this->error('doban exception ' . $e->getMessage());
             $this->initDouban($aid);
         }
-        $this->info('douban end !');
+        $message = 'douban end !';
+        $this->info($message);
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+        }
     }
 
 
     /**
      * 得到列表页
      */
-    public function getList($keyword)
+    public function getList($url)
     {
-        $keyword = _filterSpuerChar($keyword);
-
-        $url = 'https://www.douban.com/search?q=' . $keyword;
+        $rest = false;
         $ip = getRandIp();
         $ql = QueryList::run('Request',[
             'http' => [
@@ -185,30 +203,15 @@ class Douban extends Command
             return $item;
         });
 
-        $rest = '';
         if (empty($content) === false) {
             foreach ($content as $key => $value) {
                 if (empty($value['type']) === false && (mb_stripos($value['type'], '电视', 0, 'utf-8') !== false || mb_stripos($value['type'], '电影', 0, 'utf-8') !== false || mb_stripos($value['type'], '动漫', 0, 'utf-8') !== false)) {
-
-                    $title = $value['title'];
-                    $title = _filterSpuerChar($title);
-                    if(config('qiniu.qiniu_data.is_cli')) {
-                        echo $title . "\n";
-                    }
-                    if (mb_strpos($keyword, $title, 0, 'utf-8') !== false || mb_strpos($title, $keyword, 0, 'utf-8') !== false) {
-                        $rest = $value;
-                        break;
-                    }
+                    $rest = $value['con_url'];
+                    break;
                 }
             }
         }
-
-        if (empty($rest)) {
-            return false;
-        } else {
-            //取内容页的信息
-            return $this->getContent($rest['con_url'],$url);
-        }
+        return $rest;
     }
 
     /**

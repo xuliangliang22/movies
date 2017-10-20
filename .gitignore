@@ -6,7 +6,6 @@
 Homestead.json
 Homestead.yaml
 .env
-/config/qiniu.php
 /public/cookie_dede
 /public/command_logs
 cookie.txt

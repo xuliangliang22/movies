@@ -46,18 +46,18 @@ return [
      */
     'upload'  => [
 
-        'disk' => 'admin',
-
-        'directory'  => [
-            'image'  => 'image',
-            'file'   => 'file',
-        ],
-
+//        'disk' => 'admin',
+//        'directory'  => [
+//            'image'  => 'image',
+//            'file'   => 'file',
+//        ],
         //'host' => 'http://localhost:8000/upload/',
 
-        //===this is my modify
-        'host' => env('APP_URL').'/upload',
-        //===this is my modify
+        'disk' => 'qiniu',
+        'directory'  => [
+            'image'  => 'image/'.date('Ymd'),
+            'file'   => 'file/'.date('Ymd'),
+        ],
     ],
 
     /*

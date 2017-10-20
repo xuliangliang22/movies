@@ -5,16 +5,18 @@ namespace App\Console\Commands\Send;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use App\Console\Commands\Mytraits\DedeLogin;
+use App\Console\Commands\Mytraits\Common;
 
 class DedeNewPost extends Command
 {
+    use Common;
     use DedeLogin;
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'send:dedenewpost{db_name}{table_name}{channel_id}{typeid}{aid?}';
+    protected $signature = 'send:dedenewpost{channel_id}{typeid}';
 
     /**
      * The console command description.
@@ -26,7 +28,6 @@ class DedeNewPost extends Command
     /**
      * 后台地址
      */
-//    protected $dedeUrl = 'http://www.dongtaitu888.com/dongtaitu123/';
     protected $dedeUrl;
 
     /**
@@ -49,11 +50,6 @@ class DedeNewPost extends Command
      */
     protected $cookie;
 
-    //日志保存路径
-    public $commandLogsFile;
-    //是否开启日志
-    public $isCommandLogs;
-
     /**
      * Create a new command instance.
      *
@@ -62,12 +58,10 @@ class DedeNewPost extends Command
     public function __construct()
     {
         parent::__construct();
+        $this->initBegin();
         $this->dedeUrl = config('qiniu.qiniu_data.dede_url');
         $this->dedeUser = config('qiniu.qiniu_data.dede_user');
         $this->dedePwd = config('qiniu.qiniu_data.dede_pwd');
-
-        $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
-        $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
     }
 
     /**
@@ -77,10 +71,6 @@ class DedeNewPost extends Command
      */
     public function handle()
     {
-        global $isSend;
-        $isSend = false;
-        $dbName = $this->argument('db_name');
-        $tableName = $this->argument('table_name');
         //
         $dede_data = array(
             'channelid' => 1,
@@ -120,26 +110,20 @@ class DedeNewPost extends Command
         $loginUrl = $this->dedeUrl . 'login.php';
         $addUrl = $this->dedeUrl . 'article_add.php';
 
-        $take = 10;
         $this->channelId = $this->argument('channel_id');
         $this->typeId = $this->argument('typeid');
         //取出最大的id加1
-        $maxId = DB::connection($dbName)->table($tableName)->where('typeid', $this->typeId)->max('id');
-        $maxId = empty($this->argument('aid')) ? $maxId + 1 : $this->argument('aid');
-//        dd($minId);
+        $maxId = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->max('id');
+        $take = 10;
 
         do {
             //提交数据
-            $archives = DB::connection($dbName)->table($tableName)->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post', '-1')->orderBy('id', 'desc')->take($take)->get();
+            $archives = DB::connection($this->dbName)->table($this->tableName)->where('id', '<=', $maxId)->where('typeid', $this->typeId)->where('is_post', '-1')->orderBy('id', 'desc')->take($take)->get();
             $tot = count($archives);
             foreach ($archives as $key => $value) {
                 $maxId = $value->id;
-                $this->info("{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id}");
-
-                if($this->isCommandLogs === true) {
-                    $command = "{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id} \n";
-                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-                }
+                $message = date('Y-m-d H:i:s')."{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id}".PHP_EOL;
+                $this->info($message);
 
                 //判断是否登录
                 if (!$this->dedeLogin($loginUrl, $this->dedeUser, $this->dedePwd)) {
@@ -171,29 +155,30 @@ class DedeNewPost extends Command
                 $data = array_merge($dede_data, $rel_data);
                 $rest = $this->getCurl($addUrl, 'post', $data);
                 if (stripos($rest, '成功发布文') !== false) {
-                    $isSend = true;
                     //成功提交后更新is_post
-                    DB::connection($dbName)->table($tableName)->where('id', $value->id)->update(['is_post' => 0]);
-                    $this->info('dede post archive success');
-                    if($this->isCommandLogs === true) {
-                        $command = "dede post archive success aid is {$value->id} \n";
-                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-                    }
+                    //更新状态文件
+                    file_put_contents($this->dedeSendStatusFile,'is_send = 1');
+                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_post' => 0]);
+                    $message .= "news dede post success".PHP_EOL;
+                    $this->info($message);
                 } else {
-                    $this->error('dede post archive fail');
-                    if($this->isCommandLogs === true) {
-                        $command = "dede post archive fail aid is {$value->id} \n";
-                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-                    }
+                    $message .= "news dede post fail".PHP_EOL;
+                    $this->error($message);
                     exit;
+                }
+                //日志
+                if($this->isCommandLogs === true) {
+                    file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
                 }
             }
         } while ($tot > 0);
-        $this->info('dede post archive end');
+        $message = "news dede post end".PHP_EOL;
+        $this->error($message);
+        //日志
         if($this->isCommandLogs === true) {
-            $command = "dede post archive end\n\n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
         }
+
     }
 
 }

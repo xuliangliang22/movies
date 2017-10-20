@@ -12,22 +12,7 @@ use QL\QueryList;
 
 trait NewsY3600
 {
-    public $curl;
-    public $listInfo;
-    public $listNum;
-    public $contentNum;
-
-    public function MovieInit()
-    {
-        $this->listNum = 0;
-        $this->contentNum = 0;
-
-        if (empty($this->curl)) {
-            $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'curl' . DIRECTORY_SEPARATOR . 'curl.php';
-            require_once $path;
-            $this->curl = new \curl();
-        }
-    }
+    protected $listNum;
 
     /**
      * 保存电影电视剧列表页
@@ -48,10 +33,8 @@ trait NewsY3600
             
             //保存进数据库中去
             foreach ($list as $key => $value) {
-
-                $rs = null;
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
-                if ($rest) {
+                $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
+                if (count($isAlready) > 0) {
                     continue;
                 } else {
                     //不是更新的时候判断名字的重复
@@ -65,7 +48,6 @@ trait NewsY3600
                         'litpic' => $value['litpic'],
                         'typeid' => $this->typeId,
                         'is_douban' => 0,
-                        'is_body'=>0,
                     ];
 
                     $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
@@ -105,14 +87,18 @@ trait NewsY3600
      */
     public function getContent()
     {
+        $minId = 0;
+        $take = 10;
+        $message = null;
+
         do {
-            $take = 10;
-            $arc = DB::connection($this->dbName)->table($this->tableName)->where('id', '>', $this->aid)->where('is_con', -1)->where('typeid', $this->typeId)->take($take)->orderBy('id')->get();
+            $arc = DB::connection($this->dbName)->table($this->tableName)->select('id','con_url')->where('is_con', -1)->where('typeid', $this->typeId)->where('id', '>', $minId)->take($take)->get();
             $tot = count($arc);
 
             foreach ($arc as $key => $value) {
-                $this->aid = $value->id;
-                $this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
+                $minId = $value->id;
+                $message = date('Y-m-d H:i:s')."{$key}/{$tot} id is {$value->id} url is {$value->con_url}".PHP_EOL;
+                $this->info($message);
 
                 //得到保存的数组
                 $conSaveArr = $this->getConSaveArr($value->con_url);
@@ -122,19 +108,27 @@ trait NewsY3600
                     continue;
                 }
                 //内容主体
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr[0]['con']]);
+                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr[0]['con'],'is_con'=>0]);
                 if ($rest) {
-                    $this->contentNum++;
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
-                    $this->info('save con success');
+                    $message .= "y3600 content aid {$value->id} save success ";
+                    $this->info($message);
                 } else {
-                    $this->error('save con fail');
+                    $message .= "y3600 content aid {$value->id} save fail ";
+                    $this->error($message);
                     DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delte();
+                }
+
+                //日志
+                if($this->isCommandLogs === true) {
+                    file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
                 }
             }
         } while ($tot > 0);
-        //$this->info('save con end');
-        $this->aid = 0;
+        $message = "y3600 content save end ";
+        //日志
+        if($this->isCommandLogs === true) {
+            file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
+        }
     }
 
 

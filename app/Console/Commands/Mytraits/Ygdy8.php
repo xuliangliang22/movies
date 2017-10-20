@@ -9,40 +9,11 @@ namespace App\Console\Commands\Mytraits;
 
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
+use SebastianBergmann\CodeCoverage\Report\PHP;
 
 trait Ygdy8
 {
-    public $curl;
-    public $listInfo;
     public $listNum;
-
-    //库名与表名
-    public $dbName;
-    public $tableName;
-
-    //日志保存路径
-    public $commandLogsFile;
-    //是否开启日志
-    public $isCommandLogs;
-
-    public function MovieInit()
-    {
-        $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'curl' . DIRECTORY_SEPARATOR . 'curl.php';
-        require_once $path;
-        $this->curl = new \curl();
-
-        $this->dbName = config('qiniu.qiniu_data.db_name');
-        $this->tableName = config('qiniu.qiniu_data.table_name');
-
-        $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
-        $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
-
-        //---------this is my modify-------------
-        if (!is_dir(public_path('command_logs'))) {
-            mkdir(public_path('command_logs'), 0755, true);
-        }
-        //-------------------------
-    }
 
     /**
      * 保存电影电视剧列表页
@@ -59,20 +30,17 @@ trait Ygdy8
 
             //取出最大的时间
             $maxTime = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_post', 0)->max('m_time');
-
             for ($i = $start; $i <= $pageTot; $i++) {
-                $this->listInfo = $i . '-' . $pageTot . '-' . $baseListUrl . '-' . $isNew;
-                //cli
-                if (config('qiniu.qiniu_data.is_cli')) {
-                    $this->info("this is page {$i} maxtime {$maxTime}");
-                }
+                $message = date('Y-m-d H:i:s')." this is page {$i} maxtime {$maxTime}".PHP_EOL;
+                $this->info($message);
+
                 if ($i == 1) {
                     $listUrl = substr($url, 0, strrpos($url, '/')) . '/index.html';
                 } else {
                     $listUrl = $url . '_' . $i . '.html';
                 }
                 $list = $this->getList($listUrl);
-//            dd($list);
+//                dd($list);
 
                 //保存进数据库中去
                 foreach ($list as $key => $value) {
@@ -87,8 +55,15 @@ trait Ygdy8
                                 continue;
                             }
                             //更新这样记录的下载链接,将is_con=-1,down_link = '',is_update=-1//default 0
-                            $rs = DB::connection($this->dbName)->table($this->tableName)->where('id', $rest->id)->update(['down_link' => '', 'm_time' => $value['m_time'], 'is_con' => -1, 'is_update' => -1]);
-
+                            $rs = DB::connection($this->dbName)
+                                    ->table($this->tableName)
+                                    ->where('id', $rest->id)
+                                    ->update([
+                                        'down_link' => '',
+                                        'm_time' => $value['m_time'],
+                                        'is_con' => -1,
+                                        'is_update' => -1
+                                    ]);
                         } else {
                             continue;
                         }
@@ -105,38 +80,33 @@ trait Ygdy8
 //                        dd($listSaveArr);
                         $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
                     }
-
                     if ($rs) {
+                        //记录列表页一共采集了多少
                         $this->listNum++;
-                        //cli
-                        if (config('qiniu.qiniu_data.is_cli')) {
-                            $this->info($value['title'] . ' list ' . $isNewType . ' success');
-                        }
+                        $message .= $value['title'] . ' list ' . $isNewType . ' success'.PHP_EOL;
+                        $this->info($message);
                     } else {
-                        //cli
-                        if (config('qiniu.qiniu_data.is_cli')) {
-                            $this->info($value['title'] . ' list ' . $isNewType . ' fail');
-                        }
+                        $message .= $value['title'] . ' list ' . $isNewType . ' fail'.PHP_EOL;
+                        $this->error($message);
                     }
                 }
+                //保存日志
+                if($this->isCommandLogs === true){
+                    file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+                }
             }
-            $this->info('list save end');
+            $message = 'list save end';
+            $this->info($message);
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+            }
         } catch (\ErrorException $e) {
             $this->info('list error exception ' . $e->getMessage());
-            $listInfoArr = explode('-', $this->listInfo);
-            if ($listInfoArr[1] - $listInfoArr[0] < 2) {
-                return;
-            } else {
-                $this->movieList($listInfoArr[0], $listInfoArr[1], $listInfoArr[2], $listInfoArr[3]);
-            }
+            return;
         } catch (\Exception $e) {
             $this->info('list exception ' . $e->getMessage());
-            $listInfoArr = explode('-', $this->listInfo);
-            if ($listInfoArr[1] - $listInfoArr[0] < 2) {
-                return;
-            } else {
-                $this->movieList($listInfoArr[0], $listInfoArr[1], $listInfoArr[2], $listInfoArr[3]);
-            }
+            return;
         }
     }
 
@@ -181,34 +151,34 @@ trait Ygdy8
     {
         //node自动更新下载链接
         //->where('down_link','not like','%thunder://%')
-        $isNoDownLinks = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('down_link', 'not like', '%thunder://%')->where(function ($query) {
-            $query->where('is_post', -1)
-                ->orWhere('is_update', -1);
-        })->get();
-        $tot = count($isNoDownLinks);
-//        dd($tot);
+        $minId =0;
+        $take = 10;
+        $message = null;
+        do {
 
-        foreach ($isNoDownLinks as $key => $value) {
-            //cli
-            if (config('qiniu.qiniu_data.is_cli')) {
-                $this->info("node parse down_link {$key}/{$tot} id -- {$value->id}");
+            $downLinks = DB::connection($this->dbName)->table($this->tableName)->select('id','down_link')->where('typeid', $this->typeId)->where('id','>',$minId)->where('down_link', 'not like', '%thunder://%')->where(function ($query) {
+                $query->where('is_post', -1)
+                    ->orWhere('is_update', -1);
+            })->take($take)->get();
+            $tot = count($downLinks);
+
+            foreach ($downLinks as $key => $value) {
+                $minId = $value->id;
+                $message = date('Y-m-d H:i:s')." node parse down_link {$key}/{$tot} aid -- {$value->id}".PHP_EOL;
+                $this->info($message);
+                $url = config('qiniu.qiniu_data.node_url') . '?aid=' . $value->id . '&down_link=' . urlencode($value->down_link);
+                $this->curl->runSmall($url);
+                //保存日志
+                if($this->isCommandLogs === true){
+                    file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+                }
             }
-            //log
-            if ($this->isCommandLogs === true) {
-                $command = "node parse down_link {$key}/{$tot} id -- $value->id\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
-            $url = config('qiniu.qiniu_data.node_url') . '?aid=' . $value->id . '&down_link=' . urlencode($value->down_link);
-            $this->curl->runSmall($url);
-        }
-        //cli
-        if (config('qiniu.qiniu_data.is_cli')) {
-            $this->info("node parse down_link end");
-        }
-        //log
-        if ($this->isCommandLogs === true) {
-            $command = "node parse down_link end\n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        }while($tot > 0);
+        $message = 'node parse down_link end';
+        $this->info($message);
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
         }
     }
 
@@ -220,131 +190,64 @@ trait Ygdy8
      * @param $keyWordSuffix 百度搜索图片时的后缀
      *
      */
-    public function runOther($queueName, $keyWordSuffix)
+    public function runOther($queueName,$keyWordSuffix = '')
     {
-        global $isSend;
-        global $isUpdate;
-
         //采集内容的第一步,将缩略图与下载链接采集下来
         if($queueName == 'all' || $queueName == 'content'){
-            $this->callSilent('caiji:ygdy8_get_content',['type_id'=>$this->typeId]);
+            $this->call('caiji:ygdy8_get_content',['type_id'=>$this->typeId]);
             if($queueName == 'content'){
                 exit;
             }
         }
 
-        //内容页
-        if ($queueName == 'all' || $queueName == 'douban' || $queueName == 'other') {
-            //logs
-            if ($this->isCommandLogs === true) {
-                $command = "开始采集内容页 \n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
-            // php artisan caiji:ygdy8_get_content 17(type_id)
-            //豆瓣数据填充
-            $this->callSilent('caiji:douban', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
-            $this->callSilent('caiji:baike', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'type_id' => $this->typeId]);
-//
-            //logs
-            echo "内容页采集完成! \n";
-            if ($this->isCommandLogs === true) {
-                $command = "内容页采集完成! \n\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
-            if ($queueName == 'douban') {
-                exit;
-            }
-        }
-
-        //下载图片
         if ($queueName == 'all' || $queueName == 'pic' || $queueName == 'other') {
-            //logs
-            if ($this->isCommandLogs === true) {
-                $command = "开始下载图片 \n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
+            //上传图片
+            //litpic
+            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$this->typeId]);
+            //bodypic
+//            $this->callSilent('xiazai:img',['action'=>'body','type_id'=>$this->typeId]);
+            //采集豆瓣数据
+            $this->call('caiji:douban',['type_id'=>$this->typeId]);
+            //修改空白缩略图
+            $this->call('caiji:baidulitpic',['type_id'=>$this->typeId,'key_word_suffix'=>$keyWordSuffix]);
 
-            //内容页图片
-            $this->callSilent('xiazai:imgdownygdy8', ['type' => 'body', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
-            //缩略图
-            $this->callSilent('xiazai:imgdownygdy8', ['type' => 'litpic', 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'db_name' => $this->dbName, 'table_name' => $this->tableName]);
-            //百度图片
-            $this->callSilent('caiji:baidulitpic', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'qiniu_dir' => $this->qiniuDir, 'type_id' => $this->typeId, 'key_word_suffix' => $keyWordSuffix]);
-
-            echo "图片采集完成! \n";
-            if ($this->isCommandLogs === true) {
-                $command = "图片采集完成! \n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
-            if ($queueName == 'pic') {
+            if($queueName == 'pic'){
                 exit;
             }
         }
 
-        //上线部署
+//        上线部署
         if ($queueName == 'all' || $queueName == 'dede' || $queueName == 'other') {
             //logs
-            if ($this->isCommandLogs === true) {
-                $command = "将新添加数据提交到dede后台 \n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
-
+            $message = date('Y-m-d H:i:s')." 将新添加数据提交到dede后台".PHP_EOL;
+            $this->info($message);
             //node格式化下载链接
             $this->nodeDownLink();
             //将新添加数据提交到dede后台 is_post = -1
-            $this->callSilent('send:dedea67post', ['db_name' => $this->dbName, 'table_name' => $this->tableName, 'channel_id' => $this->channelId, 'typeid' => $this->typeId]);
+            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
             //将更新数据提交到dede后台,直接替换数据库
-            $this->callSilent('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
-            if ($isUpdate || $isSend) {
+            $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
+            if (file_exists($this->dedeSendStatusFile)) {
                 //更新列表页
-                $this->callSilent('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
+                $message .= "更新列表页".PHP_EOL;
+                $this->info($message);
+                $this->call('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
             }
             //logs
-            echo "上线部署完成! \n";
-            if ($this->isCommandLogs === true) {
-                $command = "上线部署完成! \n\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            $message .=  "上线部署完成! ".PHP_EOL;
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
             }
             if ($queueName == 'dede') {
                 exit;
             }
         }
-
-        //上传图片
-        if ($queueName == 'all' || $queueName == 'cdn' || $queueName == 'other') {
-            //logs
-            if ($this->isCommandLogs === true) {
-                $command = "开始上传图片 qiniu\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
-            //只有新增了数据才会去上传图片
-            if ($queueName == 'cdn') {
-                $isSend = true;
-            }
-            $localDir = '';
-            if ($isSend) {
-                //图片上传
-                $localDir = rtrim(config('qiniu.qiniu_data.www_root'), '/') . '/' . date('ymd') . $this->typeId;
-                $this->callSilent('send:qiniuimgs', ['local_dir' => $localDir, 'qiniu_dir' => trim($this->qiniuDir, '/') . '/' . date('ymd') . $this->typeId . '/']);
-            }
-            //logs
-            echo "cdn传输完成,dirname {$localDir}!\n";
-            if ($this->isCommandLogs === true) {
-                $command = "cdn传输完成,dirname {$localDir}!\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
-            if ($queueName == 'cdn') {
-                exit;
-            }
+        $message =  "内容更新完成! ".PHP_EOL;
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
         }
-
-        //logs
-        //echo "内容更新完成! \n";
-        if ($this->isCommandLogs === true) {
-            $command = "内容更新完成! \n\n\n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-        }
-
     }
 
 }

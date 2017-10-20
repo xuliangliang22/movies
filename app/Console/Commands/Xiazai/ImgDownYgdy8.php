@@ -4,36 +4,32 @@ namespace App\Console\Commands\Xiazai;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use XuLiangLiang\Search\Factory;
-use App\Console\Commands\Mytraits\QiniuTra;
+use App\Console\Commands\Mytraits\Common;
 
 
 class ImgDownYgdy8 extends Command
 {
+    use Common;
 
-    use QiniuTra;
     /**
      * The name and signature of the console command.
-     *
      * @var string
+     * php artisan xiazai:img body 13 //内容页图片
+     * php artisan xiazai:img litpic 13 //封面图片
      */
-    protected $signature = 'xiazai:imgdownygdy8 {type}{qiniu_dir}{type_id}{db_name}{table_name}';
+    protected $signature = 'xiazai:img {action} {type_id}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '下载阳光电影的图片';
+    protected $description = '上传图片到七牛';
 
-    protected $typeId;
-    protected $dbName;
-    protected $tableName;
+    /**
+     * 七牛文件前缀
+     */
     protected $savePath;
-    protected $qiniuKey;
-    //下载图片的对象
-    protected $picObj;
-
 
     /**
      * Create a new command instance.
@@ -43,6 +39,7 @@ class ImgDownYgdy8 extends Command
     public function __construct()
     {
         parent::__construct();
+        $this->initBegin();
     }
 
     /**
@@ -52,57 +49,45 @@ class ImgDownYgdy8 extends Command
      */
     public function handle()
     {
-        //判断运行环境
-//        if (substr(php_sapi_name(), 0, 3) == 'cgi') {
-//            //cgi
-//            define('IS_CGI',true);
-//        } else {
-//            //no cgi
-//            define('IS_CGI',false);
-//        }
-        $type = $this->argument('type');
-        $qiniuDir = $this->argument('qiniu_dir');
-        $this->typeId = $this->argument('type_id');
-        $this->dbName = $this->argument('db_name');
-        $this->tableName = $this->argument('table_name');
-        $factory = new Factory();
-        $factory->getSelfObj('picdown');
-        $this->picObj = $factory->factoryObj;
+        $action = $this->argument('action');
+        $typeId = $this->argument('type_id');
 
-        $this->savePath = config('qiniu.qiniu_data.www_root') . date('ymd') . $this->typeId . '/';
-        if (!is_dir($this->savePath)) {
-            mkdir($this->savePath, 0755, true);
+        $this->savePath = config('admin.upload.directory.image').$typeId ;
+
+        switch ($action)
+        {
+            case 'body':
+                $this->bodyImg($typeId);
+                break;
+            case 'litpic':
+                $this->litpicImg($typeId);
+                break;
         }
-
-        $this->qiniuKey = rtrim(config('qiniu.qiniu_data.qiniu_dns'), '/') . '/' . trim($qiniuDir, '/') . '/' . date('ymd') . $this->typeId . '/';
-
-        if ($type == 'body') {
-            $this->bodyImg();
-        } else {
-            $this->litpicImg();
-        }
-
     }
 
-    public function bodyImg()
+
+    /**
+     * 下载内容页图片
+     * @param $typeId
+     */
+    public function bodyImg($typeId)
     {
+        $message = null;
+        $content = null;
         $minId = 0;
         $take = 10;
+
         do {
-            $addonarchives = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_body', -1)->where('id','>',$minId)->take($take)->get();
+            $addonarchives = DB::connection($this->dbName)->table($this->tableName)->select('id','body')->where('typeid', $typeId)->where('is_body', -1)->where('id','>',$minId)->take($take)->get();
             $tot = count($addonarchives);
 
             foreach ($addonarchives as $key => $value) {
                 $minId = $value->id;
-                $this->info("this is dong_img_down {$key}/{$tot} -- typeid is {$value->typeid} -- aid is {$value->id}");
+                $message = date('Y-m-d H:i:s')." this is dong_img_down {$key}/{$tot} -- typeid is {$typeId} -- aid is {$value->id}".PHP_EOL;
+                $this->info($message);
 
-                //数据为空,则删除这条记录
-                if (empty($value->body) === true) {
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_body' => 0]);
-                    continue;
-                }
                 //得到所有图片链接
-                $marest = preg_match_all('/<img\s*src\s*=\s*["\'](.*?)["\'][^>]*>/is', $value->body, $matchs);
+                $marest = preg_match_all('/<img(.*?)src\s*=\s*["\'](.*?)["\'][^>]*>/is', $value->body, $matchs);
                 //数据不完整,内容中没有图片,则更新这条记录
 //                dd($matchs);
                 if ($marest === 0) {
@@ -110,106 +95,105 @@ class ImgDownYgdy8 extends Command
                     continue;
                 }
                 //如果匹配到则将为空的数据替换掉
-                foreach ($matchs[1] as $mk => $mv) {
-                    if (empty($mv)) {
-                        $value->body = str_replace($matchs[0][$mk], '', $value->body);
-                        unset($matchs[1][$mk]);
+                foreach ($matchs[2] as $mk => $mv) {
+                    //上传图片,得到一个数组
+                    $file = $this->imgUpload($mv);
+                    if($file === false){
+                        $value->body = str_replace($matchs[1][$mk],'',$value->body);
+                        continue;
                     }
+                    $ossImg = rtrim(config('filesystems.disks.qiniu.domains.default'),'/').'/'.ltrim($file,'/').config('qiniu.qiniu_data.qiniu_postfix');;
+                    $value->body = str_replace($mv,$ossImg,$value->body);
                 }
-                //$matchs[1] 得到所有的图片链接
-                $fileName = array();
-                foreach ($matchs[1] as $k => $v) {
-                    $ext = $this->getExt($v);
-                    $fileName[$k] = $this->savePath . md5($v) . $ext;
-                }
-                //dd($fileName,$matchs[1]);
-                //两个参数，保存路径，与图片网络路径
-                $this->picObj->imgDown($fileName, $matchs[1]);
-                $ossImg = array();
-//                dd($fileName);
-                foreach ($fileName as $fk => $fv) {
-                    //判断图片文件是否有效
-                    $isPic = $this->judgeImg($fv);
-                    if ($isPic === true) {
-                        $ossImg[$fk] = str_replace($this->savePath, $this->qiniuKey, $fv).'?imageslim';
-                    } else {
-                        if(file_exists($fv)){
-                            unlink($fv);
-                        }
-                        $ossImg[$fk] = '';
-                    }
-                }
-                $body = str_replace($matchs[1],$ossImg,$value->body);
-                //删除图片空链接
-                $body = preg_replace('/<img(.*)src=""(.*)>/isU','',$body);
-//                dd($body);
-                $this->info($body."\n");
-//                //更新数据库
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $body, 'is_body' => 0]);
+//                dd($value->body);
+                //更新数据库
+                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $value->body, 'is_body' => 0]);
                 if ($rest) {
-                    $this->info('img body update success');
+                    $message .= "{$typeId} aid {$value->id} body image upload success !!".PHP_EOL;
+                    $this->info($message);
                 } else {
-                    $this->error('img body update fail');
-                    exit;
+                    $message .= "{$typeId} aid {$value->id} body image upload success !!".PHP_EOL;
+                    $this->error($message);
+                }
+                //保存日志
+                if($this->isCommandLogs === true){
+                    file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
                 }
             }
         } while ($tot > 0);
-        $this->info('img body update end');
+        $message = 'img body update end';
+        $this->info($message);
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+        }
     }
+
 
     /**
      * 下载列表页的图片,并列新数据库
      */
-    public function litpicImg()
+    public function litpicImg($typeId)
     {
+        $content = null;
+        $message = null;
+        $minId = 0;
+        $take = 10;
+
         do {
-
-            $addonarchives = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->orderBy('id')->take(10)->get();
-//            dd($addonarchives);
+            $addonarchives = DB::connection($this->dbName)->table($this->tableName)->select('id','litpic')->where('typeid', $typeId)->where('is_litpic', -1)->where('id','>',$minId)->take($take)->get();
             $tot = count($addonarchives);
-            foreach ($addonarchives as $key => $value) {
-                $this->info("this is litpic_down {$key}/{$tot} -- typeid is {$value->typeid} -- aid is {$value->id}");
 
-                //数据为空,则更新这条记录
-                if (empty($value->litpic) === true) {
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_litpic' => 0]);
-                    continue;
-                }
+            foreach ($addonarchives as $key => $value) {
+                $minId = $value->id;
+                $message = date('Y-m-d H:i:s')." this is litpic_upload {$key}/{$tot} -- typeid is {$typeId} -- aid is {$value->id}".PHP_EOL;
+                $this->info($message);
+
                 //得到所有图片链接
                 $marest = preg_match('/^http(s)?(.*?)/is', $value->litpic, $matchs);
                 //数据不完整,则删除这条记录
                 if ($marest === 0) {
                     //如果图片格式不正确则更新这条记录
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_litpic' => 0, 'litpic' => '']);
                     continue;
                 }
-                //提交单线程下载图片,本地图路径
-                $ext = $this->getExt($value->litpic);
-                $fileName = $this->savePath . md5($value->litpic) . $ext;
-                $this->picObj->imgDown($fileName, $value->litpic);
-                $ossImg = '';
-                //判断图片格式是否正确
-                $isPic = $this->judgeImg($fileName);
-                if ($isPic === true) {
-                    //更新数据库信息
-                    $ossImg = str_replace($this->savePath, $this->qiniuKey, $fileName);
-                    $ossImg = $ossImg.'?imageslim';
-                } else {
-                    unlink($fileName);
+                //将网络图片上传到七牛云
+                $file = $this->imgUpload($value->litpic);
+                if($file){
+                    $message .= "{$typeId} litpic aid {$value->id} upload qiniu success !!".PHP_EOL;
+                    $this->info($message);
+                }else{
+                    $message .= "{$typeId} litpic aid {$value->id} upload qiniu fail !!".PHP_EOL;
+                    $this->error($message);
+                    //保存日志
+                    if($this->isCommandLogs === true){
+                        file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+                    }
+                    //图片上传不成功,路过
+                    continue;
                 }
-                $this->info($ossImg);
-//                dd($ossImg);
-//                //更新数据库
+
+                //更新数据库
+                $ossImg = rtrim(config('filesystems.disks.qiniu.domains.default'),'/').'/'.ltrim($file,'/').config('qiniu.qiniu_data.qiniu_postfix');
                 $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['litpic' => $ossImg, 'is_litpic' => 0]);
                 if ($rest) {
-                    $this->info('img litpic update success');
+                    $message .= "{$typeId} litpic aid {$value->id} gather table update success !!".PHP_EOL;
+                    $this->info($message);
                 } else {
-                    $this->error('img ltipic update fail');
-                    exit;
+                    $message .= "{$typeId} litpic aid {$value->id} gather table update fail !!".PHP_EOL;
+                    $this->error($message);
+                }
+                //保存日志
+                if($this->isCommandLogs === true){
+                    file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
                 }
             }
         } while ($tot > 0);
-        $this->error('img ltipic update end');
+        $message = 'img ltipic update end';
+        $this->error($message);
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+        }
     }
 
 }

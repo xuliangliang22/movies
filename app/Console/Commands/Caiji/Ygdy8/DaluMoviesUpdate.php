@@ -5,15 +5,19 @@ namespace App\Console\Commands\Caiji\Ygdy8;
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
+use App\Console\Commands\Mytraits\Common;
 
 class DaluMoviesUpdate extends Command
 {
+    use Common;
     use Ygdy8;
     use DedeLogin;
+
     /**
      * The name and signature of the console command.
      *
      * @var string
+     * 如果内容中有图片链接,则在采集列表页时,要将采集表is_body = -1,默认为0
      */
     protected $signature = 'caiji:ygdy8_dalumovies_update {page_start}{page_tot}{type_id}{--queue=}';
 
@@ -36,7 +40,7 @@ class DaluMoviesUpdate extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->MovieInit();
+        $this->initBegin();
     }
 
     /**
@@ -56,7 +60,7 @@ class DaluMoviesUpdate extends Command
         //得到这条命令logs
         if ($this->isCommandLogs === true) {
             $command = "=========================================\n";
-            $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_dalumovies_update {$pageStart} {$pageTot} {$this->typeId}{$queueName} \n the link is {$url} \n";
+            $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_dalumovies_update {$pageStart} {$pageTot} {$this->typeId} {$queueName} \n the link is {$url} \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
 
@@ -82,7 +86,6 @@ class DaluMoviesUpdate extends Command
             if ($queueName == 'list') {
                 exit;
             }
-
             //
             if ($this->listNum < 1) {
                 //logs
@@ -96,8 +99,8 @@ class DaluMoviesUpdate extends Command
 
         //其余剩下的操作
         // php artisan caiji:ygdy8_get_content 13(type_id)
-        $keyWordSuffix = '电影';
-        $this->runOther($queueName,$keyWordSuffix);
+        $keyWord = '电影';
+        $this->runOther($queueName,$keyWord);
 
     }
 
