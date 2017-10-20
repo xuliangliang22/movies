@@ -6,11 +6,13 @@ use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
 use App\Console\Commands\Mytraits\Common;
+use App\Console\Commands\Mytraits\Douban;
 
 class DaluMoviesUpdate extends Command
 {
     use Common;
     use Ygdy8;
+    use Douban;
     use DedeLogin;
 
     /**

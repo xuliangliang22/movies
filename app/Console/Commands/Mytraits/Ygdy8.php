@@ -9,7 +9,7 @@ namespace App\Console\Commands\Mytraits;
 
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
-use SebastianBergmann\CodeCoverage\Report\PHP;
+use zgldh\QiniuStorage\QiniuStorage;
 
 trait Ygdy8
 {
@@ -207,11 +207,27 @@ trait Ygdy8
             //bodypic
 //            $this->callSilent('xiazai:img',['action'=>'body','type_id'=>$this->typeId]);
             //采集豆瓣数据
-            $this->call('caiji:douban',['type_id'=>$this->typeId]);
+//            $this->call('caiji:douban',['type_id'=>$this->typeId]);
+            $this->douban();
             //修改空白缩略图
 //            $this->call('caiji:baidulitpic',['type_id'=>$this->typeId,'key_word_suffix'=>$keyWordSuffix]);
-            //删除图片与信息不完整的记录
-//            DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->orWhere('is_douban',-1)->delete();
+            //将豆瓣不好的数据删除
+            $disk = QiniuStorage::disk('qiniu');
+            DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->delete();
+
+            $doubans = DB::connection($this->dbName)->table($this->tableName)->select('id','litpic')->where('typeid', $this->typeId)->orWhere('is_douban',-1)->get();
+            $qiniuUrl = config('filesystems.disks.qiniu.domains.default');
+            foreach ($doubans as $dok=>$dov){
+                //删除图片
+                if(stripos($dov->litpic,$qiniuUrl) !== false){
+                    $file = str_replace($qiniuUrl,'',$dov->litpic);
+                    if($disk->exists($file)){
+                        $disk->delete($file);
+                    }
+                }
+                //删除这样记录
+                DB::connection($this->dbName)->table($this->tableName)->where('id',$dov->id)->delete();
+            }
 
             if($queueName == 'pic'){
                 exit;
@@ -246,6 +262,131 @@ trait Ygdy8
             }
         }
         $message =  "内容更新完成! ".PHP_EOL;
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+        }
+    }
+
+
+    /**
+     * 豆瓣
+     */
+    public function douban()
+    {
+        $minId = 0;
+        $take = 10;
+        $message = null;
+
+        try {
+            do {
+                $movies = DB::connection($this->dbName)->table($this->tableName)->select('id','typeid','title','is_litpic')->where('id', '>', $minId)->where('typeid', $this->typeId)->where('is_douban', -1)->take($take)->get();
+                $tot = count($movies);
+                foreach ($movies as $key => $row) {
+                    $minId = $row->id;
+                    $message = date('Y-m-d H:i:s')." this is id {$row->id} title {$row->title}".PHP_EOL;
+                    $this->info($message);
+                    $url = 'https://www.douban.com/search?q=' . $row->title;
+                    $conUrl = $this->getDouList($url);
+                    if (!$conUrl) {
+                        continue;
+                    }
+                    $rest = $this->getDouContent($conUrl,$url);
+                    $updateArr = [];
+
+                    foreach ($rest as $k => $v) {
+                        switch ($k) {
+                            case 'grade':
+                                $updateArr['grade'] = trim($v);
+                                break;
+                            case 'litpic':
+                                $updateArr['litpic'] = trim($v);
+                                break;
+                            case 'body':
+                                if (mb_strlen($v) > 250) {
+                                    $v = mb_substr($v, 0, 225,'utf-8') . '....';
+                                }
+                                $updateArr['body'] = trim($v);
+                                break;
+                            case 'html':
+                                foreach ($v as $key=>$value){
+                                    switch ($key)
+                                    {
+                                        case 'director':
+                                            $updateArr['director'] = trim($value);
+                                            break;
+                                        case 'actors':
+                                            $updateArr['actors'] = trim($value);
+                                            break;
+                                        case 'year':
+                                            $updateArr['myear'] = trim($value);
+                                            break;
+                                        case 'language':
+                                            $updateArr['lan_guage'] = trim($value);
+                                            break;
+                                        case 'types':
+                                            $updateArr['types'] = trim($value);
+                                            break;
+                                        case 'episode_nums':
+                                            $updateArr['episode_nums'] = trim($value);
+                                            break;
+                                    }
+                                }
+                                break;
+                        }
+                    }
+
+                    if (empty($updateArr) === false) {
+                        //保存到数据库
+                        if($row->is_litpic == -1 && isset($updateArr['litpic']) === true){
+                            //上传这张图
+                            $this->savePath = config('admin.upload.directory.image').$row->typeid ;
+                            $file = $this->imgUpload($updateArr['litpic']);
+                            if($file){
+                                $ossImg = rtrim(config('filesystems.disks.qiniu.domains.default'),'/').'/'.ltrim($file,'/').config('qiniu.qiniu_data.qiniu_postfix');
+                                $updateArr['litpic'] = $ossImg;
+                                $updateArr['is_litpic'] = 0;
+                            }
+                        }else{
+                            unset($updateArr['litpic']);
+                        }
+                        //更新
+                        $updateArr['is_douban'] = 0;
+                        $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $row->id)->update($updateArr);
+                        if ($rest) {
+                            $message .= "douban aid {$row->id} update success !!";
+                            $this->info($message);
+                        } else {
+                            $message .= "douban aid {$row->id} update fail !!";
+                            $this->error($message);
+                        }
+                    }
+                    //保存日志
+                    if($this->isCommandLogs === true){
+                        file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+                    }
+                    usleep(500);
+                }
+            } while ($tot > 0);
+        } catch (\ErrorException $e) {
+            $message = 'doban error exception ' . $e->getMessage().PHP_EOL;
+            $this->error($message);
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+            }
+            //删除这条记录
+        } catch (\Exception $e) {
+            $message = 'doban exception ' . $e->getMessage().PHP_EOL;
+            $this->error($message);
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+            }
+            //删除这条记录
+        }
+        $message = 'douban end !';
+        $this->info($message);
         //保存日志
         if($this->isCommandLogs === true){
             file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
