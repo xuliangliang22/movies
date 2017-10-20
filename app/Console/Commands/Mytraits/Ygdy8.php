@@ -102,10 +102,20 @@ trait Ygdy8
                 file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
             }
         } catch (\ErrorException $e) {
-            $this->info('list error exception ' . $e->getMessage());
+            $message = 'list error exception ' . $e->getMessage().PHP_EOL;
+            $this->info($message);
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+            }
             return;
         } catch (\Exception $e) {
-            $this->info('list exception ' . $e->getMessage());
+            $message = 'list exception ' . $e->getMessage().PHP_EOL;
+            $this->info($message);
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+            }
             return;
         }
     }
