@@ -203,7 +203,7 @@ trait Ygdy8
         if ($queueName == 'all' || $queueName == 'pic' || $queueName == 'other') {
             //上传图片
             //litpic
-//            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$this->typeId]);
+            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$this->typeId]);
             //bodypic
 //            $this->callSilent('xiazai:img',['action'=>'body','type_id'=>$this->typeId]);
             //采集豆瓣数据

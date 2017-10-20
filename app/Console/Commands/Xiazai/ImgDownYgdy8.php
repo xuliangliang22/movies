@@ -168,7 +168,7 @@ class ImgDownYgdy8 extends Command
                     if($this->isCommandLogs === true){
                         file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
                     }
-                    //图片上传不成功,路过
+                    //图片上传不成功,跳过
                     continue;
                 }
 
