@@ -56,6 +56,7 @@ trait Tv2017
                             'myear' => date('Y'),
                             'lan_guage' => implode(',', array_slice($languages, 0, rand(1, 2))),
                             'types' => '家庭,伦理,社会,爱情',
+                            'm_time' => date('Y-m-d H:i:s')
                         ];
                         $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
                         if ($rs) {
