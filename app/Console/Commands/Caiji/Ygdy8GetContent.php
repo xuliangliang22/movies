@@ -163,7 +163,7 @@ class Ygdy8GetContent extends Command
             }
             $tot ++;
         }while(true);
-        $message = 'is_update再次更新完成!!';
+        $message = 'is_update再次更新完成!!'.PHP_EOL;
         //删除全部不成功的下载链接
         DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_con', -1)->orWhere('is_update',-1)->delete();
         //保存日志

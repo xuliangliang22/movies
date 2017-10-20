@@ -280,11 +280,16 @@ trait Ygdy8
 
         try {
             do {
-                $movies = DB::connection($this->dbName)->table($this->tableName)->select('id','typeid','title','is_litpic')->where('id', '>', $minId)->where('typeid', $this->typeId)->where('is_douban', -1)->take($take)->get();
+                $movies = DB::connection($this->dbName)->table($this->tableName)->select('id','typeid','title','is_litpic')->where('typeid', $this->typeId)->where('is_douban', -1)->where('id', '>', $minId)->take($take)->get();
+                //保存日志
+                if($this->isCommandLogs === true){
+                    file_put_contents($this->commandLogsFile,var_export($movies,true),FILE_APPEND);
+                }
+
                 $tot = count($movies);
                 foreach ($movies as $key => $row) {
                     $minId = $row->id;
-                    $message = date('Y-m-d H:i:s')." this is id {$row->id} title {$row->title}".PHP_EOL;
+                    $message = date('Y-m-d H:i:s')." douban this is id {$row->id} title {$row->title}".PHP_EOL;
                     $this->info($message);
                     $url = 'https://www.douban.com/search?q=' . $row->title;
                     $conUrl = $this->getDouList($url);
@@ -385,7 +390,7 @@ trait Ygdy8
             }
             //删除这条记录
         }
-        $message = 'douban end !';
+        $message = 'douban end !'.PHP_EOL;
         $this->info($message);
         //保存日志
         if($this->isCommandLogs === true){

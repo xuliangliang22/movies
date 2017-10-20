@@ -114,17 +114,18 @@ class Dedea67Post extends Command
 
         $loginUrl = $this->dedeUrl . 'login.php';
         $addUrl = $this->dedeUrl . 'archives_add.php';
-        $take = 10;
         $this->channelId = $this->argument('channel_id');
         $this->typeId = $this->argument('typeid');
-        $message = null;
 
         //取出最大的id加1
         $maxId = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->max('id');
+        $maxId = $maxId +1;
+        $take = 10;
+        $message = null;
 
         do {
             //提交数据
-            $archives = DB::connection($this->dbName)->table($this->tableName)->where('id', '<=', $maxId)->where('typeid', $this->typeId)->where('is_post','-1')->orderBy('id','desc')->take($take)->get();
+            $archives = DB::connection($this->dbName)->table($this->tableName)->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post','-1')->orderBy('id','desc')->take($take)->get();
             $tot = count($archives);
             foreach ($archives as $key => $value) {
                 $maxId = $value->id;

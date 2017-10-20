@@ -114,11 +114,13 @@ class DedeNewPost extends Command
         $this->typeId = $this->argument('typeid');
         //取出最大的id加1
         $maxId = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->max('id');
+        $maxId = $maxId +1;
         $take = 10;
+        $message = null;
 
         do {
             //提交数据
-            $archives = DB::connection($this->dbName)->table($this->tableName)->where('id', '<=', $maxId)->where('typeid', $this->typeId)->where('is_post', '-1')->orderBy('id', 'desc')->take($take)->get();
+            $archives = DB::connection($this->dbName)->table($this->tableName)->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post', '-1')->orderBy('id', 'desc')->take($take)->get();
             $tot = count($archives);
             foreach ($archives as $key => $value) {
                 $maxId = $value->id;

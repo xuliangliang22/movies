@@ -121,7 +121,7 @@ class ImgDownYgdy8 extends Command
                 }
             }
         } while ($tot > 0);
-        $message = 'img body update end';
+        $message = 'img body update end'.PHP_EOL;
         $this->info($message);
         //保存日志
         if($this->isCommandLogs === true){
@@ -188,7 +188,7 @@ class ImgDownYgdy8 extends Command
                 }
             }
         } while ($tot > 0);
-        $message = 'img ltipic update end';
+        $message = 'img ltipic update end'.PHP_EOL;
         $this->error($message);
         //保存日志
         if($this->isCommandLogs === true){
