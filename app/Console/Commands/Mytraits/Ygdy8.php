@@ -211,7 +211,7 @@ trait Ygdy8
             //修改空白缩略图
 //            $this->call('caiji:baidulitpic',['type_id'=>$this->typeId,'key_word_suffix'=>$keyWordSuffix]);
             //删除图片与信息不完整的记录
-            DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->orWhere('is_douban',-1)->delete();
+//            DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->orWhere('is_douban',-1)->delete();
 
             if($queueName == 'pic'){
                 exit;
