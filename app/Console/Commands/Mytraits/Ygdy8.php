@@ -190,7 +190,7 @@ trait Ygdy8
      * @param $keyWordSuffix 百度搜索图片时的后缀
      *
      */
-    public function runOther($queueName,$keyWordSuffix = '')
+    public function runOther($queueName)
     {
         //采集内容的第一步,将缩略图与下载链接采集下来
         if($queueName == 'all' || $queueName == 'content'){
@@ -209,7 +209,9 @@ trait Ygdy8
             //采集豆瓣数据
             $this->call('caiji:douban',['type_id'=>$this->typeId]);
             //修改空白缩略图
-            $this->call('caiji:baidulitpic',['type_id'=>$this->typeId,'key_word_suffix'=>$keyWordSuffix]);
+//            $this->call('caiji:baidulitpic',['type_id'=>$this->typeId,'key_word_suffix'=>$keyWordSuffix]);
+            //删除图片与信息不完整的记录
+            DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->orWhere('is_douban',-1)->delete();
 
             if($queueName == 'pic'){
                 exit;

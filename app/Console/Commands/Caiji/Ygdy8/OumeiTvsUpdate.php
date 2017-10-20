@@ -55,51 +55,33 @@ class OumeiTvsUpdate extends Command
         // max_page_tot = 13 typeid = 19
         $url = 'http://www.ygdy8.net/html/tv/oumeitv/list_9_2.html';
         //得到这条命令logs
-        if ($this->isCommandLogs === true) {
-            $command = "=========================================\n";
-            $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_oumeitvs_update  {$pageStart} {$pageTot} {$this->typeId} {$queueName} \n the link is {$url} \n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-        }
+        $message = date('Y-m-d H:i:s') . "\ncaiji:ygdy8_dalumovies_update {$pageStart} {$pageTot} {$this->typeId} {$queueName} \n the link is {$url} \n";
+        $this->info($message);
 
         //得到所有的列表页
         //olist任务调度需要用到的参数
         if ($queueName == 'all' || $queueName == 'list' || $queueName == 'olist') {
+            $this->movieList($pageStart, $pageTot, $url);
             //logs
-            if ($this->isCommandLogs === true) {
-                $command = "开始采集列表页\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+            $message .= "列表页采集完成,一共 {$this->listNum} 条! \n";
+            $this->info($message);
+            //列表页为空
+            if($this->listNum < 1){
+                $message .= "列表页为空,结束! ".PHP_EOL;
+                $this->info($message);
             }
-
-            $this->movieList($pageStart, $pageTot, $url, true);
-
-            //logs
-            if (empty($this->listNum)) {
-                $this->listNum = 0;
+            //日志
+            if($this->isCommandLogs === true) {
+                file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
             }
-            echo "列表页采集完成,一共 {$this->listNum} 条! \n";
-            if ($this->isCommandLogs === true) {
-                $command = "列表页采集完成,一共 {$this->listNum} 条! \n\n";
-                file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-            }
-            if ($queueName == 'list') {
-                exit;
-            }
-
-            //
-            if ($this->listNum < 1) {
-                //logs
-                if ($this->isCommandLogs === true) {
-                    $command = "列表页为空,结束! \n\n";
-                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-                }
+            if ($queueName == 'list' || $this->listNum < 1) {
                 exit;
             }
         }
 
         //其余剩下的操作
         // php artisan caiji:ygdy8_get_content 19(type_id)
-        $keyWord = '电视剧';
-        $this->runOther($queueName,$keyWord);
+        $this->runOther($queueName);
 
     }
 }
