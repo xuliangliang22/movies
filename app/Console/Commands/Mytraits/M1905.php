@@ -13,22 +13,7 @@ use QL\QueryList;
 
 trait M1905
 {
-    public $curl;
-    public $listInfo;
     public $listNum;
-    public $contentNum;
-
-    public function MovieInit()
-    {
-        $this->listNum = 0;
-        $this->contentNum = 0;
-
-        if (empty($this->curl)) {
-            $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'curl' . DIRECTORY_SEPARATOR . 'curl.php';
-            require_once $path;
-            $this->curl = new \curl();
-        }
-    }
 
     /**
      * 保存电影电视剧列表页
@@ -63,7 +48,7 @@ trait M1905
                             'litpic' => $value['litpic'],
                             'typeid' => $this->typeId,
                             'is_douban' => 0,
-                            'is_body'=>0,
+                            'm_time' => date('Y-m-d H:i:s'),
                         ];
 
                         $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
@@ -115,13 +100,16 @@ trait M1905
     {
         $minId = 0;
         $take = 10;
+        $message = null;
         do {
             $arc = DB::connection($this->dbName)->table($this->tableName)->where('is_con', -1)->where('typeid', $this->typeId)->where('id','>',$minId)->take($take)->get();
             $tot = count($arc);
 
             foreach ($arc as $key => $value) {
                 $minId = $value->id;
-                $this->info("{$key}/{$tot} id is {$value->id} url is {$value->con_url}");
+                $message = date('Y-m-d H:i:s')."{$key}/{$tot} id is {$value->id} url is {$value->con_url}".PHP_EOL;
+                $this->info($message);
+
                 //得到保存的数组
                 $conSaveArr = $this->getConSaveArr($value->con_url,$value->title);
                 if (empty($conSaveArr)) {
@@ -129,20 +117,29 @@ trait M1905
                     DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
                     continue;
                 }
+
                 //内容主体
-//                $conSaveArr = SpHtml2Text($conSaveArr[0]['con']);
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr[0]['con']]);
+                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr[0]['con'],'is_con'=>0]);
                 if ($rest) {
-                    $this->contentNum++;
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_con' => 0]);
-                    //$this->info('save con success');
+                    $message .= "m1905 content aid {$value->id} save success ";
+                    $this->info($message);
                 } else {
-                    //$this->error('save con fail');
+                    $message .= "m1905 content aid {$value->id} save fail ";
+                    $this->error($message);
                     DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delte();
+                }
+
+                //日志
+                if($this->isCommandLogs === true) {
+                    file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
                 }
             }
         } while ($tot > 0);
-        //$this->info('save con end');
+        $message = "m1905 content save end ";
+        //日志
+        if($this->isCommandLogs === true) {
+            file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
+        }
     }
 
 

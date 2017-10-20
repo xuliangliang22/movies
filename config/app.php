@@ -182,7 +182,12 @@ return [
         /**
          * Laravel-admin
          */
-        Encore\Admin\Providers\AdminServiceProvider::class
+        Encore\Admin\Providers\AdminServiceProvider::class,
+
+        /**
+         * qiniu
+         */
+        zgldh\QiniuStorage\QiniuFilesystemServiceProvider::class
 
     ],
 

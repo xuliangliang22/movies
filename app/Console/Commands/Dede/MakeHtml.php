@@ -3,11 +3,13 @@
 namespace App\Console\Commands\Dede;
 
 use Illuminate\Console\Command;
-use App\Console\Commands\Mytraits\DedeLogin;
 use Illuminate\Support\Facades\DB;
+use App\Console\Commands\Mytraits\Common;
+use App\Console\Commands\Mytraits\DedeLogin;
 
 class MakeHtml extends Command
 {
+    use Common;
     use DedeLogin;
     /**
      * The name and signature of the console command.
@@ -24,13 +26,8 @@ class MakeHtml extends Command
      */
     protected $description = 'dede后台列表页与首页的生成';
 
-    public $curl;
     public $cookie;
 
-    //日志保存路径
-    public $commandLogsFile;
-    //是否开启日志
-    public $isCommandLogs;
 
     /**
      * Create a new command instance.
@@ -40,15 +37,7 @@ class MakeHtml extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
-        $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
-
-
-        if (empty($this->curl)) {
-            $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'curl' . DIRECTORY_SEPARATOR . 'curl.php';
-            require_once $path;
-            $this->curl = new \curl();
-        }
+        $this->initBegin();
     }
 
     /**
@@ -195,23 +184,17 @@ class MakeHtml extends Command
 
 
     /**
-     * 将更新的数据替换到dede后台
+     * 将更新的数据替换到dede后台,主要是电视剧
      */
     public function dedeDownLinkUpdate($typeId)
     {
-        global $isUpdate;
-        $isUpdate = false;
-        //采集保存的数据库和表
-        $dbName = config('qiniu.qiniu_data.db_name');
-        $tableName = config('qiniu.qiniu_data.table_name');
-
         $dedeDownLinkUpdateUrl = config('qiniu.qiniu_data.dede_url') . 'myplus/down_link_update.php';
-        $isNoDownLinks = DB::connection($dbName)->table($tableName)->where('typeid', $typeId)->where('is_update', -1)->get();
+        $isNoDownLinks = DB::connection($this->dbName)->table($this->tableName)->select('id','typeid','title','down_link')->where('typeid', $typeId)->where('is_update', -1)->get();
         $tot = count($isNoDownLinks);
 
         foreach ($isNoDownLinks as $key => $value) {
-            $this->info("{$key}/{$tot} id is {$value->id}");
-            //echo $value->down_link."\n";
+            $message = date('Y-m-d H:i:s')." {$key}/{$tot} aid is {$value->id}".PHP_EOL;
+            $this->info($message);
             //先登录
             $rest = $this->dedeLogin(config('qiniu.qiniu_data.dede_url') . 'login.php', config('qiniu.qiniu_data.dede_user'), config('qiniu.qiniu_data.dede_pwd'));
 
@@ -231,23 +214,36 @@ class MakeHtml extends Command
                     $body[1] = $content['body'];
                 }
                 if (stripos($body[1], 'update ok') !== false) {
-                    $isUpdate = true;
+                    //更新dede提交的状态文件
+                    file_put_contents($this->dedeSendStatusFile,'is_update = 1');
+
                     //自动更新内容页,得到更新的文章id
                     if (preg_match('/\d+/', $body[1], $matchs)) {
                         $aid = $matchs[0];
                         $this->makeArc($typeId, $aid, $aid);
                     }
                     //更新数据库is_update
-                    $this->info("dede down_link update {$value->title} update ok !");
+                    $message .= "dede down_link update aid {$value->id} update ok !";
+                    $this->info($message);
                 } else {
                     //没有更新成功,也将is_update更新为0
-                    $this->error("dede down_link update {$value->title} update fail !");
+                    $message .= "dede down_link update aid {$value->id} update fail !";
+                    $this->error($message);
                 }
-                DB::connection($dbName)->table($tableName)->where('id', $value->id)->update(['is_update' => 0]);
+                //保存日志
+                if($this->isCommandLogs === true){
+                    file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+                }
+                DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_update' => 0]);
             } else {
                 $this->error("dede down_link update login fail !");
             }
         }
-        $this->info("dede down_link update end !");
+        $message = "dede down_link update end !";
+        $this->info($message);
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+        }
     }
 }

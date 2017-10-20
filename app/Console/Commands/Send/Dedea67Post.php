@@ -4,17 +4,19 @@ namespace App\Console\Commands\Send;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use App\Console\Commands\Mytraits\Common;
 use App\Console\Commands\Mytraits\DedeLogin;
 
 class Dedea67Post extends Command
 {
+    use Common;
     use DedeLogin;
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'send:dedea67post {db_name}{table_name}{channel_id}{typeid}{aid?}';
+    protected $signature = 'send:dedea67post {channel_id}{typeid}';
 
     /**
      * The console command description.
@@ -49,10 +51,6 @@ class Dedea67Post extends Command
      */
     protected $cookie;
 
-    //日志保存路径
-    public $commandLogsFile;
-    //是否开启日志
-    public $isCommandLogs;
 
     /**
      * Create a new command instance.
@@ -62,12 +60,10 @@ class Dedea67Post extends Command
     public function __construct()
     {
         parent::__construct();
+        $this->initBegin();
         $this->dedeUrl = config('qiniu.qiniu_data.dede_url');
         $this->dedeUser = config('qiniu.qiniu_data.dede_user');
         $this->dedePwd = config('qiniu.qiniu_data.dede_pwd');
-
-        $this->commandLogsFile = config('qiniu.qiniu_data.command_logs_file');
-        $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');
     }
 
     /**
@@ -77,11 +73,6 @@ class Dedea67Post extends Command
      */
     public function handle()
     {
-        global $isSend;
-        $isSend = false;
-        $dbName = $this->argument('db_name');
-        $tableName = $this->argument('table_name');
-        //
         $dede_data = array(
             'channelid' => 1,
             'cid' => 58,
@@ -126,57 +117,29 @@ class Dedea67Post extends Command
         $take = 10;
         $this->channelId = $this->argument('channel_id');
         $this->typeId = $this->argument('typeid');
+        $message = null;
 
         //取出最大的id加1
-        $maxId = DB::connection($dbName)->table($tableName)->where('typeid', $this->typeId)->max('id');
-        $maxId = empty($this->argument('aid')) ? $maxId +1 : $this->argument('aid');
-//        dd($minId);
+        $maxId = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->max('id');
 
         do {
             //提交数据
-            $archives = DB::connection($dbName)->table($tableName)->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post','-1')->orderBy('id','desc')->take($take)->get();
+            $archives = DB::connection($this->dbName)->table($this->tableName)->where('id', '<=', $maxId)->where('typeid', $this->typeId)->where('is_post','-1')->orderBy('id','desc')->take($take)->get();
             $tot = count($archives);
             foreach ($archives as $key => $value) {
                 $maxId = $value->id;
-                $this->info("{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id}");
-                if($this->isCommandLogs === true) {
-                    $command = "{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id} \n";
-                    file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-                }
+                $message = date('Y-m-d H:i:s')." {$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id}".PHP_EOL;
+                $this->info($message);
 
                 //判断是否登录
                 if (!$this->dedeLogin($loginUrl, $this->dedeUser, $this->dedePwd)) {
-                    $this->error('登录失败!');
-                    if($this->isCommandLogs === true) {
-                        $command = "登录失败\n";
-                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                    $message = '登录失败!'.PHP_EOL;
+                    $this->error($message);
+                    //保存日志
+                    if($this->isCommandLogs === true){
+                        file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
                     }
                     exit;
-                }
-
-                //随机导演
-                if(empty($value->director)){
-                    $value->director = '详见内页';
-                }
-                //随机演员
-                if(empty($value->actors)){
-                    $value->actors = '详见内页';
-                }
-
-                //随机年代
-                if(empty($value->myear)){
-                    $myearArr = ['10年代','00年代','90年代','80年代','更早'];
-                    shuffle($myearArr);
-                    $myearArr = array_shift($myearArr);
-                    $value->myear = $myearArr;
-                }
-                //随机分类
-                if(empty($value->types)){
-                    $value->types = _getRandType();
-                }
-                //随机评分
-                if(empty($value->grade)){
-                    $value->grade = mt_rand(0,10);
                 }
 
                 //提交数据
@@ -206,30 +169,32 @@ class Dedea67Post extends Command
 //                dd($data);
                 $rest = $this->getCurl($addUrl, 'post', $data);
                 if (stripos($rest, '成功发布文') !== false) {
-                    $isSend = true;
                     //成功提交后更新is_post
-                    DB::connection($dbName)->table($tableName)->where('id', $value->id)->update(['is_post' => 0]);
-                    $this->info('dede post archive success');
-                    if($this->isCommandLogs === true) {
-                        $command = "dede post archive success aid is {$value->id} \n";
-                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+                    //更新状态文件
+                    file_put_contents($this->dedeSendStatusFile,'is_send = 1');
+
+                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_post' => 0]);
+                    if($rest){
+                        $message .= "dede post {$value->typeid} aid {$value->id} update gather tabel is_post=0 success !!".PHP_EOL;
+                        $this->info($message);
+                    }else{
+                        $message .= "dede post {$value->typeid} adi {$value->id} update gather tabel is_post=0 fail !!".PHP_EOL;
+                        $this->error($message);
                     }
                 } else {
-                    $this->error('dede post archive fail');
-                    if($this->isCommandLogs === true) {
-                        $command = "dede post archive fail aid is {$value->id} \n";
-                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-                    }
+                    $message .= "dede post {$value->typeid} aid {$value->id} fail !!".PHP_EOL;
+                    $this->error($message);
+                }
+                //保存日志
+                if($this->isCommandLogs === true){
+                    file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
                 }
             }
         } while ($tot > 0);
-        $this->info('dede post archive end');
-        if($this->isCommandLogs === true) {
-            $command = "dede post archive end\n\n";
-            file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
+        $message = 'dede post archive end'.PHP_EOL;
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
         }
     }
-
-
-
 }

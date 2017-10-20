@@ -5,9 +5,11 @@ namespace App\Console\Commands\Caiji\Ygdy8;
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
+use App\Console\Commands\Mytraits\Common;
 
 class OumeiTvsUpdate extends Command
 {
+    use Common;
     use Ygdy8;
     use DedeLogin;
     /**
@@ -26,7 +28,6 @@ class OumeiTvsUpdate extends Command
 
     public $typeId;
     public $channelId = 17;
-    public $qiniuDir = 'tvs/imgs';
 
     /**
      * Create a new command instance.
@@ -36,7 +37,7 @@ class OumeiTvsUpdate extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->MovieInit();
+        $this->initBegin();
     }
 
     /**
@@ -56,7 +57,7 @@ class OumeiTvsUpdate extends Command
         //得到这条命令logs
         if ($this->isCommandLogs === true) {
             $command = "=========================================\n";
-            $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_oumeitvs_update  {$pageStart} {$pageTot} {$this->typeId}{$queueName} \n the link is {$url} \n";
+            $command .= date('Y-m-d H:i:s') . "\ncaiji:ygdy8_oumeitvs_update  {$pageStart} {$pageTot} {$this->typeId} {$queueName} \n the link is {$url} \n";
             file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
         }
 
@@ -97,8 +98,8 @@ class OumeiTvsUpdate extends Command
 
         //其余剩下的操作
         // php artisan caiji:ygdy8_get_content 19(type_id)
-        $keyWordSuffix = '电视剧';
-        $this->runOther($queueName,$keyWordSuffix);
+        $keyWord = '电视剧';
+        $this->runOther($queueName,$keyWord);
 
     }
 }

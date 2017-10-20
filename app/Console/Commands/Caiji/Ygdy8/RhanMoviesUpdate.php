@@ -5,9 +5,11 @@ namespace App\Console\Commands\Caiji\Ygdy8;
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
+use App\Console\Commands\Mytraits\Common;
 
 class RhanMoviesUpdate extends Command
 {
+    use Common;
     use Ygdy8;
     use DedeLogin;
     /**
@@ -26,7 +28,6 @@ class RhanMoviesUpdate extends Command
 
     public $typeId;
     public $channelId = 17;
-    public $qiniuDir = 'movies/imgs';
 
     /**
      * Create a new command instance.
@@ -36,7 +37,7 @@ class RhanMoviesUpdate extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->MovieInit();
+        $this->initBegin();
     }
 
     /**
@@ -97,8 +98,8 @@ class RhanMoviesUpdate extends Command
 
         //其余剩下的操作
         // php artisan caiji:ygdy8_get_content 14(type_id)
-        $keyWordSuffix = '电影';
-        $this->runOther($queueName,$keyWordSuffix);
+        $keyWord = '电影';
+        $this->runOther($queueName,$keyWord);
     }
 }
 

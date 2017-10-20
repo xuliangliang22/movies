@@ -5,9 +5,11 @@ namespace App\Console\Commands\Caiji\Ygdy8;
 use Illuminate\Console\Command;
 use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
+use App\Console\Commands\Mytraits\Common;
 
 class DaluTvsUpdate extends Command
 {
+    use Common;
     use Ygdy8;
     use DedeLogin;
     /**
@@ -26,8 +28,6 @@ class DaluTvsUpdate extends Command
 
     public $typeId;
     public $channelId = 17;
-    public $qiniuDir = 'tvs/imgs';
-
 
     /**
      * Create a new command instance.
@@ -37,7 +37,7 @@ class DaluTvsUpdate extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->MovieInit();
+        $this->initBegin();
     }
 
     /**
@@ -99,8 +99,8 @@ class DaluTvsUpdate extends Command
 
         //其余剩下的操作
         // php artisan caiji:ygdy8_get_content 17(type_id)
-        $keyWordSuffix = '电视剧';
-        $this->runOther($queueName,$keyWordSuffix);
+        $keyWord = '电视剧';
+        $this->runOther($queueName,$keyWord);
     }
 }
 
