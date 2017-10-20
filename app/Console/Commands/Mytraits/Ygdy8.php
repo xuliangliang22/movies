@@ -215,7 +215,7 @@ trait Ygdy8
             $disk = QiniuStorage::disk('qiniu');
             DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->delete();
 
-            $doubans = DB::connection($this->dbName)->table($this->tableName)->select('id','litpic')->where('typeid', $this->typeId)->orWhere('is_douban',-1)->get();
+            $doubans = DB::connection($this->dbName)->table($this->tableName)->select('id','litpic')->where('typeid', $this->typeId)->where('is_douban',-1)->get();
             $qiniuUrl = config('filesystems.disks.qiniu.domains.default');
             foreach ($doubans as $dok=>$dov){
                 //删除图片
