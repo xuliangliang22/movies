@@ -203,7 +203,7 @@ trait Ygdy8
         if ($queueName == 'all' || $queueName == 'pic' || $queueName == 'other') {
             //上传图片
             //litpic
-            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$this->typeId]);
+//            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$this->typeId]);
             //bodypic
 //            $this->callSilent('xiazai:img',['action'=>'body','type_id'=>$this->typeId]);
             //采集豆瓣数据
@@ -281,10 +281,6 @@ trait Ygdy8
         try {
             do {
                 $movies = DB::connection($this->dbName)->table($this->tableName)->select('id','typeid','title','is_litpic')->where('typeid', $this->typeId)->where('is_douban', -1)->where('id', '>', $minId)->take($take)->get();
-                //保存日志
-                if($this->isCommandLogs === true){
-                    file_put_contents($this->commandLogsFile,var_export($movies,true),FILE_APPEND);
-                }
 
                 $tot = count($movies);
                 foreach ($movies as $key => $row) {
@@ -293,6 +289,7 @@ trait Ygdy8
                     $this->info($message);
                     $url = 'https://www.douban.com/search?q=' . $row->title;
                     $conUrl = $this->getDouList($url);
+
                     if (!$conUrl) {
                         continue;
                     }

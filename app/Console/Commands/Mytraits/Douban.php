@@ -34,33 +34,36 @@ trait Douban
                 return $html;
             },
         ]);
-        $content = $ql->setQuery(array(
-            'title' => array('a', 'text'),
-            'con_url' => array('a', 'href'),
-            'type' => array('span', 'text'),
-        ),'.result .title')->getData(function ($item){
-            $name = $item['title'];
-            $last = mb_substr($name, -1, 1, 'utf-8');
-            if ($last == ')') {
-                $pos = mb_strrpos($name, '(', 0, 'utf-8');
-            } elseif ($last == '）') {
-                $pos = mb_strrpos($name, '（', 0, 'utf-8');
-            } else {
-                $pos = null;
-            }
-            $item['title'] = mb_substr($name, 0, $pos, 'utf-8');
-            return $item;
-        });
+        $html = $ql->setQuery([])->getHmtl();
+        dd($html);
 
-        if (empty($content) === false) {
-            foreach ($content as $key => $value) {
-                if (empty($value['type']) === false && (mb_stripos($value['type'], '电视', 0, 'utf-8') !== false || mb_stripos($value['type'], '电影', 0, 'utf-8') !== false || mb_stripos($value['type'], '动漫', 0, 'utf-8') !== false)) {
-                    $rest = $value['con_url'];
-                    break;
-                }
-            }
-        }
-        return $rest;
+//        $content = $ql->setQuery(array(
+//            'title' => array('a', 'text'),
+//            'con_url' => array('a', 'href'),
+//            'type' => array('span', 'text'),
+//        ),'.result .title')->getData(function ($item){
+//            $name = $item['title'];
+//            $last = mb_substr($name, -1, 1, 'utf-8');
+//            if ($last == ')') {
+//                $pos = mb_strrpos($name, '(', 0, 'utf-8');
+//            } elseif ($last == '）') {
+//                $pos = mb_strrpos($name, '（', 0, 'utf-8');
+//            } else {
+//                $pos = null;
+//            }
+//            $item['title'] = mb_substr($name, 0, $pos, 'utf-8');
+//            return $item;
+//        });
+//
+//        if (empty($content) === false) {
+//            foreach ($content as $key => $value) {
+//                if (empty($value['type']) === false && (mb_stripos($value['type'], '电视', 0, 'utf-8') !== false || mb_stripos($value['type'], '电影', 0, 'utf-8') !== false || mb_stripos($value['type'], '动漫', 0, 'utf-8') !== false)) {
+//                    $rest = $value['con_url'];
+//                    break;
+//                }
+//            }
+//        }
+//        return $rest;
     }
 
     /**
