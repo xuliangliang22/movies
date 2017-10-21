@@ -87,8 +87,6 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\News\M1905Update::class,
         //================//=============//==========
 
-
-
         //修改dede_archives的litpic,加?imageslim后缀名称
         Commands\Ca2722\Litpic::class,
         //测试使用
@@ -109,7 +107,7 @@ class Kernel extends ConsoleKernel
         //          ->hourly();
 
         //大陆电影
-        $schedule->command('caiji:douban 13')
+        $schedule->command('caiji:ygdy8_get_content 13')
 //            ->weekly()->mondays()->at('00:30')
             ->dailyAt('13:00')
             ->before(function () {

@@ -80,9 +80,6 @@ class DaluMoviesUpdate extends Command
             if ($queueName == 'list' || $this->listNum < 1) {
                 exit;
             }
-            if($queueName == 'olist'){
-                $this->call('caiji:ygdy8_get_content',['type_id'=>$this->typeId]);
-            }
         }
 
         //其余剩下的操作
