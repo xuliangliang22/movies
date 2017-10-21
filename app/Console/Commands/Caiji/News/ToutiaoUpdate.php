@@ -56,7 +56,7 @@ class ToutiaoUpdate extends Command
         //只判断标题是否重复,其他不用关心,只采集前三页的内容
         $this->depth = $this->argument('depth');
         $this->typeId = $this->argument('type_id');
-//        $this->getList();
+        $this->getList();
         //保存图片
         $this->call('xiazai:img',['action'=>'litpic','type_id'=>$this->typeId]);
         //删除图片不成功的记录
