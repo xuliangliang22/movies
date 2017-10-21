@@ -168,7 +168,10 @@ class ToutiaoUpdate extends Command
                     //内容页链接
                     $conUrl = 'http://www.toutiao.com' . $value['source_url'];
                     //article
-                    if (parse_url($value['display_url'], PHP_URL_HOST) == 'temai.snssdk.com') {
+                    if(isset($value['has_video']) === true && $value['has_video']){
+                        //如果是视频则跳出
+                        continue;
+                    }elseif(parse_url($value['display_url'], PHP_URL_HOST) == 'temai.snssdk.com') {
                         //手机
                         $this->info("获得文章图片内容 {$conUrl}");
                         $body = $this->gettemai($conUrl);
@@ -188,7 +191,7 @@ class ToutiaoUpdate extends Command
                     //目前只将文章的公众号保存下来
                     if ($body) {
                         $saveArr = [
-                            'title' => $value['title'] . '(转载)',
+                            'title' => $value['title'],
                             'title_hash' => md5($value['title']),
                             'litpic' => $litpic,
                             'down_link' => $value['abstract'],
