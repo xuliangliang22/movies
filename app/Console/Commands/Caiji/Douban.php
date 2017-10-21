@@ -133,10 +133,10 @@ class Douban extends Command
                         $updateArr['is_douban'] = 0;
                         $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $row->id)->update($updateArr);
                         if ($rest) {
-                            $message .= "douban aid {$row->id} update success !!";
+                            $message .= "douban aid {$row->id} update success !!".PHP_EOL;
                             $this->info($message);
                         } else {
-                            $message .= "douban aid {$row->id} update fail !!";
+                            $message .= "douban aid {$row->id} update fail !!".PHP_EOL;
                             $this->error($message);
                         }
                     }
@@ -148,10 +148,20 @@ class Douban extends Command
                 }
             } while ($tot > 0);
         } catch (\ErrorException $e) {
-            $this->error('doban errorException ' . $e->getMessage());
+            $message = 'doban error exception ' . $e->getMessage().PHP_EOL;
+            $this->error($message);
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+            }
             $this->initDouban($aid);
         } catch (\Exception $e) {
-            $this->error('doban exception ' . $e->getMessage());
+            $message = 'doban exception ' . $e->getMessage().PHP_EOL;
+            $this->error($message);
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+            }
             $this->initDouban($aid);
         }
         $message = 'douban end !';
