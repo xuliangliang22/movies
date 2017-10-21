@@ -218,64 +218,64 @@ trait Ygdy8
             $this->call('xiazai:img',['action'=>'litpic','type_id'=>$this->typeId]);
             //bodypic
 //            $this->callSilent('xiazai:img',['action'=>'body','type_id'=>$this->typeId]);
-            //采集豆瓣数据
-//            $this->call('caiji:douban',['type_id'=>$this->typeId]);
 //            $this->call('caiji:baidulitpic',['type_id'=>$this->typeId,'key_word_suffix'=>$keyWordSuffix]);
-            //将豆瓣不好的数据删除
-//            $disk = QiniuStorage::disk('qiniu');
-//            DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->delete();
-//
-//            $doubans = DB::connection($this->dbName)->table($this->tableName)->select('id','litpic')->where('typeid', $this->typeId)->where('is_douban',-1)->get();
-//            $qiniuUrl = config('filesystems.disks.qiniu.domains.default');
-//            foreach ($doubans as $dok=>$dov){
-//                //删除图片
-//                if(stripos($dov->litpic,$qiniuUrl) !== false){
-//                    $file = str_replace($qiniuUrl,'',$dov->litpic);
-//                    if($disk->exists($file)){
-//                        $disk->delete($file);
-//                    }
-//                }
-//                //删除这样记录
-//                DB::connection($this->dbName)->table($this->tableName)->where('id',$dov->id)->delete();
-//            }
 
             if($queueName == 'pic'){
                 exit;
             }
         }
 
-//        上线部署
-//        if ($queueName == 'all' || $queueName == 'dede' || $queueName == 'other') {
-//            //logs
-//            $message = date('Y-m-d H:i:s')." 将新添加数据提交到dede后台".PHP_EOL;
-//            $this->info($message);
-//            //将新添加数据提交到dede后台 is_post = -1
-//            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
-//            //将更新数据提交到dede后台,直接替换数据库
-//            $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
-//            if (file_exists($this->dedeSendStatusFile)) {
-//                //更新列表页
-//                $message .= "更新列表页".PHP_EOL;
-//                $this->info($message);
-//                $this->call('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
-//            }
-//            //logs
-//            $message .=  "上线部署完成! ".PHP_EOL;
-//            //保存日志
-//            if($this->isCommandLogs === true){
-//                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
-//            }
-//            if ($queueName == 'dede') {
-//                exit;
-//            }
-//        }
-//        $message =  "内容更新完成! ".PHP_EOL;
-//        //保存日志
-//        if($this->isCommandLogs === true){
-//            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
-//        }
+        //上线部署
+        if ($queueName == 'all' || $queueName == 'dede' || $queueName == 'other') {
+            //logs
+            $message = date('Y-m-d H:i:s')." 将新添加数据提交到dede后台".PHP_EOL;
+            $this->info($message);
+
+            //采集豆瓣数据
+            $this->call('caiji:douban',['type_id'=>$this->typeId]);
+            //将豆瓣不好的数据删除
+            $disk = QiniuStorage::disk('qiniu');
+            DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->delete();
+
+            $doubans = DB::connection($this->dbName)->table($this->tableName)->select('id','litpic')->where('typeid', $this->typeId)->where('is_douban',-1)->get();
+            $qiniuUrl = config('filesystems.disks.qiniu.domains.default');
+            foreach ($doubans as $dok=>$dov){
+                //删除图片
+                if(stripos($dov->litpic,$qiniuUrl) !== false){
+                    $file = str_replace($qiniuUrl,'',$dov->litpic);
+                    if($disk->exists($file)){
+                        $disk->delete($file);
+                    }
+                }
+                //删除这样记录
+                DB::connection($this->dbName)->table($this->tableName)->where('id',$dov->id)->delete();
+            }
+
+            //将新添加数据提交到dede后台 is_post = -1
+            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
+            //将更新数据提交到dede后台,直接替换数据库
+            $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
+            if (file_exists($this->dedeSendStatusFile)) {
+                //更新列表页
+                $message .= "更新列表页".PHP_EOL;
+                $this->info($message);
+                $this->call('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
+            }
+            //logs
+            $message .=  "上线部署完成! ".PHP_EOL;
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+            }
+            if ($queueName == 'dede') {
+                exit;
+            }
+        }
+        $message =  "内容更新完成! ".PHP_EOL;
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+        }
     }
-
-
 }
 
