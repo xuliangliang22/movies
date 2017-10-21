@@ -29,7 +29,7 @@ class ToutiaoUpdate extends Command
 
     public $typeId;
     public $channelId = 1;
-    public $sleepTime = 0;
+    public $sleepTime = 3;
     //列表页循环深度
     public $depth;
 
@@ -76,16 +76,15 @@ class ToutiaoUpdate extends Command
     public function getList()
     {
         $maxBehotTime = 0;
-        $url = 'http://www.toutiao.com/api/pc/feed/?category=news_entertainment&max_behot_time=[max_behot_time]';
+        $surl = 'http://www.toutiao.com/api/pc/feed/?category=news_entertainment&max_behot_time=[max_behot_time]';
         //得到这条命令
-        $message = date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$this->depth} {$this->typeId} \n the link is {$url} \n";
+        $message = date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$this->depth} {$this->typeId} \n the link is {$surl} \n";
         $this->info($message);
         do
         {
-            $url = str_replace('[max_behot_time]',$maxBehotTime,$url);
+            $url = str_replace('[max_behot_time]',$maxBehotTime,$surl);
             //换ip
             $ip = getRandIp();
-
             $ql = QueryList::run('Request',[
                 'target' => $url,
                 'referrer' => 'http://www.toutiao.com/ch/news_entertainment/',
@@ -182,11 +181,11 @@ class ToutiaoUpdate extends Command
                 //目前只将文章的公众号保存下来
                 if($body) {
                     $saveArr = [
-                        'title' => $value['title'],
+                        'title' => $value['title'].'(转载)',
                         'title_hash' => md5($value['title']),
                         'litpic' => $litpic,
                         'down_link' => $value['abstract'],
-                        'body' => $body,
+                        'body' => str_replace('头条','',$body),
                     ];
                     $other = [
                         'typeid'=>$this->typeId,
