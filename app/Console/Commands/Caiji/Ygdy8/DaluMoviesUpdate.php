@@ -7,6 +7,7 @@ use App\Console\Commands\Mytraits\Ygdy8;
 use App\Console\Commands\Mytraits\DedeLogin;
 use App\Console\Commands\Mytraits\Common;
 use App\Console\Commands\Mytraits\Douban;
+use QL\QueryList;
 
 class DaluMoviesUpdate extends Command
 {
@@ -81,6 +82,9 @@ class DaluMoviesUpdate extends Command
             }
             if ($queueName == 'list' || $this->listNum < 1) {
                 exit;
+            }
+            if($queueName == 'olist'){
+                $this->call('caiji:ygdy8_get_content',['type_id'=>$this->typeId]);
             }
         }
 
