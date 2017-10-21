@@ -169,6 +169,19 @@ if(!function_exists('getExt')) {
     }
 }
 
+/**
+ * 去除css样式
+ */
+if(!function_exists('removeCss')) {
+    function removeCss($html)
+    {
+        $pattern = array('/id\s*=\s*["\'](.*?)["\']/is', '/class\s*=\s*["\'](.*?)["\']/is', '/style\s*=\s*["\'](.*?)["\']/is', '/max-width\s*=\s*["\'](.*?)["\']/is', '/min-width\s*=\s*["\'](.*?)["\']/is', '/max-height\s*=\s*["\'](.*?)["\']/is', '/min-height\s*=\s*["\'](.*?)["\']/is', '/data-(.*?)\s*=\s*["\'](.*?)["\']/is', '/width\s*=\s*["\'](.*?)["\']/is', '/height\s*=\s*["\'](.*?)["\']/is', '/src\s*=\s*["\']\/\/(.*?)["\']/is');
+        $replace = array('', '', '', '', '', '', '', '', '', '', 'src="http://$1"');
+        $html = preg_replace($pattern, $replace, $html);
+        return $html;
+    }
+}
+
 
 
 

@@ -85,6 +85,8 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\News\Y3600Update::class,
         //跟踪采集影视评论
         Commands\Caiji\News\M1905Update::class,
+        //今日头条
+        Commands\Caiji\News\ToutiaoUpdate::class,
         //================//=============//==========
 
         //修改dede_archives的litpic,加?imageslim后缀名称
@@ -198,6 +200,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('caiji:news_y3600_update 1 1 22 --queue=all')->dailyAt('02:30')->withoutOverlapping();
         //影视评论
         $schedule->command('caiji:news_m1905_update 1 2 24 --queue=all')->dailyAt('03:30')->withoutOverlapping();
+        //头条娱乐新闻
+        $schedule->command('caiji:news_toutiao_update 1 24')->dailyAt('01:30')->withoutOverlapping()->appendOutputTo('/home/www/liangcommands/public/command_logs/totiao24.log');
 
     }
 
