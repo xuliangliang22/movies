@@ -251,31 +251,31 @@ trait Ygdy8
                 DB::connection($this->dbName)->table($this->tableName)->where('id',$dov->id)->delete();
             }
 
-//            //将新添加数据提交到dede后台 is_post = -1
-//            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
-//            //将更新数据提交到dede后台,直接替换数据库
-//            $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
-//            if (file_exists($this->dedeSendStatusFile)) {
-//                //更新列表页
-//                $message .= "更新列表页".PHP_EOL;
-//                $this->info($message);
-//                $this->call('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
-//            }
-//            //logs
-//            $message .=  "上线部署完成! ".PHP_EOL;
-//            //保存日志
-//            if($this->isCommandLogs === true){
-//                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
-//            }
-//            if ($queueName == 'dede') {
-//                exit;
-//            }
+            //将新添加数据提交到dede后台 is_post = -1
+            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
+            //将更新数据提交到dede后台,直接替换数据库
+            $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
+            if (file_exists($this->dedeSendStatusFile)) {
+                //更新列表页
+                $message .= "更新列表页".PHP_EOL;
+                $this->info($message);
+                $this->call('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
+            }
+            //logs
+            $message .=  "上线部署完成! ".PHP_EOL;
+            //保存日志
+            if($this->isCommandLogs === true){
+                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+            }
+            if ($queueName == 'dede') {
+                exit;
+            }
         }
-//        $message =  "内容更新完成! ".PHP_EOL;
-//        //保存日志
-//        if($this->isCommandLogs === true){
-//            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
-//        }
+        $message =  "内容更新完成! ".PHP_EOL;
+        //保存日志
+        if($this->isCommandLogs === true){
+            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+        }
     }
 }
 

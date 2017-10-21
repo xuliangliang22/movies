@@ -108,8 +108,7 @@ class Kernel extends ConsoleKernel
 
         //大陆电影
         $schedule->command('caiji:ygdy8_get_content 13')
-//            ->weekly()->mondays()->at('00:30')
-            ->dailyAt('13:00')
+            ->weekly()->mondays()->at('00:30')
             ->before(function () {
                 // Task is about to start...
                 Artisan::call('caiji:ygdy8_dalumovies_update',['page_start'=>1,'page_tot'=>1,'type_id'=>13,'--queue'=>'olist']);
@@ -119,7 +118,7 @@ class Kernel extends ConsoleKernel
                 Artisan::call('caiji:ygdy8_dalumovies_update',['page_start'=>1,'page_tot'=>1,'type_id'=>13,'--queue'=>'pic']);
             });
         //间隔半个小时提交到dede后台
-        $schedule->command('caiji:ygdy8_dalumovies_update',['page_start'=>1,'page_tot'=>1,'type_id'=>13,'--queue'=>'dede'])->dailyAt('01:00');
+        $schedule->command('caiji:ygdy8_dalumovies_update 1 1 13 --queue=dede')->dailyAt('01:00');
 
         //日韩电影
         $schedule->command('caiji:ygdy8_get_content 14')

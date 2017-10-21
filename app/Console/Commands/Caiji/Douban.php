@@ -60,10 +60,6 @@ class Douban extends Command
         try {
             do {
                 $movies = DB::connection($this->dbName)->table($this->tableName)->select('id','typeid','title','is_litpic')->where('id', '>', $aid)->where('typeid', $this->typeId)->where('is_douban', -1)->take($take)->get();
-                //保存日志
-                if($this->isCommandLogs === true){
-                    file_put_contents($this->commandLogsFile,var_export($movies,true),FILE_APPEND);
-                }
                 $tot = count($movies);
                 foreach ($movies as $key => $row) {
                     $aid = $row->id;
