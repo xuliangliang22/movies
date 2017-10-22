@@ -164,7 +164,7 @@ class Douban extends Command
             }
             $this->initDouban($aid);
         }
-        $message = 'douban end !';
+        $message = 'douban end !'.PHP_EOL;
         $this->info($message);
         //保存日志
         if($this->isCommandLogs === true){

@@ -80,6 +80,7 @@ class ToutiaoUpdate extends Command
         //得到这条命令
         $message = date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$this->depth} {$this->typeId} \n the link is {$surl} \n";
         $this->info($message);
+        $tot = 0;
         try {
             do {
                 $url = str_replace('[max_behot_time]', $maxBehotTime, $surl);
@@ -109,7 +110,8 @@ class ToutiaoUpdate extends Command
                     $this->info('toutiao getlist save success !!');
                 }
                 $maxBehotTime = $html['next']['max_behot_time'];
-            } while (true);
+                $tot ++;
+            } while ($tot > 5);
             $this->info('toutiao 娱乐首页公众号文章更新采集完成!!');
         }catch (\Exception $e){
             $this->error('exception '.$e->getMessage());
@@ -135,10 +137,6 @@ class ToutiaoUpdate extends Command
         $i = 0;
         try {
             do {
-                if ($i >= $this->depth) {
-                    break;
-                }
-
                 $ip = getRandIp();
                 $relArtUrl = str_replace('[max_behot_time]', $maxBehotTime, $artUrl);
                 $ql = QueryList::run('Request', [
@@ -217,7 +215,7 @@ class ToutiaoUpdate extends Command
 //            //休息一下吧
                 $i++;
                 sleep($this->sleepTime);
-            } while (true);
+            } while ($i < $this->depth);
             $this->info('toutiao gather save end !!');
         }catch (\Exception $e){
             $this->error('exception '.$e->getMessage());

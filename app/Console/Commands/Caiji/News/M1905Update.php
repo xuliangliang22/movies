@@ -56,7 +56,7 @@ class M1905Update extends Command
 
         $url = 'http://www.1905.com/api/content/index.php?m=converged&a=comment&page=%s&pagesize=20';
         //得到这条命令
-        $message = date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$pageStart} {$pageTot} {$this->typeId} {$queueName} \n the link is {$url} \n";
+        $message = date('Y-m-d H:i:s') . "\ncaiji:news_m1905_update {$pageStart} {$pageTot} {$this->typeId} {$queueName} \n the link is {$url} \n";
         $this->info($message);
 
         //得到所有的列表页

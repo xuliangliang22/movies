@@ -223,11 +223,11 @@ class MakeHtml extends Command
                         $this->makeArc($typeId, $aid, $aid);
                     }
                     //更新数据库is_update
-                    $message .= "dede down_link update aid {$value->id} update ok !";
+                    $message .= "dede down_link update aid {$value->id} update ok !".PHP_EOL;
                     $this->info($message);
                 } else {
                     //没有更新成功,也将is_update更新为0
-                    $message .= "dede down_link update aid {$value->id} update fail !";
+                    $message .= "dede down_link update aid {$value->id} update fail !".PHP_EOL;
                     $this->error($message);
                 }
                 //保存日志
@@ -239,7 +239,7 @@ class MakeHtml extends Command
                 $this->error("dede down_link update login fail !");
             }
         }
-        $message = "dede down_link update end !";
+        $message = "dede down_link update end !".PHP_EOL;
         $this->info($message);
         //保存日志
         if($this->isCommandLogs === true){

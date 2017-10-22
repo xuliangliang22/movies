@@ -132,7 +132,7 @@ class Ygdy8GetContent extends Command
         do
         {
             $data = DB::connection($this->dbName)->table($this->tableName)->select('id','con_url')->where('typeid',$this->typeId)->where('is_con', -1)->where('is_update',-1)->get();
-            if(count($data) < 1 || $tot > 3){
+            if(count($data) < 1 || $tot > 10){
                 break;
             }
 
@@ -149,10 +149,10 @@ class Ygdy8GetContent extends Command
                     ]);
                     if($rest)
                     {
-                        $message .= "更新下载链接成功!";
+                        $message .= "更新下载链接成功!".PHP_EOL;
                         $this->info($message);
                     }else{
-                        $message .= "更新下载链接失败!";
+                        $message .= "更新下载链接失败!".PHP_EOL;
                         $this->error($message);
                     }
                     //保存日志
