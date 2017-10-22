@@ -108,7 +108,7 @@ class Ygdy8GetContent extends Command
             }
             $this->getContent($minId);
         }
-        $message = "con save end !!";
+        $message = "con save end !!".PHP_EOL;
         $this->info($message);
 
         //删除新增的数据is_con = -1,is_update = -1继续执行
