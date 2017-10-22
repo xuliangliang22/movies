@@ -110,13 +110,17 @@ class Ygdy8GetContent extends Command
         }
         $message = "con save end !!";
         $this->info($message);
+
+        //删除新增的数据is_con = -1,is_update = -1继续执行
+        $rs = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_con', -1)->where('is_update',0)->delete();
+        if($rs){
+            $message .= "采集内容页,删除保存节目没有成功的数据".PHP_EOL;
+            $this->info($message);
+        }
         //保存日志
         if($this->isCommandLogs === true){
             file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
         }
-
-        //删除新增的数据is_con = -1,is_update = -1继续执行
-        DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_con', -1)->where('is_update',0)->delete();
         //isupdate,更新已经存在数据
         $this->conUpdate();
     }
@@ -132,7 +136,7 @@ class Ygdy8GetContent extends Command
         do
         {
             $data = DB::connection($this->dbName)->table($this->tableName)->select('id','con_url')->where('typeid',$this->typeId)->where('is_con', -1)->where('is_update',-1)->get();
-            if(count($data) < 1 || $tot > 10){
+            if(count($data) < 1 || $tot > 3){
                 break;
             }
 
@@ -165,7 +169,11 @@ class Ygdy8GetContent extends Command
         }while(true);
         $message = 'is_update再次更新完成!!'.PHP_EOL;
         //删除全部不成功的下载链接
-        DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_con', -1)->orWhere('is_update',-1)->delete();
+        $rs = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_con', -1)->orWhere('is_update',-1)->delete();
+        if($rs){
+            $message .= "采集内容页最后,删除更新节目没有成功的数据".PHP_EOL;
+            $this->info($message);
+        }
         //保存日志
         if($this->isCommandLogs === true){
             file_put_contents($this->commandLogsFile,$message,FILE_APPEND);

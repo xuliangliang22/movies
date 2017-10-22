@@ -240,6 +240,8 @@ trait Ygdy8
             $doubans = DB::connection($this->dbName)->table($this->tableName)->select('id','litpic')->where('typeid', $this->typeId)->where('is_douban',-1)->get();
             $qiniuUrl = config('filesystems.disks.qiniu.domains.default');
             foreach ($doubans as $dok=>$dov){
+                $message .= "douban 删除豆瓣没有更新成功的数据 aid {$dov->id}".PHP_EOL;
+                $this->info($message);
                 //删除图片
                 if(stripos($dov->litpic,$qiniuUrl) !== false){
                     $file = str_replace($qiniuUrl,'',$dov->litpic);
