@@ -33,7 +33,7 @@ trait Toutiao
             $body = htmlspecialchars_decode($body);
             //去除所有的图片链接
             $body = preg_replace('/<img(.*?)>/is','',$body);
-            $body = strstr(trim($body,'\''),'.replace',true);
+            $body = trim(strstr($body,'.replace',true),'\'');
         }else{
             $data = QueryList::Query($html,array(
                'body' => array('.article-content','text','p -img -a script')
