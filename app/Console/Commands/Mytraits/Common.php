@@ -37,7 +37,7 @@ trait Common
         $this->dbName = config('qiniu.qiniu_data.db_name');
         $this->tableName = config('qiniu.qiniu_data.table_name');
 
-        //logo
+        //log
         $this->commandLogsPath = config('qiniu.qiniu_data.command_logs_path');
         $this->commandLogsFile = $this->commandLogsPath.'/'.config('qiniu.qiniu_data.command_logs_file');
         $this->isCommandLogs = config('qiniu.qiniu_data.is_command_logs');

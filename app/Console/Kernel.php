@@ -77,6 +77,9 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\Duoduo\DaluUpdate::class,
         //================//=============//==========
 
+        //www.huhupan.com
+        //云盘资源
+        Commands\Caiji\Pan\Huhu::class,
 
         //Y3600
         //娱乐新闻采集
