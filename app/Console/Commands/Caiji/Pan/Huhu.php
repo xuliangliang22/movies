@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands\Caiji\Pan;
 
-use DiDom\Query;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
@@ -26,7 +25,6 @@ class Huhu extends Command
     protected $description = 'huhu pan resource';
 
     protected $channelId = 17;
-    protected $sleep;
     /**
      * Create a new command instance.
      *
@@ -46,7 +44,6 @@ class Huhu extends Command
     public function handle()
     {
         $typeids = array(26,27,28,29);
-        $this->sleep = mt_rand(10,30);
         $url = null;
         foreach ($typeids as $key=>$value) {
             switch ($value) {
@@ -87,6 +84,7 @@ class Huhu extends Command
 
     public function getList($url,$typeId)
     {
+        $sleep = mt_rand(10,30);
         $host = 'http://huhupan.com';
         //获得总页数
         $ip = getRandIp();
@@ -111,9 +109,10 @@ class Huhu extends Command
             return;
         }
         //休息
-        sleep($this->sleep);
+        sleep($sleep);
 
         for ($i=1;$i<=$pageTot[0];$i++) {
+            $sleep = mt_rand(10,30);
             $this->info(date('Y-m-d H:i:s')." pan huhu page {$i}/{$pageTot[0]} typeid {$typeId}");
             if($i == 1){
                 $lurl = $url.'index.html';
@@ -182,7 +181,7 @@ class Huhu extends Command
                     }
                 }
             }
-            sleep($this->sleep);
+            sleep($sleep);
         }
         $this->info(date('Y-m-d H:i:s')." pan huhu list end !!");
     }
@@ -193,6 +192,7 @@ class Huhu extends Command
         $host = 'http://huhupan.com';
         $minId = 0;
         $take = 100;
+        $sleep = null;
         do {
             $arc = DB::connection($this->dbName)->table($this->tableName)->select('id', 'con_url')->where('is_con', -1)->where('typeid',$typeId)->where('id', '>', $minId)->take($take)->get();
             $tot = count($arc);
@@ -200,7 +200,9 @@ class Huhu extends Command
             foreach ($arc as $key => $value) {
                 $minId = $value->id;
                 $this->info(date('Y-m-d H:i:s') . " {$key}/{$tot} pan huhu content id is {$value->id} url is {$value->con_url}");
+
                 $ip = getRandIp();
+                $sleep = mt_rand(10,30);
                 $ql = QueryList::run('Request',[
                     'target' => $value->con_url,
                     'method' => 'GET',
@@ -215,7 +217,7 @@ class Huhu extends Command
                     return $item['type'];
                 });
                 //休息
-                sleep($this->sleep);
+                sleep($sleep);
                 $tk = array_search('网盘下载列表',$types);
                 if($tk === false){
                     //删除这条记录
@@ -224,6 +226,7 @@ class Huhu extends Command
                 }
 
                 $ip = getRandIp();
+                $sleep = mt_rand(10,30);
                 $ql = QueryList::run('Request',[
                     'target' => $value->con_url,
                     'method' => 'GET',
@@ -239,7 +242,7 @@ class Huhu extends Command
                     return $item['pan_url'];
                 });
                 //休息
-                sleep($this->sleep);
+                sleep($sleep);
                 if(empty($data)){
                     //删除这条记录
                     DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
@@ -247,6 +250,7 @@ class Huhu extends Command
                 }
 
                 $ip = getRandIp();
+                $sleep = mt_rand(10,30);
                 $ql = QueryList::run('Request',[
                     'target' => $data[0],
                     'method' => 'GET',
@@ -261,7 +265,7 @@ class Huhu extends Command
                     return $item['type'];
                 });
                 //休息
-                sleep($this->sleep);
+                sleep($sleep);
                 $tk = array_search('网盘下载列表',$types);
                 if($tk === false){
                     //删除这条记录
@@ -270,6 +274,7 @@ class Huhu extends Command
                 }
 
                 $ip = getRandIp();
+                $sleep = mt_rand(10,30);
                 $ql = QueryList::run('Request',[
                     'target' => $data[0],
                     'method' => 'GET',
@@ -287,7 +292,8 @@ class Huhu extends Command
                     'pass' => array('.box:eq('.$tk.') .box1_6 input','value'),
                 ))->data;
                 //休息
-                sleep($this->sleep);
+                sleep($sleep);
+
                 $downLink = null;
                 foreach ($con as $ck=>$cv){
                     $downLink .= '标题:'.$cv['title'].' 链接:'.$cv['link'].' 密码:'.$cv['pass'].',';
