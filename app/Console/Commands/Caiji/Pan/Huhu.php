@@ -26,7 +26,7 @@ class Huhu extends Command
     protected $description = 'huhu pan resource';
 
     protected $channelId = 17;
-    protected $sleep = 30;
+    protected $sleep;
     /**
      * Create a new command instance.
      *
@@ -46,6 +46,7 @@ class Huhu extends Command
     public function handle()
     {
         $typeids = array(26,27,28,29);
+        $this->sleep = mt_rand(10,30);
         $url = null;
         foreach ($typeids as $key=>$value) {
             switch ($value) {
@@ -67,19 +68,19 @@ class Huhu extends Command
                     break;
             }
             $this->getList($url,$value);
-            $this->getContent($value);
+//            $this->getContent($value);
 //            //下载图片
-            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$value]);
-            //豆瓣
-            $this->call('caiji:douban',['type_id'=>$value]);
-            //dede
-            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
-            if (file_exists($this->dedeSendStatusFile)) {
-                //更新列表页
-                $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
-                $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
-            }
-            $this->info(date('Y-m-d H:i:s')." typeid {$value} 上线部署完成!");
+//            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$value]);
+//            //豆瓣
+//            $this->call('caiji:douban',['type_id'=>$value]);
+//            //dede
+//            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
+//            if (file_exists($this->dedeSendStatusFile)) {
+//                //更新列表页
+//                $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
+//                $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
+//            }
+//            $this->info(date('Y-m-d H:i:s')." typeid {$value} 上线部署完成!");
         }
     }
 
@@ -88,7 +89,16 @@ class Huhu extends Command
     {
         $host = 'http://huhupan.com';
         //获得总页数
-        $pageTot = QueryList::Query($url,array(
+        $ip = getRandIp();
+        $ql = QueryList::run('Request',[
+            'target' => $url,
+            'method' => 'GET',
+            'cache-control' => 'no-cache',
+            'client-ip' => $ip,
+            'x-forwarded-for' => $ip,
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
+        ]);
+        $pageTot = $ql->setQuery(array(
             'page_tot' => array('.pagination a:last','href'),
         ))->getData(function ($item){
             preg_match('/\d+/',$item['page_tot'],$matchs);
@@ -100,8 +110,9 @@ class Huhu extends Command
             $this->error("page tot is {$pageTot} exit!!!");
             return;
         }
+        //休息
+        sleep($this->sleep);
 
-        $pageTot = 1;
         for ($i=1;$i<=$pageTot[0];$i++) {
             $this->info(date('Y-m-d H:i:s')." pan huhu page {$i}/{$pageTot[0]} typeid {$typeId}");
             if($i == 1){
@@ -109,7 +120,17 @@ class Huhu extends Command
             }else{
                 $lurl = $url.'index_'.$i.'.html';
             }
-            $data = QueryList::Query($lurl, array(
+
+            $ip = getRandIp();
+            $ql = QueryList::run('Request',[
+                'target' => $lurl,
+                'method' => 'GET',
+                'cache-control' => 'no-cache',
+                'client-ip' => $ip,
+                'x-forwarded-for' => $ip,
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
+            ]);
+            $data = $ql->setQuery(array(
                 'title' => array('h2 a:eq(1)','text'),
                 'litpic' => array('.viewimg img','src'),
                 'con_url' => array('h2 a:eq(1)','href'),
@@ -250,7 +271,7 @@ class Huhu extends Command
 
                 $ip = getRandIp();
                 $ql = QueryList::run('Request',[
-                    'target' => $value->con_url,
+                    'target' => $data[0],
                     'method' => 'GET',
                     'cache-control' => 'no-cache',
                     'client-ip' => $ip,
@@ -278,9 +299,9 @@ class Huhu extends Command
                     'is_con' => 0
                 ]);
                 if($rest){
-                    $this->info(date('Y-m-d H:i:s') . "pan huhu content update success !!");
+                    $this->info(date('Y-m-d H:i:s') . " pan huhu content update success !!");
                 }else{
-                    $this->info(date('Y-m-d H:i:s') . "pan huhu content update fail !!");
+                    $this->info(date('Y-m-d H:i:s') . " pan huhu content update fail !!");
                 }
             }
         } while ($tot > 0);
