@@ -61,7 +61,7 @@ class OumeiTvsUpdate extends Command
         //得到所有的列表页
         //olist任务调度需要用到的参数
         if ($queueName == 'all' || $queueName == 'list' || $queueName == 'olist') {
-            $this->movieList($pageStart, $pageTot, $url,true);
+            $this->movieList($pageStart, $pageTot, $url);
             //logs
             $message .= "列表页采集完成,一共 {$this->listNum} 条! \n";
             $this->info($message);

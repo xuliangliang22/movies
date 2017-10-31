@@ -18,7 +18,7 @@ trait Ygdy8
     /**
      * 保存电影电视剧列表页
      */
-    public function movieList($start, $pageTot, $baseListUrl, $isNew = false)
+    public function movieList($start, $pageTot, $baseListUrl)
     {
         try {
 
@@ -40,36 +40,26 @@ trait Ygdy8
                     $listUrl = $url . '_' . $i . '.html';
                 }
                 $list = $this->getList($listUrl);
-//                dd($list);
 
                 //保存进数据库中去
                 foreach ($list as $key => $value) {
-                    $rs = null;
-                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
-                    if ($rest) {
-                        if ($isNew === true) {
-                            $isNewType = 'update';
-                            //判断时间,更新的时候不需要判断名字的重复
-                            if (strtotime($maxTime) >= strtotime($value['m_time'])) {
-//                                break 2;
-                                continue;
-                            }
-                            //更新这样记录的下载链接,将is_con=-1,down_link = '',is_update=-1//default 0
-                            $rs = DB::connection($this->dbName)
-                                    ->table($this->tableName)
-                                    ->where('id', $rest->id)
-                                    ->update([
-                                        'down_link' => '',
-                                        'm_time' => $value['m_time'],
-                                        'is_con' => -1,
-                                        'is_update' => -1
-                                    ]);
-                        } else {
+                    $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
+                    if ($isAlready) {
+                        //判断时间,更新的时候不需要判断名字的重复
+                        if (strtotime($maxTime) >= strtotime($value['m_time'])) {
                             continue;
                         }
+                        //更新这样记录的下载链接,将is_con=-1,down_link = '',is_update=-1//default 0
+                        $rs = DB::connection($this->dbName)
+                                ->table($this->tableName)
+                                ->where('id', $isAlready->id)
+                                ->update([
+                                    'm_time' => $value['m_time'],
+                                    'is_update' => -1
+                                ]);
                     } else {
                         //不是更新的时候判断名字的重复
-                        $isNewType = 'save';
+                        //新增
                         $listSaveArr = [
                             'title' => trim($value['title']),
                             'title_hash' => md5(trim($value['title'])),
@@ -77,16 +67,15 @@ trait Ygdy8
                             'm_time' => $value['m_time'],
                             'typeid' => $this->typeId,
                         ];
-//                        dd($listSaveArr);
                         $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
                     }
                     if ($rs) {
                         //记录列表页一共采集了多少
                         $this->listNum++;
-                        $message .= $value['title'] . ' list ' . $isNewType . ' success'.PHP_EOL;
+                        $message .= $value['title'] . ' list save success'.PHP_EOL;
                         $this->info($message);
                     } else {
-                        $message .= $value['title'] . ' list ' . $isNewType . ' fail'.PHP_EOL;
+                        $message .= $value['title'] . ' list save fail'.PHP_EOL;
                         $this->error($message);
                     }
                 }

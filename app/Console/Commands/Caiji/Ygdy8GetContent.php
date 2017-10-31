@@ -73,9 +73,6 @@ class Ygdy8GetContent extends Command
                     if(empty($conSaveArr)){
                         continue;
                     }
-                    if ($value->is_update == -1) {
-                        unset($conSaveArr['litpic']);
-                    }
                     $conSaveArr['is_con'] = 0;
                     $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update($conSaveArr);
                     if ($rest) {
@@ -112,7 +109,7 @@ class Ygdy8GetContent extends Command
         $this->info($message);
 
         //删除新增的数据is_con = -1,is_update = -1继续执行
-        $rs = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_con', -1)->where('is_update',0)->delete();
+        $rs = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_con', -1)->delete();
         if($rs){
             $message .= "采集内容页,删除保存节目没有成功的数据".PHP_EOL;
             $this->info($message);
@@ -135,7 +132,7 @@ class Ygdy8GetContent extends Command
         $tot = 0;
         do
         {
-            $data = DB::connection($this->dbName)->table($this->tableName)->select('id','con_url')->where('typeid',$this->typeId)->where('is_con', -1)->where('is_update',-1)->get();
+            $data = DB::connection($this->dbName)->table($this->tableName)->select('id','con_url')->where('typeid',$this->typeId)->where('is_update',-1)->get();
             if(count($data) < 1 || $tot > 3){
                 break;
             }
@@ -169,7 +166,7 @@ class Ygdy8GetContent extends Command
         }while(true);
         $message = 'is_update再次更新完成!!'.PHP_EOL;
         //删除全部不成功的下载链接
-        $rs = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_con', -1)->orWhere('is_update',-1)->delete();
+        $rs = DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_update',-1)->delete();
         if($rs){
             $message .= "采集内容页最后,删除更新节目没有成功的数据".PHP_EOL;
             $this->info($message);
