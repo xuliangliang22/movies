@@ -126,7 +126,7 @@ trait M1905
                 } else {
                     $message .= "m1905 content aid {$value->id} save fail ";
                     $this->error($message);
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delte();
+                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
                 }
 
                 //日志

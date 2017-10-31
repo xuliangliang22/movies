@@ -60,7 +60,7 @@ class ToutiaoUpdate extends Command
         //保存图片
         $this->call('xiazai:img',['action'=>'litpic','type_id'=>$this->typeId]);
         //删除图片不成功的记录
-        DB::connection($this->dbName)->table($this->tableName)->where('is_litpic',-1)->delete();
+        DB::connection($this->dbName)->table($this->tableName)->where('typeid',$this->typeId)->where('is_litpic',-1)->delete();
         //上传dede
         $this->call('send:dedenewpost', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
 
