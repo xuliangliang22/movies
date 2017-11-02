@@ -49,9 +49,9 @@ class Pron extends Command
         $tot = count($urls);
 
         if (preg_match('/WIN/', PHP_OS)) {
-            $savePath = 'F:\videos';
+            $savePath = 'F:\videos\\'.date('Ymd');
         } else {
-            $savePath = '/mnt/videos';
+            $savePath = '/mnt/videos/'.date('Ymd');
         }
         if (is_dir($savePath) === false) {
             mkdir($savePath, 0755, true);
@@ -60,7 +60,7 @@ class Pron extends Command
             $this->info("{$k}/{$tot} url {$url}");
             sleep($sleepTime);
 
-            $saveFile = $savePath . DIRECTORY_SEPARATOR . date('Ymd') . DIRECTORY_SEPARATOR . md5($url) . '.mp4';
+            $saveFile = $savePath . DIRECTORY_SEPARATOR .md5($url) . '.mp4';
             if (file($saveFile)) {
                 $this->info("{$url} is already save");
                 continue;
