@@ -61,7 +61,7 @@ class Pron extends Command
             sleep($sleepTime);
 
             $saveFile = $savePath . DIRECTORY_SEPARATOR .md5($url) . '.mp4';
-            if (file($saveFile)) {
+            if (file_exists($saveFile)) {
                 $this->info("{$url} is already save");
                 continue;
             }
