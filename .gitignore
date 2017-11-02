@@ -8,5 +8,6 @@ Homestead.yaml
 .env
 /public/cookie_dede
 /public/command_logs
+/public/video
 cookie.txt
 
