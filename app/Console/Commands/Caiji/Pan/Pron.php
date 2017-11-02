@@ -58,6 +58,7 @@ class Pron extends Command
         }
         foreach ($urls as $k => $url) {
             $this->info("{$k}/{$tot} url {$url}");
+            sleep($sleepTime);
 
             $saveFile = $savePath . DIRECTORY_SEPARATOR . date('Ymd') . DIRECTORY_SEPARATOR . md5($url) . '.mp4';
             if (file($saveFile)) {
@@ -93,7 +94,6 @@ class Pron extends Command
                 $this->info("save fail");
                 dd($info);
             }
-            sleep($sleepTime);
         }
     }
 }
