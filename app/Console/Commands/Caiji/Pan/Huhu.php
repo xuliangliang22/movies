@@ -64,8 +64,8 @@ class Huhu extends Command
                     $url = 'http://huhupan.com/zyjm/';
                     break;
             }
-            $this->getList($url,$value);
-//            $this->getContent($value);
+//            $this->getList($url,$value);
+            $this->getContent($value);
 //            //下载图片
 //            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$value]);
 //            //豆瓣
@@ -187,130 +187,140 @@ class Huhu extends Command
     }
 
 
-    public function getContent($typeId)
+    public function getContent($typeId,$minId = 0)
     {
         $host = 'http://huhupan.com';
-        $minId = 0;
         $take = 100;
+        $arc = null;
         $sleep = null;
-        do {
-            $arc = DB::connection($this->dbName)->table($this->tableName)->select('id', 'con_url')->where('is_con', -1)->where('typeid',$typeId)->where('id', '>', $minId)->take($take)->get();
-            $tot = count($arc);
+        try {
+            do {
+                $arc = DB::connection($this->dbName)->table($this->tableName)->select('id', 'con_url')->where('is_con', -1)->where('typeid', $typeId)->where('id', '>', $minId)->take($take)->get();
+                $tot = count($arc);
 
-            foreach ($arc as $key => $value) {
-                $minId = $value->id;
-                $this->info(date('Y-m-d H:i:s') . " {$key}/{$tot} pan huhu content id is {$value->id} url is {$value->con_url}");
+                foreach ($arc as $key => $value) {
+                    $minId = $value->id;
+                    $this->info(date('Y-m-d H:i:s') . " {$key}/{$tot} pan huhu content id is {$value->id} url is {$value->con_url}");
 
-                $ip = getRandIp();
-                $sleep = mt_rand(10,30);
-                $ql = QueryList::run('Request',[
-                    'target' => $value->con_url,
-                    'method' => 'GET',
-                    'cache-control' => 'no-cache',
-                    'client-ip' => $ip,
-                    'x-forwarded-for' => $ip,
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
-                ]);
-                $types = $ql->setQuery(array(
-                    'type' => array('.meihua_1','text'),
-                ))->getData(function ($item){
-                    return $item['type'];
-                });
-                //休息
-                sleep($sleep);
-                $tk = array_search('网盘下载列表',$types);
-                if($tk === false){
-                    //删除这条记录
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
-                    continue;
+                    $ip = getRandIp();
+                    $sleep = mt_rand(10, 30);
+                    $ql = QueryList::run('Request', [
+                        'target' => $value->con_url,
+                        'method' => 'GET',
+                        'cache-control' => 'no-cache',
+                        'client-ip' => $ip,
+                        'x-forwarded-for' => $ip,
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
+                    ]);
+                    $types = $ql->setQuery(array(
+                        'type' => array('.meihua_1', 'text'),
+                    ))->getData(function ($item) {
+                        return $item['type'];
+                    });
+                    //休息
+                    sleep($sleep);
+                    $tk = array_search('网盘下载列表', $types);
+                    if ($tk === false) {
+                        //删除这条记录
+                        DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
+                        continue;
+                    }
+
+                    $ip = getRandIp();
+                    $sleep = mt_rand(10, 30);
+                    $ql = QueryList::run('Request', [
+                        'target' => $value->con_url,
+                        'method' => 'GET',
+                        'cache-control' => 'no-cache',
+                        'client-ip' => $ip,
+                        'x-forwarded-for' => $ip,
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
+                    ]);
+                    $data = $ql->setQuery(array(
+                        'pan_url' => array('.meihua_2_1:eq(' . $tk . ') .meihua_btn:first', 'href')
+                    ))->getData(function ($item) use ($host) {
+                        $item['pan_url'] = $host . $item['pan_url'];
+                        return $item['pan_url'];
+                    });
+                    //休息
+                    sleep($sleep);
+                    if (empty($data)) {
+                        //删除这条记录
+                        DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
+                        continue;
+                    }
+
+                    $ip = getRandIp();
+                    $sleep = mt_rand(10, 30);
+                    $ql = QueryList::run('Request', [
+                        'target' => $data[0],
+                        'method' => 'GET',
+                        'cache-control' => 'no-cache',
+                        'client-ip' => $ip,
+                        'x-forwarded-for' => $ip,
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
+                    ]);
+                    $types = $ql->setQuery(array(
+                        'type' => array('.biaoti', 'text'),
+                    ))->getData(function ($item) {
+                        return $item['type'];
+                    });
+                    //休息
+                    sleep($sleep);
+                    $tk = array_search('网盘下载列表', $types);
+                    if ($tk === false) {
+                        //删除这条记录
+                        DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
+                        continue;
+                    }
+
+                    $ip = getRandIp();
+                    $sleep = mt_rand(10, 30);
+                    $ql = QueryList::run('Request', [
+                        'target' => $data[0],
+                        'method' => 'GET',
+                        'cache-control' => 'no-cache',
+                        'client-ip' => $ip,
+                        'x-forwarded-for' => $ip,
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
+                    ]);
+                    $con = $ql->setQuery(array(
+                        //标题
+                        'title' => array('.box:eq(' . $tk . ') .box1_4 a', 'text'),
+                        //链接
+                        'link' => array('.box:eq(' . $tk . ') .box1_4 a', 'href'),
+                        //密码
+                        'pass' => array('.box:eq(' . $tk . ') .box1_6 input', 'value'),
+                    ))->data;
+                    //休息
+                    sleep($sleep);
+
+                    $downLink = null;
+                    foreach ($con as $ck => $cv) {
+                        $downLink .= '标题:' . $cv['title'] . ' 链接:' . $cv['link'] . ' 密码:' . $cv['pass'] . ',';
+                    }
+                    $downLink = rtrim($downLink, ',');
+                    //更新到数据库中
+                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update([
+                        'down_link' => $downLink,
+                        'is_con' => 0
+                    ]);
+                    if ($rest) {
+                        $this->info(date('Y-m-d H:i:s') . " pan huhu content update success !!");
+                    } else {
+                        $this->info(date('Y-m-d H:i:s') . " pan huhu content update fail !!");
+                    }
                 }
-
-                $ip = getRandIp();
-                $sleep = mt_rand(10,30);
-                $ql = QueryList::run('Request',[
-                    'target' => $value->con_url,
-                    'method' => 'GET',
-                    'cache-control' => 'no-cache',
-                    'client-ip' => $ip,
-                    'x-forwarded-for' => $ip,
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
-                ]);
-                $data = $ql->setQuery(array(
-                    'pan_url' => array('.meihua_2_1:eq('.$tk.') .meihua_btn:first','href')
-                ))->getData(function ($item) use($host){
-                    $item['pan_url'] = $host.$item['pan_url'];
-                    return $item['pan_url'];
-                });
-                //休息
-                sleep($sleep);
-                if(empty($data)){
-                    //删除这条记录
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
-                    continue;
-                }
-
-                $ip = getRandIp();
-                $sleep = mt_rand(10,30);
-                $ql = QueryList::run('Request',[
-                    'target' => $data[0],
-                    'method' => 'GET',
-                    'cache-control' => 'no-cache',
-                    'client-ip' => $ip,
-                    'x-forwarded-for' => $ip,
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
-                ]);
-                $types = $ql->setQuery(array(
-                    'type' => array('.biaoti','text'),
-                ))->getData(function ($item){
-                    return $item['type'];
-                });
-                //休息
-                sleep($sleep);
-                $tk = array_search('网盘下载列表',$types);
-                if($tk === false){
-                    //删除这条记录
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
-                    continue;
-                }
-
-                $ip = getRandIp();
-                $sleep = mt_rand(10,30);
-                $ql = QueryList::run('Request',[
-                    'target' => $data[0],
-                    'method' => 'GET',
-                    'cache-control' => 'no-cache',
-                    'client-ip' => $ip,
-                    'x-forwarded-for' => $ip,
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
-                ]);
-                $con = $ql->setQuery(array(
-                    //标题
-                    'title' => array('.box:eq('.$tk.') .box1_4 a','text'),
-                    //链接
-                    'link' => array('.box:eq('.$tk.') .box1_4 a','href'),
-                    //密码
-                    'pass' => array('.box:eq('.$tk.') .box1_6 input','value'),
-                ))->data;
-                //休息
-                sleep($sleep);
-
-                $downLink = null;
-                foreach ($con as $ck=>$cv){
-                    $downLink .= '标题:'.$cv['title'].' 链接:'.$cv['link'].' 密码:'.$cv['pass'].',';
-                }
-                $downLink = rtrim($downLink,',');
-                //更新到数据库中
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update([
-                    'down_link' => $downLink,
-                    'is_con' => 0
-                ]);
-                if($rest){
-                    $this->info(date('Y-m-d H:i:s') . " pan huhu content update success !!");
-                }else{
-                    $this->info(date('Y-m-d H:i:s') . " pan huhu content update fail !!");
-                }
-            }
-        } while ($tot > 0);
-        $this->info(date('Y-m-d H:i:s') . "pan huhu content update end!!");
+            } while ($tot > 0);
+            $this->info(date('Y-m-d H:i:s') . "pan huhu content update end!!");
+        }catch (\Exception $e){
+            $this->error(date('Y-m-d H:i:s') . "pan huhu content exception {$e->getMessage()} file {$e->getFile()} line {$e->getLine()}");
+            DB::connection($this->dbName)->table($this->tableName)->where('id', $minId)->delete();
+            $this->getContent($typeId,$minId);
+        }catch (\ErrorException $e){
+            $this->error(date('Y-m-d H:i:s') . "pan huhu content error exception {$e->getMessage()} file {$e->getFile()} line {$e->getLine()}");
+            DB::connection($this->dbName)->table($this->tableName)->where('id', $minId)->delete();
+            $this->getContent($typeId,$minId);
+        }
     }
 }

@@ -80,7 +80,6 @@ class Kernel extends ConsoleKernel
         //www.huhupan.com
         //云盘资源
         Commands\Caiji\Pan\Huhu::class,
-        Commands\Caiji\Pan\Pron::class,
 
         //Y3600
         //娱乐新闻采集
