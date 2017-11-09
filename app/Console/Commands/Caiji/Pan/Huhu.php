@@ -52,11 +52,11 @@ class Huhu extends Command
                     $url = 'http://huhupan.com/dyfl/';
                     break;
                 case 27:
-                    //电视剧
+                    //动漫
                     $url = 'http://huhupan.com/rmdm/';
                     break;
                 case 28:
-                    //动漫
+                    //电视剧
                     $url = 'http://huhupan.com/dsj/';
                     break;
                 case 29:
@@ -65,19 +65,19 @@ class Huhu extends Command
                     break;
             }
 //            $this->getList($url,$value);
-            $this->getContent($value);
+//            $this->getContent($value);
 //            //下载图片
 //            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$value]);
 //            //豆瓣
 //            $this->call('caiji:douban',['type_id'=>$value]);
 //            //dede
-//            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
-//            if (file_exists($this->dedeSendStatusFile)) {
-//                //更新列表页
-//                $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
-//                $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
-//            }
-//            $this->info(date('Y-m-d H:i:s')." typeid {$value} 上线部署完成!");
+            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
+            if (file_exists($this->dedeSendStatusFile)) {
+                //更新列表页
+                $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
+                $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
+            }
+            $this->info(date('Y-m-d H:i:s')." typeid {$value} 上线部署完成!");
         }
     }
 
@@ -193,6 +193,9 @@ class Huhu extends Command
         $take = 100;
         $arc = null;
         $sleep = null;
+        $data = null;
+        $types = null;
+        $con = null;
         try {
             do {
                 $arc = DB::connection($this->dbName)->table($this->tableName)->select('id', 'con_url')->where('is_con', -1)->where('typeid', $typeId)->where('id', '>', $minId)->take($take)->get();
@@ -295,7 +298,7 @@ class Huhu extends Command
                     //休息
                     sleep($sleep);
 
-                    $downLink = null;
+                    $downLink = '';
                     foreach ($con as $ck => $cv) {
                         $downLink .= '标题:' . $cv['title'] . ' 链接:' . $cv['link'] . ' 密码:' . $cv['pass'] . ',';
                     }

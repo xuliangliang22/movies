@@ -222,7 +222,7 @@ trait Ygdy8
 
             //采集豆瓣数据
             $this->call('caiji:douban',['type_id'=>$this->typeId]);
-            //将豆瓣不好的数据删除
+            //将豆瓣不好的数据删除,同时删除线上图片
             $disk = QiniuStorage::disk('qiniu');
             DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('is_litpic', -1)->delete();
 
