@@ -246,12 +246,12 @@ trait Ygdy8
             $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
             //将更新数据提交到dede后台,直接替换数据库
             $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
-            if (file_exists($this->dedeSendStatusFile)) {
-                //更新列表页
-                $message .= "更新列表页".PHP_EOL;
-                $this->info($message);
-                $this->call('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
-            }
+            // if (file_exists($this->dedeSendStatusFile)) {
+            //     //更新列表页
+            //     $message .= "更新列表页".PHP_EOL;
+            //     $this->info($message);
+            //     $this->call('dede:makehtml', ['type' => 'list', 'typeid' => $this->typeId]);
+            // }
             //logs
             $message .=  "上线部署完成! ".PHP_EOL;
             //保存日志

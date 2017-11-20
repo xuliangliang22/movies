@@ -64,11 +64,11 @@ class ToutiaoUpdate extends Command
         //上传dede
         $this->call('send:dedenewpost', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
 
-        if (file_exists($this->dedeSendStatusFile)) {
-            //更新列表页
-            $this->info("更新列表页");
-            $this->call('dede:makehtml',['type'=>'list','typeid'=>$this->typeId]);
-        }
+        // if (file_exists($this->dedeSendStatusFile)) {
+        //     //更新列表页
+        //     $this->info("更新列表页");
+        //     $this->call('dede:makehtml',['type'=>'list','typeid'=>$this->typeId]);
+        // }
         $this->info("上线部署完成!");
     }
 

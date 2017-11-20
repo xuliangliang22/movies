@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use QL\QueryList;
 use App\Console\Commands\Mytraits\Common;
 
-class Huhu extends Command
+class HuhuUpdate extends Command
 {
     use Common;
     /**
@@ -15,14 +15,14 @@ class Huhu extends Command
      *
      * @var string
      */
-    protected $signature = 'caiji:pan_huhu';
+    protected $signature = 'caiji:pan_huhu_update';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'huhu pan resource';
+    protected $description = 'huhu pan 每日更新';
 
     protected $channelId = 17;
     /**
@@ -64,20 +64,27 @@ class Huhu extends Command
                     $url = 'http://huhupan.com/zyjm/';
                     break;
             }
-            // $this->getList($url,$value);
-//            $this->getContent($value);
-//            //下载图片
-//            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$value]);
-//            //豆瓣
-//            $this->call('caiji:douban',['type_id'=>$value]);
-//            //dede
-           $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
-//            if (file_exists($this->dedeSendStatusFile)) {
-//                //更新列表页
-//                $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
-//                $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
-//            }
-//            $this->info(date('Y-m-d H:i:s')." typeid {$value} 上线部署完成!");
+
+           $this->getList($url,$value);
+           $this->getContent($value);
+
+            //下载图片
+           // $this->call('xiazai:img',['action'=>'litpic','type_id'=>$value]);
+
+            //豆瓣
+           // $this->call('caiji:douban',['type_id'=>$value]);
+
+            //dede
+           //将更新数据提交到dede后台,直接替换数据库
+           // $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
+           // $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
+           
+           // if (file_exists($this->dedeSendStatusFile)) {
+           //     //更新列表页
+           //     $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
+           //     $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
+           // }
+           // $this->info(date('Y-m-d H:i:s')." typeid {$value} 上线部署完成!");
         }
     }
 
@@ -88,6 +95,7 @@ class Huhu extends Command
     */
     public function getList($url,$typeId)
     {
+
         $sleep = mt_rand(10,30);
         $host = 'http://huhupan.com';
         //获得总页数
@@ -100,24 +108,11 @@ class Huhu extends Command
             'x-forwarded-for' => $ip,
             'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
         ]);
-        $pageTot = $ql->setQuery(array(
-            'page_tot' => array('.pagination a:last','href'),
-        ))->getData(function ($item){
-            preg_match('/\d+/',$item['page_tot'],$matchs);
-            $item['page_tot'] = $matchs[0];
-            return $item['page_tot'];
-        });
 
-        if(isset($pageTot[0]) === false || is_numeric($pageTot[0]) === false || $pageTot[0] < 1){
-            $this->error("page tot is {$pageTot} exit!!!");
-            return;
-        }
-        //休息
-        sleep($sleep);
 
-        for ($i=1;$i<=$pageTot[0];$i++) {
+        for ($i=1;$i<=1;$i++) {
             $sleep = mt_rand(10,30);
-            $this->info(date('Y-m-d H:i:s')." pan huhu page {$i}/{$pageTot[0]} typeid {$typeId}");
+            $this->info(date('Y-m-d H:i:s')." pan huhu update page {$i} typeid {$typeId}");
             if($i == 1){
                 $lurl = $url.'index.html';
             }else{
@@ -168,7 +163,8 @@ class Huhu extends Command
                         if(strtotime($value['m_time']) > strtotime($isAlready->m_time)){
                             //更新这条记录
                             DB::connection($this->dbName)->table($this->tableName)->where('id', $isAlready->id)->update([
-                                'is_update' => -1
+                                'is_update' => -1,
+                                'is_con' => -1,
                             ]);
                         }else{
                             continue;
@@ -191,6 +187,9 @@ class Huhu extends Command
     }
 
 
+    /**
+    * 
+    */
     public function getContent($typeId,$minId = 0)
     {
         $host = 'http://huhupan.com';

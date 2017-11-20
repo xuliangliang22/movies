@@ -106,13 +106,13 @@ class M1905Update extends Command
             //将新添加数据提交到dede后台 is_post = -1
             $this->call('send:dedenewpost', ['channel_id' => $this->channelId, 'typeid' => $this->typeId]);
 
-            if (file_exists($this->dedeSendStatusFile)) {
-                //更新列表页
-                //更新列表页
-                $message .= "更新列表页".PHP_EOL;
-                $this->info($message);
-                $this->call('dede:makehtml',['type'=>'list','typeid'=>$this->typeId]);
-            }
+            // if (file_exists($this->dedeSendStatusFile)) {
+            //     //更新列表页
+            //     //更新列表页
+            //     $message .= "更新列表页".PHP_EOL;
+            //     $this->info($message);
+            //     $this->call('dede:makehtml',['type'=>'list','typeid'=>$this->typeId]);
+            // }
             $message .= "上线部署完成!".PHP_EOL;
             //日志
             if($this->isCommandLogs === true) {
