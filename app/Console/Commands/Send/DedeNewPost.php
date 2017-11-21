@@ -100,7 +100,7 @@ class DedeNewPost extends Command
             'arcrank' => 0,
             'money' => 0,
             'pubdate' => '2017-02-15 21:30:50',
-            'ishtml' => -1,
+            'ishtml' => 1,
             'filename' => '',
             'templet' => '',
             'imageField_x' => 45,
@@ -150,6 +150,7 @@ class DedeNewPost extends Command
                     'body' => $value->body,
                     'pubdate' => date('Y-m-d H:i:s'),
                     'arcrank' => 0,
+                    'ishtml' => 0,
                     //文章描述
                     'description'=>$value->down_link,
                 ];
