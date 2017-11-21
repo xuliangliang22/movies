@@ -100,7 +100,7 @@ class Dedea67Post extends Command
             'sortup' => 0,
             'color' => '',
             'arcrank' => 0,
-            'ishtml' => 1,
+            'ishtml' => -1,
             'pubdate' => '2017-07-04 15:07:38',
             'money' => 0,
             'keywords]' => '',

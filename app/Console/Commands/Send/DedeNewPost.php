@@ -100,7 +100,7 @@ class DedeNewPost extends Command
             'arcrank' => 0,
             'money' => 0,
             'pubdate' => '2017-02-15 21:30:50',
-            'ishtml' => 1,
+            'ishtml' => -1,
             'filename' => '',
             'templet' => '',
             'imageField_x' => 45,
