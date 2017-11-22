@@ -33,7 +33,8 @@
             "App\\": "app/"
         },
         "files": [
-            "app/Common/functions.php"
+            "app/Common/functions.php",
+            "app/Common/Lcs.class.php"
         ]
     },
     "autoload-dev": {

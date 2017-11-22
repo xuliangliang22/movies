@@ -7,11 +7,13 @@ use App\Console\Commands\Mytraits\Common;
 use App\Console\Commands\Mytraits\Toutiao;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
+use App\Console\Commands\Mytraits\BaiduStatus;
 
 class ToutiaoUpdate extends Command
 {
     use Common;
     use Toutiao;
+    use BaiduStatus;
     /**
      * The name and signature of the console command.
      *
@@ -78,7 +80,7 @@ class ToutiaoUpdate extends Command
         $maxBehotTime = 0;
         $surl = 'http://www.toutiao.com/api/pc/feed/?category=news_entertainment&max_behot_time=[max_behot_time]';
         //得到这条命令
-        $message = date('Y-m-d H:i:s') . "\ncaiji:news_y3600_update {$this->depth} {$this->typeId} \n the link is {$surl} \n";
+        $message = date('Y-m-d H:i:s') . "\ncaiji:news_toutiao_update {$this->depth} {$this->typeId} \n the link is {$surl} \n";
         $this->info($message);
         $tot = 0;
         try {
@@ -104,7 +106,7 @@ class ToutiaoUpdate extends Command
                     if (isset($value['chinese_tag']) === false || stripos($value['chinese_tag'], '娱乐') === false || $value['has_gallery'] === true || isset($value['media_url']) === false) {
                         continue;
                     }
-                    //去获得列表页,与内容详情页
+                    //去头条号获得列表页,与内容详情页
                     $url = 'http://www.toutiao.com/' . $value['media_url'];
                     $this->getContent($url);
                     $this->info('toutiao getlist save success !!');
@@ -139,6 +141,7 @@ class ToutiaoUpdate extends Command
             do {
                 $ip = getRandIp();
                 $relArtUrl = str_replace('[max_behot_time]', $maxBehotTime, $artUrl);
+
                 $ql = QueryList::run('Request', [
                     'target' => $relArtUrl,
                     'method' => 'GET',
@@ -149,17 +152,19 @@ class ToutiaoUpdate extends Command
                 ]);
                 $html = $ql->setQuery([])->getHtml();
                 $html = json_decode($html, true);
-                $maxBehotTime = $html['next']['max_behot_time'];
                 if (empty($html['data'])) {
                     break;
                 }
-
+                $maxBehotTime = $html['next']['max_behot_time'];
                 $body = null;
                 foreach ($html['data'] as $key => $value) {
                     //判断文章是否存在
                     $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('title_hash', md5($value['title']))->first();
                     if (count($isAlready) > 0) {
                         $this->error("artlist {$value['title']} is already!!");
+                        continue;
+                    }
+                    if(!$this->baiduJudge($value['title'])){
                         continue;
                     }
 
@@ -225,6 +230,4 @@ class ToutiaoUpdate extends Command
             return;
         }
    }
-
-
 }

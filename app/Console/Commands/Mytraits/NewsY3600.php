@@ -12,6 +12,8 @@ use QL\QueryList;
 
 trait NewsY3600
 {
+    use BaiduStatus;
+
     protected $listNum;
 
     /**
@@ -36,24 +38,27 @@ trait NewsY3600
                 $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
                 if (count($isAlready) > 0) {
                     continue;
-                } else {
-                    //不是更新的时候判断名字的重复
-                    $listSaveArr = [
-                        'title' => trim($value['title']),
-                        'title_hash' => md5(trim($value['title'])),
-                        'con_url' => $value['con_url'],
-                        'm_time' => $value['m_time'],
-                        //描述信息
-                        'down_link' => SpHtml2Text($value['body']),
-                        'litpic' => $value['litpic'],
-                        'typeid' => $this->typeId,
-                        'is_douban' => 0,
-                    ];
+                }
+                //百度判断状态
+                if(!$this->baiduJudge($value['title'])){
+                    continue;
+                }
+//                不是更新的时候判断名字的重复
+                $listSaveArr = [
+                    'title' => trim($value['title']),
+                    'title_hash' => md5(trim($value['title'])),
+                    'con_url' => $value['con_url'],
+                    'm_time' => $value['m_time'],
+                    //描述信息
+                    'down_link' => SpHtml2Text($value['body']),
+                    'litpic' => $value['litpic'],
+                    'typeid' => $this->typeId,
+                    'is_douban' => 0,
+                ];
 
-                    $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
-                    if ($rs) {
-                        $this->listNum++;
-                    }
+                $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
+                if ($rs) {
+                    $this->listNum++;
                 }
             }
         }
