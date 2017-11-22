@@ -97,7 +97,7 @@ class HuhuUpdate extends Command
         $host = 'http://huhupan.com';
 
         for ($i=1;$i<=5;$i++) {
-            $sleep = mt_rand(10,30);
+            $sleep = mt_rand(5,10);
             $this->info(date('Y-m-d H:i:s')." pan huhu update page {$i} typeid {$typeId}");
             if($i == 1){
                 $lurl = $url.'index.html';
@@ -159,15 +159,15 @@ class HuhuUpdate extends Command
                     $saveArr = array_merge($value,['title_hash'=>md5($value['title']),'typeid'=>$typeId]);
                     $rest = DB::connection($this->dbName)->table($this->tableName)->insert($saveArr);
                     if($rest){
-                        $this->info(date('Y-m-d H:i:s')." pan huhu list save success !!");
+                        $this->info(date('Y-m-d H:i:s')." pan huhu typeid {$typeId} list save success !!");
                     }else{
-                        $this->error(date('Y-m-d H:i:s')." pan huhu list save fail !!");
+                        $this->error(date('Y-m-d H:i:s')." pan huhu typeid {$typeId} list save fail !!");
                     }
                 }
             }
             sleep($sleep);
         }
-        $this->info(date('Y-m-d H:i:s')." pan huhu list end !!");
+        $this->info(date('Y-m-d H:i:s')." pan huhu typeid {$typeId} list end !!");
     }
 
 
@@ -190,10 +190,10 @@ class HuhuUpdate extends Command
 
                 foreach ($arc as $key => $value) {
                     $minId = $value->id;
-                    $this->info(date('Y-m-d H:i:s') . " {$key}/{$tot} pan huhu content id is {$value->id} url is {$value->con_url}");
+                    $this->info(date('Y-m-d H:i:s') . " {$key}/{$tot} pan huhu typeid {$typeId} content id is {$value->id} url is {$value->con_url}");
 
                     $ip = getRandIp();
-                    $sleep = mt_rand(10, 30);
+                    $sleep = mt_rand(5, 10);
                     $ql = QueryList::run('Request', [
                         'target' => $value->con_url,
                         'method' => 'GET',
@@ -217,7 +217,7 @@ class HuhuUpdate extends Command
                     }
 
                     $ip = getRandIp();
-                    $sleep = mt_rand(10, 30);
+                    $sleep = mt_rand(5, 10);
                     $ql = QueryList::run('Request', [
                         'target' => $value->con_url,
                         'method' => 'GET',
@@ -241,7 +241,7 @@ class HuhuUpdate extends Command
                     }
 
                     $ip = getRandIp();
-                    $sleep = mt_rand(10, 30);
+                    $sleep = mt_rand(5, 10);
                     $ql = QueryList::run('Request', [
                         'target' => $data[0],
                         'method' => 'GET',
@@ -265,7 +265,7 @@ class HuhuUpdate extends Command
                     }
 
                     $ip = getRandIp();
-                    $sleep = mt_rand(10, 30);
+                    $sleep = mt_rand(5, 10);
                     $ql = QueryList::run('Request', [
                         'target' => $data[0],
                         'method' => 'GET',
@@ -296,13 +296,13 @@ class HuhuUpdate extends Command
                         'is_con' => 0
                     ]);
                     if ($rest) {
-                        $this->info(date('Y-m-d H:i:s') . " pan huhu content update success !!");
+                        $this->info(date('Y-m-d H:i:s') . " pan huhu typeid {$typeId} content id {$value->id} update success !!");
                     } else {
-                        $this->info(date('Y-m-d H:i:s') . " pan huhu content update fail !!");
+                        $this->info(date('Y-m-d H:i:s') . " pan huhu typeid {$typeId} content id {$value->id} update fail !!");
                     }
                 }
             } while ($tot > 0);
-            $this->info(date('Y-m-d H:i:s') . "pan huhu content update end!!");
+            $this->info(date('Y-m-d H:i:s') . "pan huhu typeid {$typeId} content update end!!");
         }catch (\Exception $e){
             $this->error(date('Y-m-d H:i:s') . "pan huhu content exception {$e->getMessage()} file {$e->getFile()} line {$e->getLine()}");
             DB::connection($this->dbName)->table($this->tableName)->where('id', $minId)->delete();
