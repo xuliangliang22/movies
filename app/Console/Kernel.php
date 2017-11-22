@@ -80,6 +80,8 @@ class Kernel extends ConsoleKernel
         //www.huhupan.com
         //云盘资源
         Commands\Caiji\Pan\Huhu::class,
+        //云盘资源,跟踪采集
+        Commands\Caiji\Pan\HuhuUpdate::class,
 
         //Y3600
         //娱乐新闻采集
@@ -204,7 +206,9 @@ class Kernel extends ConsoleKernel
         //影视评论
         $schedule->command('caiji:news_m1905_update 1 2 24 --queue=all')->dailyAt('03:30')->withoutOverlapping();
         //头条娱乐新闻
-        $schedule->command('caiji:news_toutiao_update 1 24')->dailyAt('01:30')->withoutOverlapping()->appendOutputTo('/home/www/liangcommands/public/command_logs/totiao24.log');
+        $schedule->command('caiji:news_toutiao_update 1 24')->dailyAt('01:30')->withoutOverlapping()->appendOutputTo('/home/www/liangcommands/public/command_logs/toutiao24.log');
+        //huhu_pan资源
+        $schedule->command('caiji:pan_huhu_update')->dailyAt('04:00')->withoutOverlapping()->appendOutputTo('/home/www/liangcommands/public/command_logs/huhupan.log');
 
     }
 

@@ -69,22 +69,21 @@ class HuhuUpdate extends Command
            $this->getContent($value);
 
             //下载图片
-           // $this->call('xiazai:img',['action'=>'litpic','type_id'=>$value]);
-
+            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$value]);
             //豆瓣
-           // $this->call('caiji:douban',['type_id'=>$value]);
+            $this->call('caiji:douban',['type_id'=>$value]);
 
             //dede
            //将更新数据提交到dede后台,直接替换数据库
-           // $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $this->typeId]);
-           // $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
+            $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $value]);
+            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
            
            // if (file_exists($this->dedeSendStatusFile)) {
            //     //更新列表页
            //     $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
            //     $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
            // }
-           // $this->info(date('Y-m-d H:i:s')." typeid {$value} 上线部署完成!");
+            $this->info(date('Y-m-d H:i:s')." typeid {$value} 上线部署完成!");
         }
     }
 
@@ -95,22 +94,9 @@ class HuhuUpdate extends Command
     */
     public function getList($url,$typeId)
     {
-
-        $sleep = mt_rand(10,30);
         $host = 'http://huhupan.com';
-        //获得总页数
-        $ip = getRandIp();
-        $ql = QueryList::run('Request',[
-            'target' => $url,
-            'method' => 'GET',
-            'cache-control' => 'no-cache',
-            'client-ip' => $ip,
-            'x-forwarded-for' => $ip,
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
-        ]);
 
-
-        for ($i=1;$i<=1;$i++) {
+        for ($i=1;$i<=5;$i++) {
             $sleep = mt_rand(10,30);
             $this->info(date('Y-m-d H:i:s')." pan huhu update page {$i} typeid {$typeId}");
             if($i == 1){
@@ -151,6 +137,7 @@ class HuhuUpdate extends Command
                 }
                 return $item;
             });
+            dd($data);
 
             //判断是否存在
             $ltot = count($data);
@@ -158,7 +145,7 @@ class HuhuUpdate extends Command
                 $this->info(date('Y-m-d H:i:s')." pan huhu list {$key}/{$ltot}");
                 if($value){
                     $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $typeId)->where('title_hash', md5(trim($value['title'])))->first();
-                    if(count($isAlready) > 0){
+                    if(count($isAlready) > 0) {
                         //判断日期
                         if(strtotime($value['m_time']) > strtotime($isAlready->m_time)){
                             //更新这条记录
@@ -169,15 +156,14 @@ class HuhuUpdate extends Command
                         }else{
                             continue;
                         }
+                    }
+                    //保存新内容
+                    $saveArr = array_merge($value,['title_hash'=>md5($value['title']),'typeid'=>$typeId]);
+                    $rest = DB::connection($this->dbName)->table($this->tableName)->insert($saveArr);
+                    if($rest){
+                        $this->info(date('Y-m-d H:i:s')." pan huhu list save success !!");
                     }else{
-                        //保存新内容
-                        $saveArr = array_merge($value,['title_hash'=>md5($value['title']),'typeid'=>$typeId]);
-                        $rest = DB::connection($this->dbName)->table($this->tableName)->insert($saveArr);
-                        if($rest){
-                            $this->info(date('Y-m-d H:i:s')." pan huhu list save success !!");
-                        }else{
-                            $this->error(date('Y-m-d H:i:s')." pan huhu list save fail !!");
-                        }
+                        $this->error(date('Y-m-d H:i:s')." pan huhu list save fail !!");
                     }
                 }
             }
