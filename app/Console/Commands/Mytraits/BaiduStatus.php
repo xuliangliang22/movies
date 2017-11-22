@@ -29,7 +29,7 @@ trait BaiduStatus
                 }
             }
             return true;
-        } catch (\Exception | \ErrorException $e) {
+        } catch (\Exception $e) {
             echo "baidu status exception {$e->getMessage()} file {$e->getFile()} line {$e->getLine()}" . PHP_EOL;
             return false;
         } catch (\ErrorException $e) {
