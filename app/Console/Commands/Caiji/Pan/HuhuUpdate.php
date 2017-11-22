@@ -137,8 +137,6 @@ class HuhuUpdate extends Command
                 }
                 return $item;
             });
-            dd($data);
-
             //判断是否存在
             $ltot = count($data);
             foreach ($data as $key=>$value){
