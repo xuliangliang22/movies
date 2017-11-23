@@ -122,11 +122,13 @@ class Dedea67Post extends Command
         $maxId = $maxId +1;
         $take = 10;
         $message = null;
+        $notAutoLitpic = config('qiniu.qiniu_data.dede_notautolitpic');
 
         do {
             //提交数据
             $archives = DB::connection($this->dbName)->table($this->tableName)->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post','-1')->orderBy('id','desc')->take($take)->get();
             $tot = count($archives);
+            $rel_data = null;
             foreach ($archives as $key => $value) {
                 $maxId = $value->id;
                 $message = date('Y-m-d H:i:s')." {$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id}".PHP_EOL;
@@ -166,9 +168,11 @@ class Dedea67Post extends Command
                     'grade' => $value->grade,
                     'episode_nums' => $value->episode_nums,
                 ];
-//                dd($rel_data);
+                if(in_array($value->typeid,$notAutoLitpic)){
+                    $rel_data['autolitpic'] = 0;
+                }
                 $data = array_merge($dede_data, $rel_data);
-//                dd($data);
+//               dd($data);
                 $rest = $this->getCurl($addUrl, 'post', $data);
                 if (stripos($rest, '成功发布文') !== false) {
                     //成功提交后更新is_post

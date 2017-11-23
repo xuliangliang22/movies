@@ -76,6 +76,9 @@ return [
              'Mongolische',
              'Der indischen Sprache',
         ],
+
+        //提取第一个图片为缩略图，禁用此功能的栏目id
+        'dede_notautolitpic' => [26,27,28,29],
     ],
 ];
 

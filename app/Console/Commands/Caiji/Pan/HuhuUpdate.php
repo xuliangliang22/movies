@@ -25,6 +25,7 @@ class HuhuUpdate extends Command
     protected $description = 'huhu pan 每日更新';
 
     protected $channelId = 17;
+
     /**
      * Create a new command instance.
      *
@@ -43,9 +44,9 @@ class HuhuUpdate extends Command
      */
     public function handle()
     {
-        $typeids = array(26,27,28,29);
+        $typeids = array(26, 27, 28, 29);
         $url = null;
-        foreach ($typeids as $key=>$value) {
+        foreach ($typeids as $key => $value) {
             switch ($value) {
                 //电影
                 case 26:
@@ -65,48 +66,48 @@ class HuhuUpdate extends Command
                     break;
             }
 
-           $this->getList($url,$value);
-           $this->getContent($value);
+            $this->getList($url, $value);
+            $this->getContent($value);
 
             //下载图片
-            $this->call('xiazai:img',['action'=>'litpic','type_id'=>$value]);
+            $this->call('xiazai:img', ['action' => 'litpic', 'type_id' => $value]);
             //豆瓣
-            $this->call('caiji:douban',['type_id'=>$value]);
+            $this->call('caiji:douban', ['type_id' => $value]);
 
             //dede
-           //将更新数据提交到dede后台,直接替换数据库
+            //将更新数据提交到dede后台,直接替换数据库
             $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $value]);
             $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
-           
-           // if (file_exists($this->dedeSendStatusFile)) {
-           //     //更新列表页
-           //     $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
-           //     $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
-           // }
-            $this->info(date('Y-m-d H:i:s')." typeid {$value} 上线部署完成!");
+
+            // if (file_exists($this->dedeSendStatusFile)) {
+            //     //更新列表页
+            //     $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
+            //     $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
+            // }
+            $this->info(date('Y-m-d H:i:s') . " typeid {$value} 上线部署完成!");
         }
     }
 
 
     /**
-     * @param $url 
-     * @param $typeId 
-    */
-    public function getList($url,$typeId)
+     * @param $url
+     * @param $typeId
+     */
+    public function getList($url, $typeId)
     {
         $host = 'http://huhupan.com';
 
-        for ($i=1;$i<=5;$i++) {
-            $sleep = mt_rand(5,10);
-            $this->info(date('Y-m-d H:i:s')." pan huhu update page {$i} typeid {$typeId}");
-            if($i == 1){
-                $lurl = $url.'index.html';
-            }else{
-                $lurl = $url.'index_'.$i.'.html';
+        for ($i = 1; $i <= 5; $i++) {
+            $sleep = mt_rand(5, 10);
+            $this->info(date('Y-m-d H:i:s') . " pan huhu update page {$i} typeid {$typeId}");
+            if ($i == 1) {
+                $lurl = $url . 'index.html';
+            } else {
+                $lurl = $url . 'index_' . $i . '.html';
             }
 
             $ip = getRandIp();
-            $ql = QueryList::run('Request',[
+            $ql = QueryList::run('Request', [
                 'target' => $lurl,
                 'method' => 'GET',
                 'cache-control' => 'no-cache',
@@ -115,66 +116,66 @@ class HuhuUpdate extends Command
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36',
             ]);
             $data = $ql->setQuery(array(
-                'title' => array('h2 a:eq(1)','text'),
-                'litpic' => array('.viewimg img','src'),
-                'con_url' => array('h2 a:eq(1)','href'),
-                'm_time' => array('.preem','text')
-            ),'.main .block:gt(0)')->getData(function ($item) use($host){
-                if(empty($item['title']) || empty($item['litpic']) || empty($item['con_url'])|| empty($item['m_time']) || $item['con_url'] == 'http://quan.huhupan.com'){
+                'title' => array('h2 a:eq(1)', 'text'),
+                'litpic' => array('.viewimg img', 'src'),
+                'con_url' => array('h2 a:eq(1)', 'href'),
+                'm_time' => array('.preem', 'text')
+            ), '.main .block:gt(0)')->getData(function ($item) use ($host) {
+                if (empty($item['title']) || empty($item['litpic']) || empty($item['con_url']) || empty($item['m_time']) || $item['con_url'] == 'http://quan.huhupan.com') {
                     return false;
                 }
-                if(preg_match('/^\/(.*?)/is',$item['litpic'])){
-                    $item['litpic'] = $host.$item['litpic'];
+                if (preg_match('/^\/(.*?)/is', $item['litpic'])) {
+                    $item['litpic'] = $host . $item['litpic'];
                 }
-                if(preg_match('/^\/(.*?)/is',$item['con_url'])){
-                    $item['con_url'] = $host.$item['con_url'];
+                if (preg_match('/^\/(.*?)/is', $item['con_url'])) {
+                    $item['con_url'] = $host . $item['con_url'];
                 }
 
-                if(preg_match('/\d{4}\-\d{2}\-\d{2}/is',$item['m_time'],$matchs)){
+                if (preg_match('/\d{4}\-\d{2}\-\d{2}/is', $item['m_time'], $matchs)) {
                     $item['m_time'] = $matchs[0];
-                }else{
+                } else {
                     $item['m_time'] = date('Y-m-d');
                 }
                 return $item;
             });
             //判断是否存在
             $ltot = count($data);
-            foreach ($data as $key=>$value){
-                $this->info(date('Y-m-d H:i:s')." pan huhu list {$key}/{$ltot}");
-                if($value){
+            foreach ($data as $key => $value) {
+                $this->info(date('Y-m-d H:i:s') . " pan huhu list {$key}/{$ltot}");
+                if ($value) {
                     $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $typeId)->where('title_hash', md5(trim($value['title'])))->first();
-                    if(count($isAlready) > 0) {
+                    if (count($isAlready) > 0) {
                         //判断日期
-                        if(strtotime($value['m_time']) > strtotime($isAlready->m_time)){
+                        if (strtotime($value['m_time']) > strtotime($isAlready->m_time)) {
                             //更新这条记录
                             DB::connection($this->dbName)->table($this->tableName)->where('id', $isAlready->id)->update([
                                 'is_update' => -1,
                                 'is_con' => -1,
                             ]);
-                        }else{
+                        } else {
                             continue;
                         }
                     }
                     //保存新内容
-                    $saveArr = array_merge($value,['title_hash'=>md5($value['title']),'typeid'=>$typeId]);
+                    $saveArr = array_merge($value, ['title_hash' => md5($value['title']), 'typeid' => $typeId]);
                     $rest = DB::connection($this->dbName)->table($this->tableName)->insert($saveArr);
-                    if($rest){
-                        $this->info(date('Y-m-d H:i:s')." pan huhu typeid {$typeId} list save success !!");
-                    }else{
-                        $this->error(date('Y-m-d H:i:s')." pan huhu typeid {$typeId} list save fail !!");
+                    if ($rest) {
+                        $this->info(date('Y-m-d H:i:s') . " pan huhu typeid {$typeId} list save success !!");
+                    } else {
+                        $this->error(date('Y-m-d H:i:s') . " pan huhu typeid {$typeId} list save fail !!");
                     }
                 }
             }
             sleep($sleep);
         }
-        $this->info(date('Y-m-d H:i:s')." pan huhu typeid {$typeId} list end !!");
+        $this->info(date('Y-m-d H:i:s') . " pan huhu typeid {$typeId} list end !!");
     }
 
 
     /**
-    * 
-    */
-    public function getContent($typeId,$minId = 0)
+     *
+     */
+    public function getContent($typeId, $minId = 0)
     {
         $host = 'http://huhupan.com';
         $take = 100;
@@ -287,7 +288,11 @@ class HuhuUpdate extends Command
 
                     $downLink = '';
                     foreach ($con as $ck => $cv) {
-                        $downLink .= '标题:' . $cv['title'] . ' 链接:' . $cv['link'] . ' 密码:' . $cv['pass'] . ',';
+                        if (stripos($value, 'http://pan') !== false || stripos($value, 'https://yunpan') !== false) {
+                            $downLink .= '标题:' . $cv['title'] . ' 链接:' . $cv['link'] . ' 密码:' . $cv['pass'] . ',';
+                        } else {
+                            $downLink .= '标题:' . $cv['title'] . ' 链接:' . $cv['link'] . ',';
+                        }
                     }
                     $downLink = rtrim($downLink, ',');
                     //更新到数据库中
@@ -303,14 +308,14 @@ class HuhuUpdate extends Command
                 }
             } while ($tot > 0);
             $this->info(date('Y-m-d H:i:s') . "pan huhu typeid {$typeId} content update end!!");
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->error(date('Y-m-d H:i:s') . "pan huhu content exception {$e->getMessage()} file {$e->getFile()} line {$e->getLine()}");
             DB::connection($this->dbName)->table($this->tableName)->where('id', $minId)->delete();
-            $this->getContent($typeId,$minId);
-        }catch (\ErrorException $e){
+            $this->getContent($typeId, $minId);
+        } catch (\ErrorException $e) {
             $this->error(date('Y-m-d H:i:s') . "pan huhu content error exception {$e->getMessage()} file {$e->getFile()} line {$e->getLine()}");
             DB::connection($this->dbName)->table($this->tableName)->where('id', $minId)->delete();
-            $this->getContent($typeId,$minId);
+            $this->getContent($typeId, $minId);
         }
     }
 }
