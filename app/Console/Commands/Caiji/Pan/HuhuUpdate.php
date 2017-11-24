@@ -288,7 +288,7 @@ class HuhuUpdate extends Command
 
                     $downLink = '';
                     foreach ($con as $ck => $cv) {
-                        if (stripos($value, 'http://pan') !== false || stripos($value, 'https://yunpan') !== false) {
+                        if (stripos($cv['link'], 'http://pan') !== false || stripos($cv['link'], 'https://yunpan') !== false) {
                             $downLink .= '标题:' . $cv['title'] . ' 链接:' . $cv['link'] . ' 密码:' . $cv['pass'] . ',';
                         } else {
                             $downLink .= '标题:' . $cv['title'] . ' 链接:' . $cv['link'] . ',';
