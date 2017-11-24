@@ -143,7 +143,7 @@ class HuhuUpdate extends Command
             foreach ($data as $key => $value) {
                 $this->info(date('Y-m-d H:i:s') . " pan huhu list {$key}/{$ltot}");
                 if ($value) {
-                    $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $typeId)->where('title_hash', md5(trim($value['title'])))->first();
+                    $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $typeId)->where('title_hash', md5($value['title']))->first();
                     if (count($isAlready) > 0) {
                         //判断日期
                         if (strtotime($value['m_time']) > strtotime($isAlready->m_time)) {
