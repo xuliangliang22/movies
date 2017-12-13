@@ -65,7 +65,7 @@ class Douban extends Command
                     $aid = $row->id;
                     $message = date('Y-m-d H:i:s')." this is id {$row->id} title {$row->title}".PHP_EOL;
                     $this->info($message);
-                    $url = 'https://www.douban.com/search?q=' . $row->title;
+                    $url = 'https://www.douban.com/search?q=' . urlencode($row->title);
                     $conUrl = $this->getList($url);
                     if (!$conUrl) {
                         continue;
@@ -273,7 +273,7 @@ class Douban extends Command
                         $rest['scriptwriter'] = $vret;
                         break;
                     case '主演':
-                        $rest['actors'] = $vret;
+                        $rest['actors'] = mb_substr($vret,0,50,'utf-8');
                         break;
                     case '类型':
                         $rest['types'] = $vret;
@@ -308,7 +308,7 @@ class Douban extends Command
                 }
             }
             $item['html'] = $rest;
-            $item['body'] = strtr($item['body'], array("\r" => '', "\n" => '', '©豆瓣' => '', '豆瓣' => '', ' ' => ''));
+            $item['body'] = isset($item['body']) ? strtr($item['body'], array("\r" => '', "\n" => '', '©豆瓣' => '', '豆瓣' => '', ' ' => '')) : '';
             return $item;
         });
         if (is_array($douban_data)) {

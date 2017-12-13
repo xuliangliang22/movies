@@ -73,8 +73,10 @@ class HuhuUpdate extends Command
             $this->call('xiazai:img', ['action' => 'litpic', 'type_id' => $value]);
             //豆瓣
             $this->call('caiji:douban', ['type_id' => $value]);
+            //将不符合的数据删除掉
+            DB::connection($this->dbName)->table($this->tableName)->where('is_litpic',-1)->delete();
+            DB::connection($this->dbName)->table($this->tableName)->where('is_douban',-1)->delete();
 
-            //dede
             //将更新数据提交到dede后台,直接替换数据库
             $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $value]);
             $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
