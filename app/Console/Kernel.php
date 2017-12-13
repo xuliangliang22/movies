@@ -99,6 +99,9 @@ class Kernel extends ConsoleKernel
         //测试使用
         Commands\Caiji\Test::class,
 
+        //下载youtube
+        Commands\Caiji\Youtube::class,
+
 
     ];
 
