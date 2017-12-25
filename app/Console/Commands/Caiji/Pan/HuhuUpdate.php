@@ -146,7 +146,7 @@ class HuhuUpdate extends Command
                 $this->info(date('Y-m-d H:i:s') . " pan huhu list {$key}/{$ltot}");
                 if ($value) {
                     $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $typeId)->where('title_hash', md5($value['title']))->first();
-                    if (count($isAlready) > 0) {
+                    if ($isAlready) {
                         //判断日期
                         if (strtotime($value['m_time']) > strtotime($isAlready->m_time)) {
                             //更新这条记录
@@ -290,7 +290,7 @@ class HuhuUpdate extends Command
 
                     $downLink = '';
                     foreach ($con as $ck => $cv) {
-                        if (stripos($cv['link'], 'http://pan') !== false || stripos($cv['link'], 'https://yunpan') !== false) {
+                        if (stripos($cv['link'], 'pan') !== false || stripos($cv['link'], 'yunpan') !== false) {
                             $downLink .= '标题:' . $cv['title'] . ' 链接:' . $cv['link'] . ' 密码:' . $cv['pass'] . ',';
                         } else {
                             $downLink .= '标题:' . $cv['title'] . ' 链接:' . $cv['link'] . ',';
