@@ -55,11 +55,12 @@ class Douban extends Command
 
     public function initDouban($aid)
     {
-        $message = null;
-        $take = 10;
+        $message = '';
+        $offset = 0;
+        $limit  = 1000;
         try {
             do {
-                $movies = DB::connection($this->dbName)->table($this->tableName)->select('id','typeid','title','is_litpic')->where('id', '>', $aid)->where('typeid', $this->typeId)->where('is_douban', -1)->take($take)->get();
+                $movies = DB::table('ca_gather')->select('id','typeid','title')->where('typeid',$this->typeId)->where('is_douban',-1)->skip($offset)->take($limit)->get();
                 $tot = count($movies);
                 foreach ($movies as $key => $row) {
                     $aid = $row->id;
@@ -75,74 +76,55 @@ class Douban extends Command
 
                     foreach ($rest as $k => $v) {
                         switch ($k) {
-                            case 'grade':
-                                $updateArr['grade'] = trim($v);
-                                break;
-                            case 'litpic':
-                                $updateArr['litpic'] = trim($v);
-                                break;
+//                            case 'grade':
+//                                $updateArr['grade'] = trim($v);
+//                                break;
+//                            case 'litpic':
+//                                $updateArr['litpic'] = trim($v);
+//                                break;
                             case 'body':
                                 if (mb_strlen($v) > 250) {
                                     $v = mb_substr($v, 0, 225,'utf-8') . '....';
                                 }
                                 $updateArr['body'] = trim($v);
                                 break;
-                            case 'html':
-                                foreach ($v as $key=>$value){
-                                    switch ($key)
-                                    {
-                                        case 'director':
-                                            $updateArr['director'] = trim($value);
-                                            break;
-                                        case 'actors':
-                                            $updateArr['actors'] = trim($value);
-                                            break;
-                                        case 'year':
-                                            $updateArr['myear'] = trim($value);
-                                            break;
-                                        case 'language':
-                                            $updateArr['lan_guage'] = trim($value);
-                                            break;
-                                        case 'types':
-                                            $updateArr['types'] = trim($value);
-                                            break;
-                                        case 'episode_nums':
-                                            $updateArr['episode_nums'] = trim($value);
-                                            break;
-                                    }
-                                }
-                                break;
+//                            case 'html':
+//                                foreach ($v as $key=>$value){
+//                                    switch ($key)
+//                                    {
+//                                        case 'director':
+//                                            $updateArr['director'] = trim($value);
+//                                            break;
+//                                        case 'actors':
+//                                            $updateArr['actors'] = trim($value);
+//                                            break;
+//                                        case 'year':
+//                                            $updateArr['myear'] = trim($value);
+//                                            break;
+//                                        case 'language':
+//                                            $updateArr['lan_guage'] = trim($value);
+//                                            break;
+//                                        case 'types':
+//                                            $updateArr['types'] = trim($value);
+//                                            break;
+//                                        case 'episode_nums':
+//                                            $updateArr['episode_nums'] = trim($value);
+//                                            break;
+//                                    }
+//                                }
+//                                break;
                         }
                     }
 
-                    if (empty($updateArr) === false) {
-                        //保存到数据库
-                        if($row->is_litpic == -1 && isset($updateArr['litpic']) === true){
-                            //上传这张图
-                            $this->savePath = config('admin.upload.directory.image').$row->typeid ;
-                            $file = $this->imgUpload($updateArr['litpic']);
-                            if($file){
-                                $ossImg = rtrim(config('filesystems.disks.qiniu.domains.default'),'/').'/'.ltrim($file,'/').config('qiniu.qiniu_data.qiniu_postfix');
-                                $updateArr['litpic'] = $ossImg;
-                                $updateArr['is_litpic'] = 0;
-                            }
-                        }else{
-                            unset($updateArr['litpic']);
-                        }
-                        //更新
-                        $updateArr['is_douban'] = 0;
-                        $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $row->id)->update($updateArr);
-                        if ($rest) {
-                            $message .= "douban aid {$row->id} update success !!".PHP_EOL;
-                            $this->info($message);
-                        } else {
-                            $message .= "douban aid {$row->id} update fail !!".PHP_EOL;
-                            $this->error($message);
-                        }
-                    }
-                    //保存日志
-                    if($this->isCommandLogs === true){
-                        file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
+                    //更新
+                    $updateArr['is_douban'] = 0;
+                    $rest = DB::table('ca_gather')->where('id', $row->id)->update($updateArr);
+                    if ($rest) {
+                        $message .= "douban aid {$row->id} update success !!".PHP_EOL;
+                        $this->info($message);
+                    } else {
+                        $message .= "douban aid {$row->id} update fail !!".PHP_EOL;
+                        $this->error($message);
                     }
                     usleep(500);
                 }
@@ -150,26 +132,14 @@ class Douban extends Command
         } catch (\ErrorException $e) {
             $message = 'doban error exception ' . $e->getMessage().PHP_EOL;
             $this->error($message);
-            //保存日志
-            if($this->isCommandLogs === true){
-                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
-            }
             $this->initDouban($aid);
         } catch (\Exception $e) {
             $message = 'doban exception ' . $e->getMessage().PHP_EOL;
             $this->error($message);
-            //保存日志
-            if($this->isCommandLogs === true){
-                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
-            }
             $this->initDouban($aid);
         }
         $message = 'douban end !'.PHP_EOL;
         $this->info($message);
-        //保存日志
-        if($this->isCommandLogs === true){
-            file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
-        }
     }
 
 

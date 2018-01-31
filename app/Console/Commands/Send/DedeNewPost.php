@@ -112,76 +112,47 @@ class DedeNewPost extends Command
 
         $this->channelId = $this->argument('channel_id');
         $this->typeId = $this->argument('typeid');
-        //取出最大的id加1
-        $maxId = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->max('id');
-        $maxId = $maxId +1;
-        $take = 10;
-        $message = null;
 
-        do {
-            //提交数据
-            $archives = DB::connection($this->dbName)->table($this->tableName)->where('id', '<', $maxId)->where('typeid', $this->typeId)->where('is_post', '-1')->orderBy('id', 'desc')->take($take)->get();
-            $tot = count($archives);
-            foreach ($archives as $key => $value) {
-                $maxId = $value->id;
-                $message = date('Y-m-d H:i:s')."{$key}/{$tot} -- typeid is {$value->typeid} aid is {$value->id}".PHP_EOL;
-                $this->info($message);
-
+        $offset = 0;
+        $limit = 1000;
+        do
+        {
+            $arts = DB::table('ca_gather')->where('typeid',$this->typeId)->where('is_post',-1)->skip($offset)->take($limit)->get();
+            $tot = count($arts);
+            foreach ($arts as $key=>$value){
                 //判断是否登录
                 if (!$this->dedeLogin($loginUrl, $this->dedeUser, $this->dedePwd)) {
                     $this->error('登录失败!');
-                    if($this->isCommandLogs === true) {
-                        $command = "登录失败\n";
-                        file_put_contents($this->commandLogsFile, $command, FILE_APPEND);
-                    }
                     exit;
                 }
-
                 //提交数据
-                $rel_data = [
+                $data = [
                     'channelid' => $this->channelId,
                     'title' => $value->title,
                     'picname' => $value->litpic,
                     'weight' => mt_rand(1, 100),
                     'click' => mt_rand(1000, 9999),
-//                    'typeid' => 58,
                     'typeid' => $value->typeid,
                     'cid' => $value->typeid,
                     'body' => $value->body,
                     'pubdate' => date('Y-m-d H:i:s'),
                     'arcrank' => 0,
-                    'ishtml' => 0,
+                    'ishtml' => -1,
                     //文章描述
                     'description'=>$value->down_link,
                 ];
-//                dd($rel_data);
-                $data = array_merge($dede_data, $rel_data);
+                $data = array_merge($dede_data, $data);
                 $rest = $this->getCurl($addUrl, 'post', $data);
                 if (stripos($rest, '成功发布文') !== false) {
-                    //成功提交后更新is_post
-                    //更新状态文件
-                    file_put_contents($this->dedeSendStatusFile,'is_send = 1');
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['is_post' => 0]);
-                    $message .= "news dede post success".PHP_EOL;
-                    $this->info($message);
+                    DB::table('ca_gather')->where('id', $value->id)->update(['is_post' => 0]);
+                    $this->info("{$key}/{$tot}news dede post success");
                 } else {
-                    $message .= "news dede post fail".PHP_EOL;
-                    $this->error($message);
-                    exit;
-                }
-                //日志
-                if($this->isCommandLogs === true) {
-                    file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
+                    $this->error("{$key}/{$tot}news dede post fail");
                 }
             }
-        } while ($tot > 0);
-        $message = "news dede post end".PHP_EOL;
-        $this->error($message);
-        //日志
-        if($this->isCommandLogs === true) {
-            file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
-        }
+            $offset+=$limit;
+        }while($tot > 0);
+        $this->info("news dede post end");
 
     }
-
 }

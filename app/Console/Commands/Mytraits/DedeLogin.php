@@ -14,7 +14,6 @@ trait DedeLogin
      */
     public function dedeLogin($loginUrl, $userName, $passWord)
     {
-        $message = null;
         //保存cookie
         $is_login = false;
         $cookiePath = public_path() . DIRECTORY_SEPARATOR . 'cookie_dede';
@@ -39,12 +38,6 @@ trait DedeLogin
 
         if (strpos($headerStr, '成功登录') !== false) {
             //将数据提交到后台
-            $message = 'login ok';
-            $this->info($message);
-            //保存日志
-            if($this->isCommandLogs === true){
-                file_put_contents($this->commandLogsFile,$message,FILE_APPEND);
-            }
             $this->cookie .= $this->parseCookie($headerStr);
             $is_login = true;
             file_put_contents($cookieFile, $this->cookie);

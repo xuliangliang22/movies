@@ -6,10 +6,12 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
 use App\Console\Commands\Mytraits\Common;
+use App\Console\Commands\Mytraits\DedeLogin;
 
 class HuhuUpdate extends Command
 {
     use Common;
+    use DedeLogin;
     /**
      * The name and signature of the console command.
      *
@@ -25,6 +27,7 @@ class HuhuUpdate extends Command
     protected $description = 'huhu pan 每日更新';
 
     protected $channelId = 17;
+    protected $typeId;
 
     /**
      * Create a new command instance.
@@ -47,6 +50,7 @@ class HuhuUpdate extends Command
         $typeids = array(26, 27, 28, 29);
         $url = null;
         foreach ($typeids as $key => $value) {
+            $this->typeId = $value;
             switch ($value) {
                 //电影
                 case 26:
@@ -66,27 +70,19 @@ class HuhuUpdate extends Command
                     break;
             }
 
-            $this->getList($url, $value);
-            $this->getContent($value);
-
-            //下载图片
-            $this->call('xiazai:img', ['action' => 'litpic', 'type_id' => $value]);
+//            $this->movieList($url, $value);
+//            $this->getContent($value);
+            //下载图片,到本地
+//            $this->litpicDownload();
             //豆瓣
-            $this->call('caiji:douban', ['type_id' => $value]);
+//            $this->call('caiji:douban', ['type_id' => $value]);
             //将不符合的数据删除掉
-            DB::connection($this->dbName)->table($this->tableName)->where('is_litpic',-1)->delete();
-            DB::connection($this->dbName)->table($this->tableName)->where('is_douban',-1)->delete();
+            DB::table('ca_gather')->where('is_litpic',-1)->delete();
+            DB::table('ca_gather')->where('is_douban',-1)->delete();
 
-            //将更新数据提交到dede后台,直接替换数据库
-            $this->call('dede:makehtml', ['type' => 'update', 'typeid' => $value]);
-            $this->call('send:dedea67post', ['channel_id' => $this->channelId, 'typeid' => $value]);
-
-            // if (file_exists($this->dedeSendStatusFile)) {
-            //     //更新列表页
-            //     $this->info(date('Y-m-d H:i:s')." typeid {$value} 更新列表页");
-            //     $this->call('dede:makehtml',['type'=>'list','typeid'=>$value]);
-            // }
+            $this->dedemoviePost();
             $this->info(date('Y-m-d H:i:s') . " typeid {$value} 上线部署完成!");
+            dd('ok');
         }
     }
 
@@ -95,7 +91,7 @@ class HuhuUpdate extends Command
      * @param $url
      * @param $typeId
      */
-    public function getList($url, $typeId)
+    public function movieList($url, $typeId)
     {
         $host = 'http://huhupan.com';
 
@@ -145,12 +141,12 @@ class HuhuUpdate extends Command
             foreach ($data as $key => $value) {
                 $this->info(date('Y-m-d H:i:s') . " pan huhu list {$key}/{$ltot}");
                 if ($value) {
-                    $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $typeId)->where('title_hash', md5($value['title']))->first();
+                    $isAlready = DB::table('ca_gather')->where('typeid', $typeId)->where('title_hash', md5($value['title']))->first();
                     if ($isAlready) {
                         //判断日期
                         if (strtotime($value['m_time']) > strtotime($isAlready->m_time)) {
                             //更新这条记录
-                            DB::connection($this->dbName)->table($this->tableName)->where('id', $isAlready->id)->update([
+                            DB::table('ca_gather')->where('id', $isAlready->id)->update([
                                 'is_update' => -1,
                                 'is_con' => -1,
                             ]);
@@ -159,8 +155,8 @@ class HuhuUpdate extends Command
                         }
                     }
                     //保存新内容
-                    $saveArr = array_merge($value, ['title_hash' => md5($value['title']), 'typeid' => $typeId]);
-                    $rest = DB::connection($this->dbName)->table($this->tableName)->insert($saveArr);
+                    $saveArr = array_merge($value, ['title_hash' => md5($value['title']), 'typeid' => $typeId,'is_douban'=>-1]);
+                    $rest = DB::table('ca_gather')->insert($saveArr);
                     if ($rest) {
                         $this->info(date('Y-m-d H:i:s') . " pan huhu typeid {$typeId} list save success !!");
                     } else {
@@ -188,7 +184,7 @@ class HuhuUpdate extends Command
         $con = null;
         try {
             do {
-                $arc = DB::connection($this->dbName)->table($this->tableName)->select('id', 'con_url')->where('is_con', -1)->where('typeid', $typeId)->where('id', '>', $minId)->take($take)->get();
+                $arc = DB::table('ca_gather')->select('id', 'con_url')->where('is_con', -1)->where('typeid', $typeId)->where('id', '>', $minId)->take($take)->get();
                 $tot = count($arc);
 
                 foreach ($arc as $key => $value) {
@@ -215,7 +211,7 @@ class HuhuUpdate extends Command
                     $tk = array_search('网盘下载列表', $types);
                     if ($tk === false) {
                         //删除这条记录
-                        DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
+                        DB::table('ca_gather')->where('id', $value->id)->delete();
                         continue;
                     }
 
@@ -239,7 +235,7 @@ class HuhuUpdate extends Command
                     sleep($sleep);
                     if (empty($data)) {
                         //删除这条记录
-                        DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
+                        DB::table('ca_gather')->where('id', $value->id)->delete();
                         continue;
                     }
 
@@ -263,7 +259,7 @@ class HuhuUpdate extends Command
                     $tk = array_search('网盘下载列表', $types);
                     if ($tk === false) {
                         //删除这条记录
-                        DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
+                        DB::table('ca_gather')->where('id', $value->id)->delete();
                         continue;
                     }
 
@@ -298,7 +294,7 @@ class HuhuUpdate extends Command
                     }
                     $downLink = rtrim($downLink, ',');
                     //更新到数据库中
-                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update([
+                    $rest = DB::table('ca_gather')->where('id', $value->id)->update([
                         'down_link' => $downLink,
                         'is_con' => 0
                     ]);
@@ -312,11 +308,11 @@ class HuhuUpdate extends Command
             $this->info(date('Y-m-d H:i:s') . "pan huhu typeid {$typeId} content update end!!");
         } catch (\Exception $e) {
             $this->error(date('Y-m-d H:i:s') . "pan huhu content exception {$e->getMessage()} file {$e->getFile()} line {$e->getLine()}");
-            DB::connection($this->dbName)->table($this->tableName)->where('id', $minId)->delete();
+            DB::table('ca_gather')->where('id', $minId)->delete();
             $this->getContent($typeId, $minId);
         } catch (\ErrorException $e) {
             $this->error(date('Y-m-d H:i:s') . "pan huhu content error exception {$e->getMessage()} file {$e->getFile()} line {$e->getLine()}");
-            DB::connection($this->dbName)->table($this->tableName)->where('id', $minId)->delete();
+            DB::table('ca_gather')->where('id', $minId)->delete();
             $this->getContent($typeId, $minId);
         }
     }

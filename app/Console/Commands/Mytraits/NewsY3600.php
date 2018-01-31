@@ -12,8 +12,6 @@ use QL\QueryList;
 
 trait NewsY3600
 {
-    use BaiduStatus;
-
     protected $listNum;
 
     /**
@@ -24,29 +22,28 @@ trait NewsY3600
         $url = substr($baseListUrl, 0, strrpos($baseListUrl, '.'));
 
         for ($i = $start; $i <= $pageTot; $i++) {
-            //$this->info("this is page {$i}");
             if ($i == 1) {
                 $listUrl = $url . '.html';
             } else {
                 $listUrl = $url . '_' . $i . '.html';
             }
 
+            $listSaveArr = [];
             $list = $this->getList($listUrl);
             
             //保存进数据库中去
             foreach ($list as $key => $value) {
-                $isAlready = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
-                if (count($isAlready) > 0) {
+                $isAlready = DB::table('ca_gather')->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->count();
+                if ($isAlready > 0) {
                     continue;
                 }
                 //百度判断状态
                 if(!$this->baiduJudge($value['title'])){
                     continue;
                 }
-//                不是更新的时候判断名字的重复
                 $listSaveArr = [
-                    'title' => trim($value['title']),
-                    'title_hash' => md5(trim($value['title'])),
+                    'title' => $value['title'],
+                    'title_hash' => md5($value['title']),
                     'con_url' => $value['con_url'],
                     'm_time' => $value['m_time'],
                     //描述信息
@@ -56,12 +53,15 @@ trait NewsY3600
                     'is_douban' => 0,
                 ];
 
-                $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
-                if ($rs) {
-                    $this->listNum++;
+                $issave = DB::table('ca_gather')->insert($listSaveArr);
+                if ($issave) {
+                    $this->info("y3600 list save success");
+                }else{
+                    $this->error("y3600 list save faile");
                 }
             }
         }
+        $this->info('y3600 list end');
     }
 
     /**
@@ -69,7 +69,6 @@ trait NewsY3600
      */
     public function getList($url)
     {
-//        echo $url."\n";
         $host = 'http://www.y3600.com';
         $list = QueryList::Query($url, array(
             'title' => array('ol a', 'text'),
@@ -78,11 +77,11 @@ trait NewsY3600
             'body' => array('li', 'text'),
             'm_time' => array('em', 'text')
         ), '.wdls')->getData(function ($item) use ($host) {
+            $item['title'] = trim($item['title']);
             $item['con_url'] = trim($host, '/') . $item['con_url'];
             $item['m_time'] = date('Y') . '-' . trim(strstr($item['m_time'], '['), '][');
             return $item;
         });
-
         return $list;
     }
 
@@ -92,53 +91,34 @@ trait NewsY3600
      */
     public function getContent()
     {
-        $minId = 0;
-        $take = 10;
-        $message = null;
-
-        do {
-            $arc = DB::connection($this->dbName)->table($this->tableName)->select('id','con_url')->where('is_con', -1)->where('typeid', $this->typeId)->where('id', '>', $minId)->take($take)->get();
-            $tot = count($arc);
-
-            foreach ($arc as $key => $value) {
-                $minId = $value->id;
-                $message = date('Y-m-d H:i:s')."{$key}/{$tot} id is {$value->id} url is {$value->con_url}".PHP_EOL;
-                $this->info($message);
-
-                //得到保存的数组
+        $offset = 0;
+        $limit = 1000;
+        do
+        {
+            $arts = DB::table('ca_gather')->select('id','con_url')->where('is_con', -1)->where('typeid', $this->typeId)->skip($offset)->take($limit)->get();
+            $tot = count($arts);
+            foreach ($arts as $key=>$value){
                 $conSaveArr = $this->getConSaveArr($value->con_url);
                 if (!$conSaveArr) {
                     //内容不存在则删除这条记录
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
+                    DB::table('ca_gather')->where('id', $value->id)->delete();
                     continue;
                 }
                 //内容主体
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr[0]['con'],'is_con'=>0]);
+                $rest = DB::table('ca_gather')->where('id', $value->id)->update(['body' => $conSaveArr[0]['con'],'is_con'=>0]);
                 if ($rest) {
-                    $message .= "y3600 content aid {$value->id} save success ";
-                    $this->info($message);
+                    $this->info("{$key}/{$tot} y3600 content save success");
                 } else {
-                    $message .= "y3600 content aid {$value->id} save fail ";
-                    $this->error($message);
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delte();
-                }
-
-                //日志
-                if($this->isCommandLogs === true) {
-                    file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
+                    $this->info("{$key}/{$tot} y3600 content save fail");
                 }
             }
-        } while ($tot > 0);
-        $message = "y3600 content save end ";
-        //日志
-        if($this->isCommandLogs === true) {
-            file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
-        }
+            $offset+=$limit;
+        }while($tot > 0);
+        $this->info('y3600 content end');
     }
 
 
     /**
-     * 得到内容页的保存数组,以◎分割
      * @param $url 内容页的网址链接
      */
     public function getConSaveArr($url)

@@ -10,7 +10,7 @@
     </head>
     <body>
         <div class="flex-center position-ref full-height">
-            <h5>welcome</h5>
+            <h5>welcome,影片自动采集系统</h5>
         </div>
     </body>
     <script>

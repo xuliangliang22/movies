@@ -7,14 +7,11 @@
  */
 namespace App\Console\Commands\Mytraits;
 
-use DiDom\Query;
 use Illuminate\Support\Facades\DB;
 use QL\QueryList;
 
 trait M1905
 {
-    public $listNum;
-
     /**
      * 保存电影电视剧列表页
      */
@@ -29,36 +26,37 @@ trait M1905
             }
 
             $list = $this->getList($listUrl);
-            
             //保存进数据库中去
             foreach ($list as $key => $value) {
-                if (strpos($value['con_url'], 'news') !== false) {
-                    $rest = DB::connection($this->dbName)->table($this->tableName)->where('typeid', $this->typeId)->where('title_hash', md5(trim($value['title'])))->first();
-                    //判断重复性
-                    if ($rest) {
-                        continue;
-                    } else {
-                        //不是更新的时候判断名字的重复
-                        $listSaveArr = [
-                            'title' => trim($value['title']),
-                            'title_hash' => md5(trim($value['title'])),
-                            'con_url' => $value['con_url'],
-                            //描述信息
-                            'down_link' => SpHtml2Text($value['body']),
-                            'litpic' => $value['litpic'],
-                            'typeid' => $this->typeId,
-                            'is_douban' => 0,
-                            'm_time' => date('Y-m-d H:i:s'),
-                        ];
+                $value['title'] = trim($value['title']);
 
-                        $rs = DB::connection($this->dbName)->table($this->tableName)->insert($listSaveArr);
-                        if ($rs) {
-                            $this->listNum++;
-                        }
+                if (strpos($value['con_url'], 'news') !== false) {
+                    $isAlready = DB::table('ca_gather')->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->count();
+                    //判断重复性
+                    if ($isAlready > 0) {
+                        continue;
                     }
+                    //百度判断状态
+                    if(!$this->baiduJudge($value['title'])){
+                        continue;
+                    }
+                    $listSaveArr = [
+                        'title' => $value['title'],
+                        'title_hash' => md5($value['title']),
+                        'con_url' => $value['con_url'],
+                        //描述信息
+                        'down_link' => SpHtml2Text($value['body']),
+                        'litpic' => $value['litpic'],
+                        'typeid' => $this->typeId,
+                        'is_douban' => 0,
+                        'm_time' => date('Y-m-d H:i:s'),
+                    ];
+                    DB::table('ca_gather')->insert($listSaveArr);
                 }
             }
         }
+        //end
+        $this->info('m1905 list end');
     }
 
     /**
@@ -98,60 +96,36 @@ trait M1905
      */
     public function getContent()
     {
-        $minId = 0;
-        $take = 10;
-        $message = null;
-        do {
-            $arc = DB::connection($this->dbName)->table($this->tableName)->where('is_con', -1)->where('typeid', $this->typeId)->where('id','>',$minId)->take($take)->get();
-            $tot = count($arc);
-
-            foreach ($arc as $key => $value) {
-                $minId = $value->id;
-                $message = date('Y-m-d H:i:s')."{$key}/{$tot} id is {$value->id} url is {$value->con_url}".PHP_EOL;
-                $this->info($message);
-
-                //得到保存的数组
-                $conSaveArr = $this->getConSaveArr($value->con_url,$value->title);
-                if (empty($conSaveArr)) {
+        $offset = 0;
+        $limit = 1000;
+        do
+        {
+            $arts = DB::table('ca_gather')->select('id','title','con_url')->where('is_con', -1)->where('typeid', $this->typeId)->skip($offset)->take($limit)->get();
+            $tot = count($arts);
+            foreach ($arts as $key=>$value){
+                $conSaveArr = $this->getConSaveArr($value->con_url);
+                if (!$conSaveArr) {
                     //内容不存在则删除这条记录
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
+                    DB::table('ca_gather')->where('id', $value->id)->delete();
                     continue;
                 }
-
                 //内容主体
-                $rest = DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->update(['body' => $conSaveArr[0]['con'],'is_con'=>0]);
-                if ($rest) {
-                    $message .= "m1905 content aid {$value->id} save success ";
-                    $this->info($message);
-                } else {
-                    $message .= "m1905 content aid {$value->id} save fail ";
-                    $this->error($message);
-                    DB::connection($this->dbName)->table($this->tableName)->where('id', $value->id)->delete();
-                }
-
-                //日志
-                if($this->isCommandLogs === true) {
-                    file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
-                }
+                DB::table('ca_gather')->where('id', $value->id)->update(['body' => $conSaveArr[0]['con'],'is_con'=>0]);
             }
-        } while ($tot > 0);
-        $message = "m1905 content save end ";
-        //日志
-        if($this->isCommandLogs === true) {
-            file_put_contents($this->commandLogsFile, $message, FILE_APPEND);
-        }
+            $offset+=$limit;
+        }while($tot > 0);
+        $this->info('m1905 content end');
     }
 
 
     /**
-     * 得到内容页的保存数组,以◎分割
      * @param $url 内容页的网址链接
      */
-    public function getConSaveArr($url,$title)
+    public function getConSaveArr($url)
     {
         $content = QueryList::Query($url, array(
             'con' => array('.pic-content', 'text', 'p -img -a -script -.atlas_placehoder'),
-        ))->getData(function ($item) use($title){
+        ))->getData(function ($item){
             $pattern = array('/width\s*=\s*[\'"](.*?)[\'"]/is', '/height\s*=\s*[\'"](.*?)[\'"]/is','/style\s*=\s*["\'](.*?)["\']/is');
             $replace = array('', '','');
             $con = preg_replace($pattern, $replace, $item['con']);
@@ -160,7 +134,6 @@ trait M1905
             $item['con'] = trim($con);
             return $item;
         });
-//        dd($content);
         return $content;
     }
 
