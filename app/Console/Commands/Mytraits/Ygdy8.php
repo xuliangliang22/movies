@@ -49,8 +49,8 @@ trait Ygdy8
                     continue;
                 }
 
-                $isAlready = DB::table('ca_gather')->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->count();
-                if ($isAlready > 0) {
+                $isAlready = DB::table('ca_gather')->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
+                if ($isAlready) {
                     //判断时间,更新的时候不需要判断名字的重复
                     if (strtotime($maxTime) >= strtotime($value['m_time'])) {
                         continue;

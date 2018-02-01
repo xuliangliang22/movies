@@ -374,6 +374,8 @@ trait Common
         $message = "dede down_link update end !" . PHP_EOL;
         $this->info($message);
     }
+
+    
 }
 
 
