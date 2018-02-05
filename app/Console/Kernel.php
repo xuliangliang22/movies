@@ -64,6 +64,10 @@ class Kernel extends ConsoleKernel
         Commands\Caiji\Movie\Ygdy8Other::class,
 
 
+        //yy4480
+        Commands\Caiji\Movie\Yy4480::class,
+
+
     ];
 
     /**

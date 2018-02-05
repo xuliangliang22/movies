@@ -92,6 +92,7 @@ trait Common
 
 
     /**
+     * 在文档开头，改变属性，指定文件保存位置
      * 图片保存到本地
      * @param $wwwRoot
      * @param $imagePath
@@ -104,16 +105,20 @@ trait Common
             $arts = DB::table('ca_gather')->select('id', 'title', 'body')->where('is_body', -1)->skip($offset)->take($limit)->get();
             $tot = count($arts);
             foreach ($arts as $key => $value) {
-                $html = QueryList::run('DImage', [
-                    'content' => $value->body,
-                    'www_root' => $this->wwwRoot,
-                    'base_url' => '',
-                    'attr' => 'src',
-                    'image_path' => $this->imagePath,
-                    'callback' => function ($o) use ($value) {
-                        $o->attr('alt', $value->title);
-                    }
-                ]);
+                if(empty($value->body) === false && stripos($value->body,'img') !== false) {
+                    $html = QueryList::run('DImage', [
+                        'content' => $value->body,
+                        'www_root' => $this->wwwRoot,
+                        'base_url' => '',
+                        'attr' => 'src',
+                        'image_path' => $this->imagePath,
+                        'callback' => function ($o) use ($value) {
+                            $o->attr('alt', $value->title);
+                        }
+                    ]);
+                }else{
+                    $html = $value->body;
+                }
                 //更新到数据库
                 $issave = DB::table('ca_gather')->where('id', $value->id)->update([
                     'body' => trim($html),
@@ -375,7 +380,7 @@ trait Common
         $this->info($message);
     }
 
-    
+
 }
 
 
