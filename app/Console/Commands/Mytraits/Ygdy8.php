@@ -61,7 +61,7 @@ trait Ygdy8
                         'is_con'=>-1,
                         'm_time' => $value['m_time'],
                         'is_update' => -1,
-                        //留着node
+                        //运行node标志
                         'is_post' => -2,
                     ]);
                 } else {

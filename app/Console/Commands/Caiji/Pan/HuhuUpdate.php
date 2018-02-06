@@ -70,19 +70,21 @@ class HuhuUpdate extends Command
                     break;
             }
 
-//            $this->movieList($url, $value);
-//            $this->getContent($value);
+            $this->movieList($url, $value);
+            $this->getContent($value);
             //下载图片,到本地
-//            $this->litpicDownload();
+            $this->litpicDownload();
             //豆瓣
-//            $this->call('caiji:douban', ['type_id' => $value]);
+            $this->call('caiji:douban', ['type_id' => $value]);
             //将不符合的数据删除掉
             DB::table('ca_gather')->where('is_litpic',-1)->delete();
             DB::table('ca_gather')->where('is_douban',-1)->delete();
 
+            //发布
             $this->dedemoviePost();
+            //更新
+            $this->dedeupdatePost();
             $this->info(date('Y-m-d H:i:s') . " typeid {$value} 上线部署完成!");
-            dd('ok');
         }
     }
 
