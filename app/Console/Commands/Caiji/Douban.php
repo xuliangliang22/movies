@@ -128,6 +128,8 @@ class Douban extends Command
                     }
                     usleep(500);
                 }
+
+                $offset+=$limit;
             } while ($tot > 0);
         } catch (\ErrorException $e) {
             $message = 'doban error exception ' . $e->getMessage().PHP_EOL;

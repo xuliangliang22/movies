@@ -44,6 +44,8 @@ trait Common
 
     /**
      * 上传图片,线上七牛空间
+     * @param $url
+     * @return null|string
      */
     protected function imgUpload($url)
     {
@@ -89,6 +91,98 @@ trait Common
         }
         return $file;
     }
+
+    /**
+     * 下载内容页图片,上传到七牛
+     * @param $typeId
+     */
+    public function bodyPicDownloadQiniu()
+    {
+        $arts = null;
+        $offset = 0;
+        $limit = 1000;
+        do
+        {
+            $arts = DB::table('ca_gather')->select('id','body')->where('typeid', $this->typeId)->where('is_body', -1)->skip($offset)->take($limit)->get();
+            $tot = count($arts);
+            foreach ($arts as $key => $value) {
+                //得到所有图片链接
+                $marest = preg_match_all('/<img(.*?)src\s*=\s*["\'](.*?)["\'][^>]*>/is', $value->body, $matchs);
+                //数据不完整,内容中没有图片,则更新这条记录
+                if ($marest === 0) {
+                    DB::table('ca_gather')->where('id', $value->id)->update(['is_body' => 0]);
+                    continue;
+                }
+                //如果匹配到则将为空的数据替换掉
+                foreach ($matchs[2] as $mk => $mv) {
+                    //上传图片,得到一个数组
+                    $file = $this->imgUpload($mv);
+                    if(!$file){
+                        //如果上传失败则将其替换为空
+                        $value->body = str_replace($matchs[1][$mk],'',$value->body);
+                    }else {
+                        //替换,qiniu_postfix后缀（瘦身）
+                        $ossImg = rtrim(config('filesystems.disks.qiniu.domains.default'), '/') . '/' . ltrim($file, '/') . config('qiniu.qiniu_data.qiniu_postfix');;
+                        $value->body = str_replace($mv, $ossImg, $value->body);
+                    }
+                }
+//                dd($value->body);
+                //更新数据库
+                $rest = DB::table('ca_gather')->where('id', $value->id)->update(['body' => $value->body, 'is_body' => 0]);
+                if ($rest) {
+                    $this->info('congratulate,body img qiniu upload save to db success,artid '.$value->id);
+                } else {
+                    $this->error('sorry,body img qiniu upload save to db fail, artid'.$value->id);
+                }
+            }
+
+            $offset+=$limit;
+        }while($tot > 0);
+        $this->info('congratulate,body img qiniu upload end');
+    }
+
+
+    /**
+     * 下载缩略图,上传到七牛
+     */
+    public function litpicDownloadQiniu()
+    {
+        $ossImg = '';
+        $arts = null;
+        $offset = 0;
+        $limit = 1000;
+
+        do{
+            $arts = DB::table('ca_gather')->select('id','litpic')->where('typeid', $this->typeId)->where('is_litpic', -1)->skip($offset)->take($limit)->get();
+            $tot = count($arts);
+
+            foreach ($arts as $key => $value) {
+                $ossImg = '';
+                //得到所有图片链接
+                $marest = preg_match('/^http(s)?(.*?)/is', $value->litpic, $matchs);
+                //数据不完整,则删除这条记录
+                if ($marest) {
+                    //将网络图片上传到七牛云
+                    $file = $this->imgUpload($value->litpic);
+                    if ($file) {
+                        $ossImg = rtrim(config('filesystems.disks.qiniu.domains.default'), '/') . '/' . ltrim($file, '/') . config('qiniu.qiniu_data.qiniu_postfix');
+                    }
+                }
+
+                //更新数据库,链接不正确则将之替换为''
+                $rest = DB::table('ca_gather')->where('id', $value->id)->update(['litpic' => $ossImg, 'is_litpic' => 0]);
+                if ($rest) {
+                    $this->info('congratulate,qiniu litpic upload success ,artid ' . $value->id);
+                } else {
+                    $this->error('sorry,qiniu litpic upload fail ,artid ' . $value->id);
+                }
+            }
+
+            $offset+=$limit;
+        }while($tot > 0);
+        $this->info('congratulate,qiniu litpic upload end');
+    }
+
 
 
     /**
