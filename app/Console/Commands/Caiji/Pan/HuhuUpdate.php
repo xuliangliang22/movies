@@ -96,6 +96,8 @@ class HuhuUpdate extends Command
     public function movieList($url, $typeId)
     {
         $host = 'http://huhupan.com';
+        //取出最大的时间
+        $maxTime = DB::table('ca_gather')->where('typeid', $this->typeId)->where('is_post', 0)->max('m_time');
 
         for ($i = 1; $i <= 5; $i++) {
             $sleep = mt_rand(5, 10);
@@ -146,15 +148,15 @@ class HuhuUpdate extends Command
                     $isAlready = DB::table('ca_gather')->where('typeid', $typeId)->where('title_hash', md5($value['title']))->first();
                     if ($isAlready) {
                         //判断日期
-                        if (strtotime($value['m_time']) > strtotime($isAlready->m_time)) {
+                        if (strtotime($value['m_time']) > strtotime($maxTime)) {
                             //更新这条记录
                             DB::table('ca_gather')->where('id', $isAlready->id)->update([
                                 'is_update' => -1,
                                 'is_con' => -1,
                             ]);
-                        } else {
-                            continue;
                         }
+                        
+                        continue;
                     }
                     //保存新内容
                     $saveArr = array_merge($value, ['title_hash' => md5($value['title']), 'typeid' => $typeId,'is_douban'=>-1]);

@@ -4,6 +4,9 @@ return [
     'qiniu_data' => [
         //七牛文件后缀
         'qiniu_postfix'=>'?imageslim',
+        //缩略图
+//        'qiniu_postfix'=>'?imageView2/2/w/200/h/200',
+
         //语言
         'dede_languages' => [
             'Sprache akan',
