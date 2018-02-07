@@ -76,16 +76,16 @@ class HuhuUpdate extends Command
             //豆瓣
             $this->call('caiji:douban', ['type_id' => $value]);
 
+            DB::table('ca_gather')->where('is_douban',-1)->delete();
+
             //下载图片,到本地
             if(env('UPLOAD_IMG_DIRVER') == 'local') {
                 $this->litpicDownload();
             }elseif (env('UPLOAD_IMG_DIRVER') == 'qiniu'){
                 $this->litpicDownloadQiniu();
             }
-
             //将不符合的数据删除掉
             DB::table('ca_gather')->where('is_litpic',-1)->delete();
-            DB::table('ca_gather')->where('is_douban',-1)->delete();
 
             //发布
             $this->dedemoviePost();

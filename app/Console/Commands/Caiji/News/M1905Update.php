@@ -60,8 +60,14 @@ class M1905Update extends Command
         $url = 'http://www.1905.com/api/content/index.php?m=converged&a=comment&page=%s&pagesize=20';
         $this->movieList($pageStart, $pageTot, $url);
         $this->getContent();
-        //下载图片
-        $this->litpicDownload();
+
+        //下载图片,到本地
+        if(env('UPLOAD_IMG_DIRVER') == 'local') {
+            $this->litpicDownload();
+        }elseif (env('UPLOAD_IMG_DIRVER') == 'qiniu'){
+            $this->litpicDownloadQiniu();
+        }
+
         //提交到dede后台
         $this->dedeartPost();
         $this->info('【' . date('Y-m-d H:i:s') . '】 news m1905 end');

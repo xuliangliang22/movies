@@ -59,8 +59,14 @@ class Y3600Update extends Command
         $url = 'http://www.y3600.com/news/index.html';
         $this->movieList($pageStart, $pageTot, $url);
         $this->getContent();
-        //下载图片
-        $this->litpicDownload();
+
+        //下载图片,到本地
+        if(env('UPLOAD_IMG_DIRVER') == 'local') {
+            $this->litpicDownload();
+        }elseif (env('UPLOAD_IMG_DIRVER') == 'qiniu'){
+            $this->litpicDownloadQiniu();
+        }
+
         //提交到dede后台
         $this->dedeartPost();
         $this->info('【'.date('Y-m-d H:i:s').'】 news y3600 end');
