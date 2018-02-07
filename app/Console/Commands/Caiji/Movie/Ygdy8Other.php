@@ -56,7 +56,11 @@ class Ygdy8Other extends Command
         $this->nodeDownLink();
 
         //下载内容中的图片,保存到服务器上
-        $this->bodypicDownload();
+        if(env('UPLOAD_IMG_DIRVER') == 'local') {
+            $this->bodypicDownload();
+        }elseif (env('UPLOAD_IMG_DIRVER') == 'qiniu'){
+            $this->bodyPicDownloadQiniu();
+        }
 
         //发送到dede后台
         $this->dedemoviePost();

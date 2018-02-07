@@ -37,6 +37,7 @@ trait Common
             $this->curl = new \curl();
         }
         $this->imagePath = $this->imagePath . date('ymd');
+
         $this->dedeUrl = env('DEDE_ADMIN_URL');
         $this->dedeUser = env('DEDE_ADMIN_USER');
         $this->dedePwd = env('DEDE_ADMIN_PWD');
@@ -69,7 +70,7 @@ trait Common
             if ($ext == 'jpeg') {
                 $ext = 'jpg';
             }
-            $file = $this->savePath . '/' . md5($url) . '.' . $ext;
+            $file = $this->imagePath . '/' . md5($url) . '.' . $ext;
 
             //如果不存在则才会上传
             if (!$disk->exists($file)) {

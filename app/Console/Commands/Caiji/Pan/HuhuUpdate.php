@@ -72,14 +72,17 @@ class HuhuUpdate extends Command
 
             $this->movieList($url, $value);
             $this->getContent($value);
+
+            //豆瓣
+            $this->call('caiji:douban', ['type_id' => $value]);
+
             //下载图片,到本地
             if(env('UPLOAD_IMG_DIRVER') == 'local') {
                 $this->litpicDownload();
             }elseif (env('UPLOAD_IMG_DIRVER') == 'qiniu'){
                 $this->litpicDownloadQiniu();
             }
-            //豆瓣
-            $this->call('caiji:douban', ['type_id' => $value]);
+
             //将不符合的数据删除掉
             DB::table('ca_gather')->where('is_litpic',-1)->delete();
             DB::table('ca_gather')->where('is_douban',-1)->delete();
@@ -101,7 +104,7 @@ class HuhuUpdate extends Command
     {
         $host = 'http://huhupan.com';
         //取出最大的时间
-        $maxTime = DB::table('ca_gather')->where('typeid', $this->typeId)->where('is_post', 0)->max('m_time');
+        $maxTime = DB::table('ca_gather')->where('typeid', $typeId)->where('is_post', 0)->max('m_time');
 
         for ($i = 1; $i <= 5; $i++) {
             $sleep = mt_rand(5, 10);
