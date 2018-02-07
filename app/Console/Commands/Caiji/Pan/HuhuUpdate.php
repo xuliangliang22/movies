@@ -73,7 +73,11 @@ class HuhuUpdate extends Command
             $this->movieList($url, $value);
             $this->getContent($value);
             //下载图片,到本地
-            $this->litpicDownload();
+            if(env('UPLOAD_IMG_DIRVER') == 'local') {
+                $this->litpicDownload();
+            }elseif (env('UPLOAD_IMG_DIRVER') == 'qiniu'){
+                $this->litpicDownloadQiniu();
+            }
             //豆瓣
             $this->call('caiji:douban', ['type_id' => $value]);
             //将不符合的数据删除掉
@@ -155,7 +159,7 @@ class HuhuUpdate extends Command
                                 'is_con' => -1,
                             ]);
                         }
-                        
+
                         continue;
                     }
                     //保存新内容
