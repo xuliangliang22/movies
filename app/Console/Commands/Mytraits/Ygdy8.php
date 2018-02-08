@@ -200,10 +200,11 @@ trait Ygdy8
 
         //还是要将下载链接分出来
         $data = QueryList::Query($content,array(
-            'body' => array('#Zoom','text','br -a -script'),
+            'body' => array('#Zoom','text','p br -a -script'),
             'pic' => array('#Zoom img:eq(1)','src'),
         ))->getData(function ($item) use($content){
             $item['body'] = strstr($item['body'],'【下载地址】',true);
+            $item['body'] = removeCss($item['body']);
             $item['down_link'] = QueryList::Query($content,array(
                 'down_link' => array('a','href'),
             ),'#Zoom table')->getData(function ($item){
