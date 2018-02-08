@@ -27,10 +27,10 @@ trait Ygdy8
         }
 
         //取出最大的时间
-        $maxTime = DB::table('ca_gather')->where('typeid', $this->typeId)->where('is_post', 0)->max('m_time');
-        if(!$maxTime){
-            $maxTime = date('Y-m-d H:i:s');
-        }
+//        $maxTime = DB::table('ca_gather')->where('typeid', $this->typeId)->where('is_post', 0)->max('m_time');
+//        if(!$maxTime){
+//            $maxTime = date('Y-m-d H:i:s');
+//        }
         for ($i = $start; $i <= $pageTot; $i++) {
             if ($i == 1) {
                 $listUrl = substr($url, 0, strrpos($url, '/')) . '/index.html';
@@ -49,8 +49,13 @@ trait Ygdy8
                     continue;
                 }
 
+                $maxTime = date('Y-m-d H:i:s');
                 $isAlready = DB::table('ca_gather')->where('typeid', $this->typeId)->where('title_hash', md5($value['title']))->first();
                 if ($isAlready) {
+                    //如果这条记录存在，则去判断更新时间
+                    if($isAlready->m_time){
+                        $maxTime = $isAlready->m_time;
+                    }
                     //判断时间,更新的时候不需要判断名字的重复
                     if (strtotime($maxTime) >= strtotime($value['m_time'])) {
                         continue;

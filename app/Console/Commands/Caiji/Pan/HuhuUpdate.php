@@ -104,7 +104,7 @@ class HuhuUpdate extends Command
     {
         $host = 'http://huhupan.com';
         //取出最大的时间
-        $maxTime = DB::table('ca_gather')->where('typeid', $typeId)->where('is_post', 0)->max('m_time');
+//        $maxTime = DB::table('ca_gather')->where('typeid', $typeId)->where('is_post', 0)->max('m_time');
 
         for ($i = 1; $i <= 5; $i++) {
             $sleep = mt_rand(5, 10);
@@ -152,9 +152,14 @@ class HuhuUpdate extends Command
             foreach ($data as $key => $value) {
                 $this->info(date('Y-m-d H:i:s') . " pan huhu list {$key}/{$ltot}");
                 if ($value) {
+                    //如果记录已经存在则要判断更新时间
+                    $maxTime = date('Y-m-d H:i:s');
                     $isAlready = DB::table('ca_gather')->where('typeid', $typeId)->where('title_hash', md5($value['title']))->first();
                     if ($isAlready) {
                         //判断日期
+                        if($isAlready->m_time){
+                            $maxTime = $isAlready->m_time;
+                        }
                         if (strtotime($value['m_time']) > strtotime($maxTime)) {
                             //更新这条记录
                             DB::table('ca_gather')->where('id', $isAlready->id)->update([
