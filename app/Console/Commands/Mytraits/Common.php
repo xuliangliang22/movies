@@ -19,8 +19,6 @@ trait Common
     protected $wwwRoot = '/home/www/ca2722';
     protected $imagePath = '/uploads/';
 
-
-
     //dede
     protected $dedeUrl;
     protected $dedeUser;
@@ -184,8 +182,6 @@ trait Common
         $this->info('congratulate,qiniu litpic upload end');
     }
 
-
-
     /**
      * 在文档开头，改变属性，指定文件保存位置
      * 图片保存到本地
@@ -229,7 +225,6 @@ trait Common
         } while ($tot > 0);
         $this->info("bodypic download end");
     }
-
 
     protected function litpicDownload()
     {
@@ -466,7 +461,7 @@ trait Common
                 $message .= "dede down_link update aid {$value->id} update ok !" . PHP_EOL;
                 $this->info($message);
             } else {
-                //没有更新成功,也将is_update更新为0
+                //没有更新成功
                 $message .= "dede down_link update aid {$value->id} update fail !" . PHP_EOL;
                 $this->error($message);
             }
