@@ -187,7 +187,12 @@ return [
         /**
          * qiniu
          */
-        zgldh\QiniuStorage\QiniuFilesystemServiceProvider::class
+        zgldh\QiniuStorage\QiniuFilesystemServiceProvider::class,
+
+        /**
+         * cors
+         */
+        Barryvdh\Cors\ServiceProvider::class
 
     ],
 
